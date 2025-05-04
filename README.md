@@ -1,2 +1,38 @@
-# web-dev-essentials
+# 概要
 .Net Web開発基礎教育に関するサンプルコードを集積したリポジトリ
+
+# アジェンダ
+
+1. staticなページを作る  
+htmlの基本的構造を知る
+1. cssで修飾する  
+セレクタと、何をcssに纏めるかを知る
+1. javaScriptでクライアントサイドで処理する  
+バックエンド処理との使い分け、特製の違いを知る
+    - ・Dynacmic Typeである事
+    - `<script type="module">`とかvarとかスコープの話
+    - ブラウザ処理順の話(css読み込みと併せて)
+4. syncでバックエンドと連携する（MVC）  
+基礎的なWebアプリケーションの構造を知る
+    - formの使い方、重要性
+    - HTTPレスポンスコードの一般的パターンと使い分け
+5. asyncでバックエンドと連携する（REST API）  
+Ajaxの基礎を知る
+    - rxjsを用いる（今更xhrやjQuery知っても仕方ないので）
+6. サーバ立てて動かす
+    - Azure WebAppsの互換性を考えるとIISの使い方を知っておいた方が良い
+    - IISのGUI設定、iis.config、 web.configの関係性
+6. scssでcssを構造化する
+    - scssの概念を知る
+6. typescriptでjsを使いやすく
+    - tsによる静的型付けを知る
+
+# その他候補
+- HTML規格（HTML Living Std）
+- クロスブラウザ性
+- レンダリングエンジン
+- cssベンダープレフィクス
+- JavaScript実行エンジン
+- SEO
+- モバイル端末対応
+- レスポンシブ
