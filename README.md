@@ -3,10 +3,10 @@
 
 # アジェンダ
 
-1. staticなページを作る  
-htmlの基本的構造を知る
-1. cssで修飾する  
-セレクタと、何をcssに纏めるかを知る
+1. [HTML基礎](./1-StaticHtml/)  
+HTMLの基本的構造
+1. [CSSの使い方](./2-Style/)  
+HTMLレイアウトを修飾
 1. javaScriptでクライアントサイドで処理する  
 バックエンド処理との使い分け、特製の違いを知る
     - ・Dynacmic Typeである事
