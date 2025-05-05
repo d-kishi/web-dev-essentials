@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja" style="font-size: 14px;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="HTMLの基本を学ぶためのページです">
+    <meta name="keywords" content="HTML, 学習, ウェブ開発">
+    <meta name="author" content="学習者">
+    <base href="/2-Style/">
+    <title>Styleで装飾する - 1.styleの基礎</title>
+    <link rel="icon" type="image/x-icon" href="./assets/favicon.ico">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #fafafa; color: #333; width: 1920px; height: 1080px; display: flex; flex-direction: column; align-items: center;">
+    <div name="header" style="background-color: #f8f4ff; padding: 20px; text-align: left; box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 100%;">
+        <h1 style="margin: 0; font-size: 2.5rem; color: #3d1f5e;">Styleで装飾する - 1.styleの基礎</h1>
+    </div>
+
+    <div name="main-content" style="margin: 20px; padding: 20px; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); min-width: 600px; max-width: 800px;">
+        <div style="margin-bottom: 30px; padding: 20px; background-color: #f8f4ff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h2 style="color: #3d1f5e; margin-top: 0; font-size: 1.8rem;">目次</h2>
+            <ul style="list-style-type: none; padding: 0; margin: 0;">
+                <li style="padding: 5px 0; border-bottom: 1px solid #eee;">
+                    <a href="#section-1" style="color: #3d1f5e; text-decoration: none; display: block; padding: 5px 0; font-size: 1rem;">1. ユーザー情報入力フォーム</a>
+                </li>
+                <li style="padding: 5px 0; border-bottom: 1px solid #eee;">
+                    <a href="#section-2" style="color: #3d1f5e; text-decoration: none; display: block; padding: 5px 0; font-size: 1rem;">2. 基本的なHTML要素</a>
+                </li>
+            </ul>
+        </div>
+
+        <div style="margin-bottom: 30px;">
+            <h2 id="section-1" style="color: #3d1f5e; background-color: #f8f4ff; padding: 10px; border-radius: 4px; font-size: 1.8rem;">1. ユーザー情報入力フォーム</h2>
+            <div style="display: grid; gap: 15px; margin-left: 20px;">
+                <div style="display: grid; gap: 5px;">
+                    <label for="name" style="font-weight: bold; font-size: 1rem;">お名前：</label>
+                    <input type="text" name="name" placeholder="山田太郎" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; width: 300px;" />
+                </div>
+
+                <div style="display: grid; gap: 5px;">
+                    <label for="email" style="font-weight: bold; font-size: 1rem;">メールアドレス：</label>
+                    <input type="email" name="email" placeholder="example@example.com" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; width: 300px;" />
+                </div>
+
+                <div style="display: grid; gap: 5px;">
+                    <label for="age" style="font-weight: bold; font-size: 1rem;">年齢：</label>
+                    <input type="number" name="age" min="0" max="120" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; width: 100px;" />
+                </div>
+
+                <div style="display: grid; gap: 5px;">
+                    <label for="gender" style="font-weight: bold; font-size: 1rem;">性別：</label>
+                    <select name="gender" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; width: 200px;">
+                        <option value="">選択してください</option>
+                        <option value="male">男性</option>
+                        <option value="female">女性</option>
+                        <option value="other">その他</option>
+                    </select>
+                </div>
+
+                <div style="display: grid; gap: 5px;">
+                    <label style="font-weight: bold; font-size: 1rem;">興味のある分野（複数選択可）：</label>
+                    <div style="display: grid; gap: 10px; margin-left: 20px;">
+                        <label style="display: flex; align-items: center; gap: 5px; font-size: 1rem;">
+                            <input type="checkbox" name="interests" value="web" style="width: 1rem; height: 1rem;"> ウェブ開発
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 5px; font-size: 1rem;">
+                            <input type="checkbox" name="interests" value="design" style="width: 1rem; height: 1rem;"> デザイン
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 5px; font-size: 1rem;">
+                            <input type="checkbox" name="interests" value="programming" style="width: 1rem; height: 1rem;"> プログラミング
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 5px; font-size: 1rem;">
+                            <input type="checkbox" name="interests" value="database" style="width: 1rem; height: 1rem;"> データベース
+                        </label>
+                    </div>
+                </div>
+
+                <div style="display: grid; gap: 5px;">
+                    <label style="font-weight: bold; font-size: 1rem;">学習経験：</label>
+                    <div style="display: grid; gap: 10px; margin-left: 20px;">
+                        <label style="display: flex; align-items: center; gap: 5px; font-size: 1rem;">
+                            <input type="radio" name="experience" value="beginner" style="width: 1rem; height: 1rem;"> 初心者
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 5px; font-size: 1rem;">
+                            <input type="radio" name="experience" value="intermediate" style="width: 1rem; height: 1rem;"> 中級者
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 5px; font-size: 1rem;">
+                            <input type="radio" name="experience" value="advanced" style="width: 1rem; height: 1rem;"> 上級者
+                        </label>
+                    </div>
+                </div>
+
+                <div style="display: grid; gap: 5px;">
+                    <label for="message" style="font-weight: bold; font-size: 1rem;">メッセージ：</label>
+                    <textarea name="message" rows="4" placeholder="ご意見・ご要望をお書きください" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; resize: vertical; width: 500px;"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="button" style="padding: 10px 20px; background-color: #2c7a7b; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">送信する</button>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 30px;">
+            <h2 id="section-2" style="color: #3d1f5e; background-color: #f8f4ff; padding: 10px; border-radius: 4px; font-size: 1.8rem;">2. 基本的なHTML要素</h2>
+            <div style="margin-bottom: 20px; margin-left: 20px;">
+                <p style="line-height: 1.6; font-size: 1rem;">これは<span style="background-color: #f8f4ff; padding: 2px 5px; border-radius: 3px;">段落</span>です。</p>
+                <p style="line-height: 1.6; font-size: 1rem;">これは別の<span style="background-color: #f8f4ff; padding: 2px 5px; border-radius: 3px;">段落</span>です。</p>
+            </div>
+
+            <div style="margin-bottom: 20px; margin-left: 20px;">
+                <h3 style="color: #3d1f5e; font-size: 1.4rem;">リンクの例</h3>
+                <a href="https://www.example.com" style="color: #3d1f5e; text-decoration: none; border-bottom: 1px solid #3d1f5e; font-size: 1rem;">サンプルリンク</a>
+            </div>
+
+            <div style="margin-bottom: 20px; margin-left: 20px;">
+                <h3 style="color: #3d1f5e; font-size: 1.4rem;">画像の例</h3>
+                <img src="./assets/sample.png" alt="サンプル画像" width="200" height="150" style="border-radius: 4px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+            </div>
+
+            <div style="margin-bottom: 20px; margin-left: 20px;">
+                <h3 style="color: #3d1f5e; font-size: 1.4rem;">リストの例</h3>
+                <ul style="list-style-type: none; padding: 0;">
+                    <li style="padding: 5px 0; border-bottom: 1px solid #eee; font-size: 1rem;">項目1</li>
+                    <li style="padding: 5px 0; border-bottom: 1px solid #eee; font-size: 1rem;">項目2</li>
+                    <li style="padding: 5px 0; border-bottom: 1px solid #eee; font-size: 1rem;">項目3</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div name="footer" style="background-color: #f8f4ff; color: #3d1f5e; text-align: left; padding: 20px; margin-top: 40px; width: 100%;">
+        <p style="margin: 0; font-size: 1rem;">© 2024 HTML学習</p>
+    </div>
+</body>
+</html> 

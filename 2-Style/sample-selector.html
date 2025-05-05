@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja" style="font-size: 14px;">
+<head>
+    <meta charset="UTF-8">
+    <base href="/2-Style/">
+    <title>サンプル</title>
+    <style>
+      /* コンテナラッパーに適用するスタイル */
+      .itemContainer {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        width: 600px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+      }
+
+      /* リストアイテム内のラッパ(div)に適用するスタイル */
+      .itemContainer li > div {
+        margin: 10px;
+        padding: 10px;
+        width: 150px;
+        height: 150px;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      /* 偶数と奇数のリストアイテムに異なるスタイルを適用 */
+      /* 奇数のリストアイテム */
+      .itemContainer li:nth-child(odd) > div {
+        background-color: lightcyan;
+        color: steelblue;
+      }
+
+      /* 偶数のリストアイテム */
+      .itemContainer li:nth-child(even) > div {
+        background-color: darksalmon;
+        color: firebrick
+      }
+
+      /* リストアイテム内のh2タグがデフォルトで持っているmargin設定を無効化 */
+      .itemContainer h2 {
+        margin: 0;
+      }
+
+      /* .item-list {
+        border: 1px solid red;
+      } */
+    </style>
+</head>
+<body>
+  <h1>構造化解説用</h1>
+  <p>このページは、HTMLの構造化解説とCSSセレクタ学習用のサンプルです。</p>
+  <ul class="itemContainer">
+    <li>
+      <div>
+        <h2>Number: 1</h2>
+        <p>1番目のアイテム</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h2>Number: 2</h2>
+        <p>2番目のアイテム</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h2>Number: 3</h2>
+        <p>3番目のアイテム</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h2>Number: 4</h2>
+        <p>4番目のアイテム</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h2>Number: 5</h2>
+        <p>5番目のアイテム</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h2>Number: 6</h2>
+        <p>6番目のアイテム</p>
+      </div>
+    </li>
+  </ul>
+</body>

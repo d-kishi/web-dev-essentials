@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="HTMLの基本を学ぶためのページです">
+    <meta name="keywords" content="HTML, 学習, ウェブ開発">
+    <meta name="author" content="学習者">
+    <base href="/2-Style/">
+    <title>Styleで装飾する - 3.外部スタイルシート</title>
+    <link rel="icon" type="image/x-icon" href="./assets/favicon.ico">
+    <link rel="stylesheet" href="./css/theme.css">
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body class="theme-background theme-text">
+    <div class="header theme-background-light theme-shadow">
+        <h1 class="theme-primary">Styleで装飾する - 3.外部スタイルシート</h1>
+    </div>
+
+    <div class="main-content theme-background-white theme-shadow">
+        <div class="section">
+            <h2 id="section-1" class="theme-primary theme-background-light">1. ユーザー情報入力フォーム</h2>
+            <div class="form-container">
+                <div class="form-group">
+                    <label for="name" class="theme-primary">お名前：</label>
+                    <input type="text" name="name" placeholder="山田太郎" class="theme-border" />
+                </div>
+
+                <div class="form-group">
+                    <label for="email" class="theme-primary">メールアドレス：</label>
+                    <input type="email" name="email" placeholder="example@example.com" class="theme-border" />
+                </div>
+
+                <div class="form-group">
+                    <label for="age" class="theme-primary">年齢：</label>
+                    <input type="number" name="age" min="0" max="120" class="theme-border" />
+                </div>
+
+                <div class="form-group">
+                    <label for="gender" class="theme-primary">性別：</label>
+                    <select name="gender" class="theme-border">
+                        <option value="">選択してください</option>
+                        <option value="male">男性</option>
+                        <option value="female">女性</option>
+                        <option value="other">その他</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="theme-primary">興味のある分野（複数選択可）：</label>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" name="interests" value="web"> ウェブ開発
+                        </label>
+                        <label>
+                            <input type="checkbox" name="interests" value="design"> デザイン
+                        </label>
+                        <label>
+                            <input type="checkbox" name="interests" value="programming"> プログラミング
+                        </label>
+                        <label>
+                            <input type="checkbox" name="interests" value="database"> データベース
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="theme-primary">学習経験：</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="experience" value="beginner"> 初心者
+                        </label>
+                        <label>
+                            <input type="radio" name="experience" value="intermediate"> 中級者
+                        </label>
+                        <label>
+                            <input type="radio" name="experience" value="advanced"> 上級者
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="message" class="theme-primary">メッセージ：</label>
+                    <textarea name="message" rows="4" placeholder="ご意見・ご要望をお書きください" class="theme-border"></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button type="button" class="theme-button theme-shadow">送信する</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 id="section-2" class="theme-primary theme-background-light">2. 基本的なHTML要素</h2>
+            <div class="content-section">
+                <p>これは<span class="theme-highlight">段落</span>です。</p>
+                <p>これは別の<span class="theme-highlight">段落</span>です。</p>
+            </div>
+
+            <div class="content-section">
+                <h3 class="theme-primary">リンクの例</h3>
+                <a href="https://www.example.com" class="theme-link">サンプルリンク</a>
+            </div>
+
+            <div class="content-section">
+                <h3 class="theme-primary">画像の例</h3>
+                <img src="./assets/sample.png" alt="サンプル画像" width="200" height="150" class="theme-shadow">
+            </div>
+
+            <div class="content-section">
+                <h3 class="theme-primary">リストの例</h3>
+                <ul>
+                    <li class="theme-border">項目1</li>
+                    <li class="theme-border">項目2</li>
+                    <li class="theme-border">項目3</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer theme-background-light theme-primary">
+        <p>© 2024 HTML学習</p>
+    </div>
+</body>
+</html>
