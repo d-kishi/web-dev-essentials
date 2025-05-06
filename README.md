@@ -7,11 +7,8 @@
 HTMLの基本的構造
 1. [CSSの使い方](./2-Style/)  
 HTMLレイアウトを修飾
-1. javaScriptでクライアントサイドで処理する  
-バックエンド処理との使い分け、特製の違いを知る
-    - ・Dynacmic Typeである事
-    - `<script type="module">`とかvarとかスコープの話
-    - ブラウザ処理順の話(css読み込みと併せて)
+1. [JavaScript処理](./3-Js/)
+フロントエンド処理とHTMLイベント
 4. syncでバックエンドと連携する（MVC）  
 基礎的なWebアプリケーションの構造を知る
     - formの使い方、重要性
