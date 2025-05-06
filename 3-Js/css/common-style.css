@@ -1,0 +1,71 @@
+/* 全体のbodyスタイル */
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+  padding: 0;
+  background-color: #f9f9f9;
+  color: #333;
+}
+
+/* コンテンツ全体のラッパ */
+.wrapper {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* フォーム内部のコンテナ */
+.wrapper form .container {
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* フォーム要素の間隔調整 */
+.container > div, .container > fieldset, .container > fieldset > div {
+  margin-bottom: 15px;
+}
+
+/* 住所情報フィールドセット */
+.wrapper form fieldset {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+}
+
+/* フィールドセットの見出し */
+.wrapper form fieldset legend {
+  font-weight: bold;
+  padding: 0 10px;
+}
+
+/* ラベルの共通スタイル */
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+/* 入力欄、ボタン、DDLの共通スタイル */
+input, button, select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+/* 送信ボタンのスタイル */
+button {
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+/* 送信ボタンのホバー時の効果 */
+button:hover {
+  background-color: #0056b3;
+}
