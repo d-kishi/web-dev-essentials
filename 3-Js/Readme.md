@@ -79,10 +79,10 @@ JavaScriptはこのECMAScriptを基に実装されており、以下のような
 
 ECMAScriptの進化により、JavaScriptはより強力で柔軟な言語となり、モダンなWeb開発において重要な役割を果たしています。
 
-ECMAScriptのバージョンは、シンプルに`.cshtml`や`.js`ファイルにJavaScriptコードを記載して実行する場合、特にバージョン指定は不要です。
+ECMAScriptのバージョンは、シンプルに`.cshtml`や`.js`ファイルにJavaScriptコードを記載して実行する場合、特にバージョン指定は不要です。  
 本稿では触れませんが、TypeScriptを使用する場合はTypeScript⇒JavaScriptへ変換しないとブラウザが解釈できませんので、"どのECMAScriptバージョンで変換するか"の指定が必要になります。
 
-そのバージョン指定で"ES6"や"ES2015"といった単語が出てきます。
+そのバージョン指定で"ES6"や"ES2015"といった単語が出てきます。  
 ここでは、"ES"とは"ECMAScript"を意味している、という事だけ覚えておいてください。
 
 ## どこにJavaScriptを記載するのか
@@ -113,7 +113,7 @@ JavaScriptコードは主に以下の3つの方法で記載することができ
 ```
 
 このケースは[こちらのサンプル](./js-sample2-externalfile.html)になります。  
-分離することで、上記の「HTMLファイル内での直接記述」に記載したネガティブを回避できます。　　
+分離することで、上記の「HTMLファイル内での直接記述」に記載したネガティブを回避できます。  
 更には、CSS外部ファイルと同じようにブラウザ（またはCDN）キャッシュを活用できます。
 
 ### HTML要素の属性として
@@ -139,7 +139,7 @@ JavaScriptを`<head>`に記載すると、`.js`ファイルのダウンロード
 [このサンプル](./js-sample3-oldstyle.html)をブラウザで表示してみてください。  
 `window.alert();`を`<head>`タグ内で呼び出していますが、alertダイアログ表示中はJavaScriptの実行を中断する（=ブラウザのJavaScript処理が終了しない）ため、この間ブラウザには白い画面が表示されます。
 
-よって、かつてはbodyの閉じタグ（`</body>`）の直前に記述するのが推奨されていました。 
+よって、かつてはbodyの閉じタグ（`</body>`）の直前に記述するのが推奨されていました。  
 製造時期の古いものは、以下のように記載されているものが多くあります。
 
 ```html
@@ -297,32 +297,32 @@ console.log(5 === "5");   // false (型変換が行われない)
 #### 主要なデータ型
 
 1. **プリミティブ型**（基本データ型）
-  - number: 数値（整数と浮動小数点数）
+  - number: 数値（整数と浮動小数点数）  
     ```javascript
     let age = 25;        // 整数
     let price = 19.99;   // 浮動小数点数
     ```
-  - string: 文字列
+  - string: 文字列  
     ```javascript
     let name = "John";
     let message = 'Hello';  // シングルクォートも可
     ```
-  - boolean: 真偽値
+  - boolean: 真偽値  
     ```javascript
     let isActive = true;
     let isLoggedIn = false;
     ```
-  - null: 値が存在しないことを示す
+  - null: 値が存在しないことを示す  
     ```javascript
     let empty = null;
     ```
-  - undefined: 値が未定義であることを示す
+  - undefined: 値が未定義であることを示す  
     ```javascript
     let notDefined;  // 自動的にundefinedになる
     ```
 
 2. **オブジェクト型**
-  - object: キーと値のペアを持つ集合
+  - object: キーと値のペアを持つ集合  
     ```javascript
     let person = {
      name: "John",
@@ -332,14 +332,14 @@ console.log(5 === "5");   // false (型変換が行われない)
      }
     };
     ```
-  - array: 配列
+  - array: 配列  
     ```javascript
     let colors = ["red", "green", "blue"];
     ```
 
 #### 変数の型を確認するには
 
-型の確認は`typeof`演算子を使用できます。
+型の確認は`typeof`演算子を使用できます。  
 ```javascript
 console.log(typeof 42);          // "number"
 console.log(typeof "Hello");     // "string"
@@ -593,7 +593,7 @@ console.log(obj1 === obj2); // false (異なるオブジェクト参照)
 - `===`は型の一致も確認するため、比較対象の型が異なる場合は必ず`false`になります。
 - 配列やオブジェクトの比較では、参照先が同じかどうかを確認します。内容が同じでも異なる参照であれば`false`になります。
 
-JavaScriptで値の比較を行いたい場合、`===`を使用してください。
+JavaScriptで値の比較を行いたい場合、`===`を使用してください。  
 `===`を使用することで、より厳密で予測可能なコードを記述できます。特に型の一致が重要な場合や、暗黙の型変換を避けたい場合に有効です。
 
 逆に`==`を使用するケースは稀で、禁止に近い非推奨と考えてください。  
@@ -614,7 +614,7 @@ Lintのルールセットとしても、エラーとなるのが一般的です�
 
 JavaScriptは、HTML要素を変更したり、逆にHTML要素からJavaScriptの関数・メソッドを呼び出すことができます。
 
-例えば、チェックボックスがチェックされた場合だけボタンを表示したいと考えるとします。
+例えば、チェックボックスがチェックされた場合だけボタンを表示したいと考えるとします。  
 Webアプリケーションはサーバから応答されたHTMLをブラウザ上で表示するものですので、チェックがOn/Offに変更された事をトリガにして、サーバ側に新しいHTMLを要求します。  
 ブラウザは、サーバからの応答を基に画面描画を更新します。
 
@@ -646,7 +646,7 @@ class属性に対して検索します。
 HTML要素に`class="myClass"`を **含む** 要素が抽出されます。 
 但し部分一致検索ではありませんので、 `class="myClass1"`のようなパターンには一致しません。
 
-以下のように、複数のclass名を指定してAnd検索することもできます。
+以下のように、複数のclass名を指定してAnd検索することもできます。  
 ``` javascript
 // myClassとanotherClassの両方が設定されている要素を取得
 const elements = document.getElementsByClassName("myClass anotherClass");
