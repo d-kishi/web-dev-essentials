@@ -87,6 +87,6 @@ button:hover {
 }
 
 .onError {
-  color: red;
-  border: 2px solid firebrick;
+  color: firebrick;
+  background-color: rgba(178, 34, 34, 0.2);
 }
