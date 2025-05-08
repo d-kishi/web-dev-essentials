@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ユーザ情報登録フォーム</title>
   <link rel="stylesheet" href="./css/common-style.css">
+  <!-- ここで外部jsファイルを読み込む -->
+  <script src="./scripts/sample2.js"></script>
 </head>
 <body>
   <div class="wrapper">
@@ -119,20 +121,17 @@
           </div>
         </fieldset>
 
-        <button type="submit" onclick="clickSubmit(event)">登録</button>
+        <div>
+          <p>性別</p>
+          <div class="radio-group">
+            <label><input type="radio" name="sex" value="male">男性</label>
+            <label><input type="radio" name="sex" value="female">女性</label>
+          </div>
+        </div>
+
+        <button type="submit">登録</button>
       </div>
     </form>
-    <script>
-      /** 
-       * ボタンがクリックされたときの処理
-       * @param {Event} e - イベントオブジェクト
-       */
-      function clickSubmit(e) {
-        // クリックされたボタンのテキストを取得
-        window.alert(`${e.target.innerText}ボタンがクリックされました。`);
-        e.preventDefault(); // フォームの送信をキャンセル
-      }
-    </script>
   </div>
 </body>
 </html>

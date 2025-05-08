@@ -33,22 +33,22 @@
             <div style="display: grid; gap: 15px; margin-left: 20px;">
                 <div style="display: grid; gap: 5px;">
                     <label for="name" style="font-weight: bold; font-size: 1rem;">お名前：</label>
-                    <input type="text" name="name" placeholder="山田太郎" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; width: 300px;" />
+                    <input id="name" type="text" name="name" placeholder="山田太郎" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; width: 300px;" />
                 </div>
 
                 <div style="display: grid; gap: 5px;">
                     <label for="email" style="font-weight: bold; font-size: 1rem;">メールアドレス：</label>
-                    <input type="email" name="email" placeholder="example@example.com" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; width: 300px;" />
+                    <input id="email" type="email" name="email" placeholder="example@example.com" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; width: 300px;" />
                 </div>
 
                 <div style="display: grid; gap: 5px;">
                     <label for="age" style="font-weight: bold; font-size: 1rem;">年齢：</label>
-                    <input type="number" name="age" min="0" max="120" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; width: 100px;" />
+                    <input id="age" type="number" name="age" min="0" max="120" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; width: 100px;" />
                 </div>
 
                 <div style="display: grid; gap: 5px;">
                     <label for="gender" style="font-weight: bold; font-size: 1rem;">性別：</label>
-                    <select name="gender" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; width: 200px;">
+                    <select id="gender" name="gender" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; width: 200px;">
                         <option value="">選択してください</option>
                         <option value="male">男性</option>
                         <option value="female">女性</option>
@@ -91,7 +91,7 @@
 
                 <div style="display: grid; gap: 5px;">
                     <label for="message" style="font-weight: bold; font-size: 1rem;">メッセージ：</label>
-                    <textarea name="message" rows="4" placeholder="ご意見・ご要望をお書きください" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; resize: vertical; width: 500px;"></textarea>
+                    <textarea id="message" name="message" rows="4" placeholder="ご意見・ご要望をお書きください" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; resize: vertical; width: 500px;"></textarea>
                 </div>
 
                 <div style="display: flex; gap: 10px; margin-top: 20px;">

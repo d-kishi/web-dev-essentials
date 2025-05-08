@@ -44,12 +44,16 @@ body {
 /* ラベルの共通スタイル */
 label {
   display: block;
-  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+p {
+  margin: 0;
   font-weight: bold;
 }
 
 /* 入力欄、ボタン、DDLの共通スタイル */
-input, button, select {
+input[type="text"], input[type="password"], input[type="date"], input[type="email"], button, select {
   width: 100%;
   padding: 10px;
   border: 1px solid #ccc;
@@ -68,4 +72,21 @@ button {
 /* 送信ボタンのホバー時の効果 */
 button:hover {
   background-color: #0056b3;
+}
+
+/* ラジオボタンのラッパー */
+.radio-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+/* ラジオボタンのラベル */
+.radio-group label {
+  margin-right: 15px;
+}
+
+.onError {
+  color: red;
+  border: 2px solid firebrick;
 }
