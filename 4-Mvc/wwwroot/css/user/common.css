@@ -1,0 +1,62 @@
+/* フォーム要素の間隔調整 */
+.formContainer > div, .formContainer > fieldset, .formContainer > fieldset > div {
+    margin-bottom: 15px;
+}
+
+/* 住所情報フィールドセット */
+.wrapper form fieldset {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+}
+
+/* フィールドセットの見出し */
+.wrapper form fieldset legend {
+  font-weight: bold;
+  padding: 0 10px;
+}
+
+p {
+    margin: 0;
+    font-weight: bold;
+}
+
+/* 入力欄、ボタン、DDLの共通スタイル */
+input[type="text"], input[type="password"], input[type="date"], input[type="email"], button, select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+/* 送信ボタンのスタイル */
+button {
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+/* 送信ボタンのホバー時の効果 */
+button:hover {
+  background-color: #0056b3;
+}
+
+/* ラジオボタンのラッパー */
+.radio-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+/* ラジオボタンのラベル */
+.radio-group label {
+  margin-right: 15px;
+}
+
+.onError {
+  color: firebrick;
+  background-color: rgba(178, 34, 34, 0.2);
+}
