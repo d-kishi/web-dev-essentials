@@ -1,83 +1,48 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Web.Essentials.Mvc.Models;
 
 namespace Web.Essentials.Mvc.Controllers
 {
+    /// <summary>
+    /// ユーザ処理コントローラ
+    /// </summary>
     public class UserController : Controller
     {
-        //// GET: UserController
-        //public ActionResult Index()
-        //{
-        //    return View();
-        //}
-
-        //// GET: UserController/Details/5
-        //public ActionResult Details(int id)
-        //{
-        //    return View();
-        //}
-
-        // GET: UserController/Create
+        /// <summary>
+        /// 新規ユーザ登録画面を表示する
+        /// </summary>
+        /// <remarks>
+        /// Get: UserController/Create
+        /// </remarks>
+        /// <returns>
+        /// <see cref="UserModel"/> の空のインスタンスを使って新規ユーザー作成ビューを表示する <see cref="ActionResult"/> を返します。
+        /// </returns>
         public ActionResult Create()
         {
-            return View();
+            return View(new UserModel());
         }
 
-        // POST: UserController/Create
+        /// <summary>
+        /// 新規ユーザを登録する
+        /// </summary
+        /// <remarks>
+        /// Post: UserController/Create
+        /// </remarks>
+        /// <param name="userModel">ユーザ情報モデル</param>
+        /// <returns>単純にPostしたモデルを返す</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public ActionResult Create(UserModel userModel)
         {
-            try
+            // モデルの検証を行うには以下のようにModelStateを使用します。
+            if (!ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                // モデルの検証に失敗した場合、入力内容を保持して再表示
+                return View(userModel);
             }
-            catch
-            {
-                return View();
-            }
+
+            return View(userModel);
         }
-
-        //// GET: UserController/Edit/5
-        //public ActionResult Edit(int id)
-        //{
-        //    return View();
-        //}
-
-        //// POST: UserController/Edit/5
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public ActionResult Edit(int id, IFormCollection collection)
-        //{
-        //    try
-        //    {
-        //        return RedirectToAction(nameof(Index));
-        //    }
-        //    catch
-        //    {
-        //        return View();
-        //    }
-        //}
-
-        //// GET: UserController/Delete/5
-        //public ActionResult Delete(int id)
-        //{
-        //    return View();
-        //}
-
-        //// POST: UserController/Delete/5
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public ActionResult Delete(int id, IFormCollection collection)
-        //{
-        //    try
-        //    {
-        //        return RedirectToAction(nameof(Index));
-        //    }
-        //    catch
-        //    {
-        //        return View();
-        //    }
-        //}
     }
 }

@@ -32,3 +32,10 @@ label {
 p {
     margin: 0;
 }
+
+/* エラーテキストのスタイル */
+.text-error {
+    color: firebrick;
+    font-size: 0.9em;
+/*    margin-top: 5px;*/
+}
