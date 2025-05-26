@@ -9,7 +9,6 @@
 }  
 
 <form asp-controller="User" asp-action="Create" method="post">  
-	@Html.AntiForgeryToken()  
 	<div class="formContainer">  
 		<div>  
 			<label asp-for="Username"></label>  
@@ -60,7 +59,7 @@
 				<span asp-validation-for="Address.AddressLine" class="text-error"></span>  
 			</div>  
 		</fieldset>  
-
+		
 		<div>  
 			<p asp-for="Gender"></p>
 			<div class="radio-group">  
