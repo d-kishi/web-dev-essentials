@@ -11,11 +11,12 @@ HTMLレイアウトを修飾
 フロントエンド処理とHTMLイベント
 4. [.Net MVCアプリケーション](./4-Mvc/)  
 基礎的なWebアプリケーションの構造を知る
-    - formの使い方、重要性
-    - HTTPレスポンスコードの一般的パターンと使い分け
+    - .NET MVCの基本的構文（Razor, TagHelper）
+    - formの使い方
 5. asyncでバックエンドと連携する（REST API）  
 Ajaxの基礎を知る
     - rxjsを用いる（今更xhrやjQuery知っても仕方ないので）
+    - HTTPレスポンスコードの一般的パターンと使い分け
 6. サーバ立てて動かす
     - Azure WebAppsの互換性を考えるとIISの使い方を知っておいた方が良い
     - IISのGUI設定、iis.config、 web.configの関係性
