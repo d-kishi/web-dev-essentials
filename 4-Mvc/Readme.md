@@ -6,25 +6,25 @@
 バックエンドの処理はControllerとModelを用意しただけになりますので、設計や実装方法としては参考になるものではありません。
 
 ## 目次
-- [.Net MVCとしてWebアプリケーションを作成する](#net-mvcとしてwebアプリケーションを作成する)
-  - [目次](#目次)
-  - [プロジェクト構成](#プロジェクト構成)
-  - [実行方法](#実行方法)
-  - [Viewの構成](#viewの構成)
-    - [ディレクトリ構造](#ディレクトリ構造)
-      - [読み込み順序と役割](#読み込み順序と役割)
-  - [Razor構文](#razor構文)
-    - [基本的な構文](#基本的な構文)
-    - [注意点](#注意点)
-  - [TagHelper](#taghelper)
-    - [基本的な使い方](#基本的な使い方)
-      - [フォーム関連](#フォーム関連)
-      - [リンク関連](#リンク関連)
-      - [選択系](#選択系)
-    - [TagHelperの利点](#taghelperの利点)
-    - [完全な例](#完全な例)
+
+- [プロジェクト構成](#プロジェクト構成)
+- [実行方法](#実行方法)
+- [Viewの構成](#viewの構成)
+  - [ディレクトリ構造](#ディレクトリ構造)
+  - [読み込み順序と役割](#読み込み順序と役割)
+- [Razor構文](#razor構文)
+  - [基本的な構文](#基本的な構文)
+  - [注意点](#注意点)
+- [TagHelper](#taghelper)
+  - [基本的な使い方](#基本的な使い方)
+    - [フォーム関連](#フォーム関連)
+    - [リンク関連](#リンク関連)
+    - [選択系](#選択系)
+  - [TagHelperの利点](#taghelperの利点)
+- [FormとModel](#formとmodel)
 
 ## プロジェクト構成
+
 - **Controllers**: ユーザーからのリクエストを処理し、適切なViewを返す
 - **Views**: ユーザーインターフェースを定義するRazorテンプレート
 - **Models**: データ構造を定義
@@ -40,6 +40,7 @@
 Viewsディレクトリの構成を解説します。
 
 ### ディレクトリ構造
+
 ```
 Views/
 ├─ _ViewStart.cshtml      # 全Viewの初期設定
@@ -88,12 +89,15 @@ Razorは、C#コードとHTMLをシームレスに組み合わせて記述でき
 ### 基本的な構文
 
 - **C#コードの埋め込み**
+
   ```cshtml
   <p>@DateTime.Now</p>
   ```
+
   → 現在日時を表示
 
 - **変数の宣言と使用**
+
   ```cshtml
   @{
       var message = "Hello, Razor!";
@@ -102,6 +106,7 @@ Razorは、C#コードとHTMLをシームレスに組み合わせて記述でき
   ```
 
 - **条件分岐**
+
   ```cshtml
   @if (User.Identity.IsAuthenticated)
   {
@@ -114,6 +119,7 @@ Razorは、C#コードとHTMLをシームレスに組み合わせて記述でき
   ```
 
 - **ループ処理**
+
   ```cshtml
   @for (int i = 0; i < 3; i++)
   {
@@ -122,16 +128,21 @@ Razorは、C#コードとHTMLをシームレスに組み合わせて記述でき
   ```
 
 - **モデルの利用**
+
   ```cshtml
   @model UserModel
   <p>ユーザー名: @Model.UserName</p>
   ```
+
+  後述のTagHelperを使用せず、リテラルとしてHTML上に値を出力したい場合はRazor構文を使用します。  
+  例えば上記のような`<p>`タグは`asp-for`に対応していませんので、pタグのInnterTextを出力したい場合は上記のように記述します。
 
 - **HTMLエスケープ**
   - `@`で出力した値は自動的にHTMLエスケープされます。
   - 生のHTMLを出力したい場合は`@Html.Raw()`を使います。
 
 - **セクションの定義**
+
   ```cshtml
   @section Styles {
       <link rel="stylesheet" href="custom.css" />
@@ -153,7 +164,7 @@ Razor構文を使うことで、C#のロジックとHTMLを直感的に組み合
 ```
 
 `Html.BeginForm`は`<form>`タグに、`@Html.TextBoxFor`は`<input type="text">`タグが最終的に生成されます。  
-しかし、これは見ての通り実際に生成されるHTMLタグとは異なります。
+しかし、これは見ての通り実際に生成されるHTMLタグとcshtml上の記載が異なってしまいます。
 
 これではRazor⇒HTMLへの変換パターンをエンジニアが覚えなければならず、直感的に製造できるものではありませんでした。  
 この問題への解決として、.NET Core以降は前述のMicrosoft.AspNetCore.Mvc.TagHelpersが導入され、通常のHTMLタグに`asp-○○`と拡張属性で制御することができるようになりました。  
@@ -168,64 +179,78 @@ TagHelperは、.NET Coreで導入された機能で、通常のHTMLタグに`asp
 #### フォーム関連
 
 **フォームタグ**
+
 ```cshtml
 <form asp-controller="User" asp-action="Create" method="post">
   <!-- フォーム内容 -->
 </form>
 ```
+
 ポイントとして、TagHelperでformを定義した場合は適切なaction属性とCSRFトークンが自動生成されます。  
 これにより、従来のようにCSRF対策で`@Html.AntiForgeryToken()`を記述する必要はありません。
 
 **入力フィールド**
+
 ```cshtml
 @model UserModel
 
-<input asp-for="UserName" class="form-control" />
-<input asp-for="Email" type="email" class="form-control" />
-<input asp-for="Age" type="number" class="form-control" />
+<input asp-for="UserName" />
+<input asp-for="Email" />
+<input asp-for="Age" />
 ```
+
 モデルのプロパティに基づいて、name、id、value属性が自動設定されます。
 `asp-for`のvalueはモデルのプロパティになりますが、このプロパティに定義した`Required`や`StringLength`、`DataType`といったC#の属性に基づいてHTMLの属性も自動設定されます。  
 
 **ラベル**
+
 ```cshtml
 <label asp-for="UserName"></label>
 <label asp-for="Email"></label>
 ```
+
 モデルの`[Display(Name="...")]`属性やプロパティ名からラベルテキストが生成されます
 
 **バリデーションメッセージ**
+
 ```cshtml
 <span asp-validation-for="UserName" class="text-danger"></span>
 <span asp-validation-for="Email" class="text-danger"></span>
 ```
+
 モデルのバリデーション属性に基づいてエラーメッセージが表示されます
 
 #### リンク関連
 
 **アクションリンク**
+
 ```cshtml
 <a asp-controller="User" asp-action="Index">ユーザー一覧</a>
 <a asp-controller="User" asp-action="Edit" asp-route-id="123">編集</a>
 ```
+
 適切なURL（/User/Index、/User/Edit/123）が生成されます
 
 **画像タグ**
+
 ```cshtml
 <img asp-append-version="true" src="~/images/logo.png" alt="ロゴ" />
 ```
+
 `asp-append-version="true"`とすることで、キャッシュバスティングのためのバージョン番号が自動付与されます  
-これは特に、CDN有効なWebアプリケーションでファイルを更新する場合にCDNキャッシュのクリアを気にする必要が無くなります
+これは特に、CDN(Content Delivery Network)を導入したWebアプリケーションでファイルを更新する場合にCDNキャッシュのクリアを気にする必要が無くなります
 
 #### 選択系
 
 **ドロップダウンリスト**
+
 ```cshtml
-<select asp-for="CategoryId" asp-items="ViewBag.Categories" class="form-control">
+<select asp-for="CategoryId" asp-items="ViewBag.Categories">
   <option value="">選択してください</option>
 </select>
 ```
-→ ViewBagやモデルのSelectListItemsから選択肢が自動生成されます
+
+`asp-items`にリスト・配列を設定する事により、選択肢を自動生成します
 
 ### TagHelperの利点
 
@@ -235,35 +260,36 @@ TagHelperは、.NET Coreで導入された機能で、通常のHTMLタグに`asp
 4. **バリデーション統合**: モデルのData Annotationsと自動連携
 5. **IntelliSense**: Visual StudioやVS Codeでの補完サポート
 
-### 完全な例
-
-```cshtml
-@model UserCreateViewModel
-
-<form asp-controller="User" asp-action="Create" method="post">
-  <div class="form-group">
-    <label asp-for="UserName"></label>
-    <input asp-for="UserName" class="form-control" />
-    <span asp-validation-for="UserName" class="text-danger"></span>
-  </div>
-  
-  <div class="form-group">
-    <label asp-for="Email"></label>
-    <input asp-for="Email" type="email" class="form-control" />
-    <span asp-validation-for="Email" class="text-danger"></span>
-  </div>
-  
-  <div class="form-group">
-    <label asp-for="CategoryId"></label>
-    <select asp-for="CategoryId" asp-items="ViewBag.Categories" class="form-control">
-      <option value="">選択してください</option>
-    </select>
-    <span asp-validation-for="CategoryId" class="text-danger"></span>
-  </div>
-  
-  <button type="submit" class="btn btn-primary">登録</button>
-  <a asp-controller="User" asp-action="Index" class="btn btn-secondary">キャンセル</a>
-</form>
-```
-
 この方法により、HTMLの可読性を保ちながら、MVCフレームワークの強力な機能を活用できます。
+
+## FormとModel
+
+./Controllers/UserController.csの`public ActionResult Create(UserModel userModel)`は、./Views/User/Create.cshtmlの`<form>`タグによるPost処理を受け付けるエンドポイントとなる。  
+引数の`UserModel userModel`に渡されるインスタンスの値は、`<form>`内の各タグに設定された`asp-for`属性のプロパティが./Models/UserModel.csの`UserModel`に自動的にバインドされたものが渡される。
+
+つまり、.cshtmlの内部を解説すると以下のようになる。
+
+``` cshtml
+<!-- 当該cshtmlで使用するViewModelの宣言 -->
+@model Web.Essentials.Mvc.Models.UserModel
+
+<!-- /User/CreateにPostするフォームである事を宣言 -->
+<form asp-controller="User" asp-action="Create" method="post">  
+	<div class="formContainer">  
+		<div>  
+			<label asp-for="Username"></label>  <!-- UserModel.Usernameを紐づけて、下記inputタグへのfor生成と、LabelタグInnterTextをUsernameのDisplay属性から取得 -->
+			<input asp-for="Username" />  <!-- UserModel.Usernameとinputのvalueを連携 -->
+			<span asp-validation-for="Username" class="text-error"></span>  <!-- UserModel.Usernameの各種Validation用の属性で検証した結果を表示 -->
+		</div>  
+		<div>  
+			<label asp-for="Email"></label>
+			<input asp-for="Email" />
+			<span asp-validation-for="Email" class="text-error"></span>  
+		</div>  
+		...
+    ...
+
+		<button type="submit">登録</button>  <!-- Formのsubmitトリガとなるボタン -->
+	</div>  
+</form>  
+```
