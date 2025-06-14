@@ -38,8 +38,7 @@ $ npm -v
 
 ## セットアップ
 
-以下動画の02:30～を参照  
-https://www.youtube.com/watch?v=6kBbbPDg12U&list=PLbt-3VxyQSh1kSk6BpRse7m1sAdm_BygA&index=8  
+[こちら](https://www.youtube.com/watch?v=6kBbbPDg12U&list=PLbt-3VxyQSh1kSk6BpRse7m1sAdm_BygA&index=8)動画の02:30～を参照  
 
 ※以降の「ターミナル」は、VSCodeのターミナルのことを指している
 
