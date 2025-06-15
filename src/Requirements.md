@@ -68,6 +68,44 @@
 ### 2.3 ネームスペース構成
 - **ルートネームスペース**: `Web.Essentials`
 
+### 2.4 プロジェクト構成
+
+#### 2.4.1 ソリューション構成
+- **ソリューション名**: `Web.Essentials.sln`
+
+#### 2.4.2 プロジェクト分割（クリーンアーキテクチャ対応）
+以下の3プロジェクト構成でレイヤー分離を実現：
+
+1. **Web.Essentials.Domain** (Class Library)
+   - ドメイン層の実装
+   - エンティティ、値オブジェクト、ドメインサービス
+   - リポジトリインターフェース
+   - 他プロジェクトに依存しない純粋なドメインロジック
+
+2. **Web.Essentials.Infrastructure** (Class Library)  
+   - インフラストラクチャ層の実装
+   - リポジトリ実装、Entity Framework DbContext
+   - 外部サービス連携
+   - Web.Essentials.Domain に依存
+
+3. **Web.Essentials.App** (ASP.NET Core MVC)
+   - プレゼンテーション層とアプリケーション層
+   - Controllers、ViewModels、Views
+   - アプリケーションサービス、DTOs
+   - Web.Essentials.Domain、Web.Essentials.Infrastructure に依存
+
+#### 2.4.3 プロジェクト参照関係
+```
+Web.Essentials.App
+├── → Web.Essentials.Domain
+└── → Web.Essentials.Infrastructure
+    └── → Web.Essentials.Domain
+```
+
+#### 2.4.4 開発環境
+- **VSCode**（メイン開発環境）
+- **Visual Studio 2022**（互換性確保）
+
 ## 3. 機能要件
 
 ### 3.1 商品管理機能
