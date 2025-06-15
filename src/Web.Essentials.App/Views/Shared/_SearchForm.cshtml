@@ -1,0 +1,128 @@
+@{
+    var searchKeyword = ViewBag.SearchKeyword as string ?? "";
+    var categoryId = ViewBag.CategoryId as int?;
+    var showCategoryFilter = ViewBag.ShowCategoryFilter as bool? ?? false;
+    var categories = ViewBag.Categories as IEnumerable<Web.Essentials.App.ViewModels.CategoryViewModel> ?? new List<Web.Essentials.App.ViewModels.CategoryViewModel>();
+}
+
+<!-- 検索フォーム部分ビュー -->
+<!-- Ajax検索用の共通検索フォーム -->
+<div class="search-form-container">
+    <form id="searchForm" class="search-form" onsubmit="return false;">
+        <div class="search-form-row">
+            <!-- 検索キーワード入力 -->
+            <div class="search-field">
+                <label for="searchKeyword" class="search-label">検索キーワード</label>
+                <div class="search-input-group">
+                    <input type="text" 
+                           id="searchKeyword" 
+                           name="searchKeyword" 
+                           class="search-input" 
+                           value="@searchKeyword"
+                           placeholder="商品名、説明、JANコードで検索..."
+                           autocomplete="off" />
+                    <div id="searchSuggestions" class="search-suggestions" style="display: none;">
+                        <!-- オートコンプリート候補をここに表示 -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- カテゴリ絞り込み（商品検索時のみ） -->
+            @if (showCategoryFilter)
+            {
+                <div class="search-field">
+                    <label for="categoryFilter" class="search-label">カテゴリ</label>
+                    <select id="categoryFilter" name="categoryId" class="search-select">
+                        <option value="">すべてのカテゴリ</option>
+                        @foreach (var category in categories)
+                        {
+                            @if (categoryId == category.Id)
+                            {
+                                <option value="@category.Id" selected>
+                                    @category.Name
+                                </option>
+                            }
+                            else
+                            {
+                                <option value="@category.Id">
+                                    @category.Name
+                                </option>
+                            }
+                        }
+                    </select>
+                </div>
+            }
+            
+            <!-- 検索ボタン -->
+            <div class="search-actions">
+                <button type="button" class="btn btn-primary search-btn" onclick="performSearch()">
+                    <span class="btn-icon">🔍</span>
+                    検索
+                </button>
+                <button type="button" class="btn btn-secondary reset-btn" onclick="resetSearch()">
+                    <span class="btn-icon">↻</span>
+                    リセット
+                </button>
+            </div>
+        </div>
+        
+        <!-- 高度な検索オプション（展開可能） -->
+        <div class="advanced-search-toggle">
+            <button type="button" class="toggle-btn" onclick="toggleAdvancedSearch()">
+                <span id="advancedSearchToggleText">高度な検索オプションを表示</span>
+                <span id="advancedSearchToggleIcon" class="toggle-icon">▼</span>
+            </button>
+        </div>
+        
+        <div id="advancedSearchOptions" class="advanced-search-options" style="display: none;">
+            <div class="search-form-row">
+                <!-- 価格範囲検索（商品検索時のみ） -->
+                @if (showCategoryFilter)
+                {
+                    <div class="search-field">
+                        <label for="priceMin" class="search-label">価格範囲</label>
+                        <div class="price-range-group">
+                            <input type="number" 
+                                   id="priceMin" 
+                                   name="priceMin" 
+                                   class="search-input price-input" 
+                                   placeholder="最低価格"
+                                   min="0"
+                                   step="1" />
+                            <span class="price-separator">〜</span>
+                            <input type="number" 
+                                   id="priceMax" 
+                                   name="priceMax" 
+                                   class="search-input price-input" 
+                                   placeholder="最高価格"
+                                   min="0"
+                                   step="1" />
+                        </div>
+                    </div>
+                }
+                
+                <!-- 作成日期間検索 -->
+                <div class="search-field">
+                    <label for="createdDateFrom" class="search-label">作成日期間</label>
+                    <div class="date-range-group">
+                        <input type="date" 
+                               id="createdDateFrom" 
+                               name="createdDateFrom" 
+                               class="search-input date-input" />
+                        <span class="date-separator">〜</span>
+                        <input type="date" 
+                               id="createdDateTo" 
+                               name="createdDateTo" 
+                               class="search-input date-input" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    
+    <!-- 検索結果統計 -->
+    <div id="searchStats" class="search-stats" style="display: none;">
+        <span id="searchStatsText">検索結果: 0件</span>
+        <span id="searchTime" class="search-time"></span>
+    </div>
+</div>

@@ -1,0 +1,52 @@
+<!-- 確認モーダルダイアログ -->
+<!-- 削除確認などの汎用モーダル -->
+<div id="confirmationModal" class="modal-overlay" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <!-- モーダルヘッダー -->
+            <div class="modal-header">
+                <h3 class="modal-title" id="confirmationModalTitle">確認</h3>
+                <button type="button" class="modal-close" onclick="closeConfirmationModal()" aria-label="閉じる">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            
+            <!-- モーダルボディ -->
+            <div class="modal-body">
+                <div class="confirmation-icon">
+                    <span id="confirmationModalIcon">⚠</span>
+                </div>
+                <div class="confirmation-message">
+                    <p id="confirmationModalMessage">この操作を実行しますか？</p>
+                    <div id="confirmationModalDetails" class="confirmation-details" style="display: none;">
+                        <!-- 詳細情報がある場合に表示 -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- モーダルフッター -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeConfirmationModal()">
+                    キャンセル
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmationModalOkButton" onclick="executeConfirmationAction()">
+                    実行
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ローディングモーダル -->
+<div id="loadingModal" class="modal-overlay loading-modal" style="display: none;">
+    <div class="modal-dialog loading-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p id="loadingMessage">処理中...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

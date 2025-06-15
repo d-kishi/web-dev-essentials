@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=1920, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ECサイト商品管理システム</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/components.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/forms.css" asp-append-version="true" />
+</head>
+<body>
+    <!-- ヘッダー -->
+    <header class="main-header">
+        <div class="header-container">
+            <div class="header-logo">
+                <a href="@Url.Action("Index", "Home")" class="logo-link">
+                    <h1>ECサイト商品管理システム</h1>
+                </a>
+            </div>
+            <nav class="header-nav">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="@Url.Action("Index", "Home")" class="nav-link">ホーム</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle">商品管理</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="@Url.Action("Index", "Product")" class="dropdown-link">商品一覧</a></li>
+                            <li><a href="@Url.Action("Create", "Product")" class="dropdown-link">商品登録</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a href="#" class="nav-link dropdown-toggle">カテゴリ管理</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="@Url.Action("Index", "Category")" class="dropdown-link">カテゴリ一覧</a></li>
+                            <li><a href="@Url.Action("Create", "Category")" class="dropdown-link">カテゴリ登録</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- メッセージ表示エリア -->
+    @Html.Partial("_Messages")
+
+    <!-- メインコンテンツ -->
+    <main class="main-content">
+        <div class="content-container">
+            @RenderBody()
+        </div>
+    </main>
+
+    <!-- フッター -->
+    <footer class="main-footer">
+        <div class="footer-container">
+            <p>&copy; 2024 ECサイト商品管理システム - Web開発基礎学習用アプリケーション</p>
+        </div>
+    </footer>
+
+    <!-- 確認モーダル -->
+    @Html.Partial("_ConfirmationModal")
+
+    <!-- 共通JavaScript -->
+    <script src="~/js/common.js" asp-append-version="true"></script>
+    <script src="~/js/ajax.js" asp-append-version="true"></script>
+    <script src="~/js/components.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

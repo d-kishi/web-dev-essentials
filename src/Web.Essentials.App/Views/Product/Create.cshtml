@@ -1,0 +1,384 @@
+@model Web.Essentials.App.ViewModels.ProductCreateViewModel
+@{
+    ViewData["Title"] = "商品登録";
+}
+
+<!-- 商品登録画面 -->
+<div class="page-header">
+    <div class="page-title-section">
+        <h1 class="page-title">商品登録</h1>
+        <p class="page-description">新しい商品を登録します。必須項目を入力してください。</p>
+    </div>
+    <div class="page-actions">
+        <a href="@Url.Action("Index", "Product")" class="btn btn-secondary">
+            <span class="btn-icon">←</span>
+            商品一覧に戻る
+        </a>
+    </div>
+</div>
+
+<!-- パンくずナビ -->
+<nav class="breadcrumb-nav" aria-label="パンくずナビ">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="@Url.Action("Index", "Home")">ホーム</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="@Url.Action("Index", "Product")">商品一覧</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            商品登録
+        </li>
+    </ol>
+</nav>
+
+<!-- 商品登録フォーム -->
+<div class="form-container">
+    <form asp-action="Create" 
+          method="post" 
+          enctype="multipart/form-data" 
+          id="productCreateForm" 
+          class="product-form"
+          novalidate>
+        
+        @Html.AntiForgeryToken()
+        
+        <!-- 商品フォーム（部分ビュー） -->
+        @Html.Partial("_ProductForm", Model)
+        
+        <!-- フォーム操作ボタン -->
+        <div class="form-actions">
+            <div class="action-buttons">
+                <button type="submit" class="btn btn-primary btn-large" id="saveButton">
+                    <span class="btn-icon">💾</span>
+                    商品を登録
+                </button>
+                <button type="button" class="btn btn-secondary btn-large" onclick="showSaveAsDraftModal()">
+                    <span class="btn-icon">📋</span>
+                    下書き保存
+                </button>
+                <button type="button" class="btn btn-outline btn-large" onclick="previewProduct()">
+                    <span class="btn-icon">👁</span>
+                    プレビュー
+                </button>
+                <button type="button" class="btn btn-light btn-large" onclick="resetForm()">
+                    <span class="btn-icon">↻</span>
+                    リセット
+                </button>
+            </div>
+            
+            <!-- 保存オプション -->
+            <div class="save-options">
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="saveAndContinue" class="checkbox-input">
+                        <span class="checkbox-custom"></span>
+                        保存後、続けて新しい商品を登録する
+                    </label>
+                </div>
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="validateBeforeSave" class="checkbox-input" checked>
+                        <span class="checkbox-custom"></span>
+                        保存前にバリデーションを実行する
+                    </label>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- プレビューモーダル -->
+<div id="productPreviewModal" class="modal-overlay preview-modal" style="display: none;">
+    <div class="modal-dialog modal-large">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">商品プレビュー</h3>
+                <button type="button" class="modal-close" onclick="closePreviewModal()">
+                    <span>×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="productPreviewContent" class="preview-content">
+                    <!-- プレビュー内容がここに表示される -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closePreviewModal()">
+                    閉じる
+                </button>
+                <button type="button" class="btn btn-primary" onclick="submitFromPreview()">
+                    このまま登録する
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 下書き保存モーダル -->
+<div id="saveAsDraftModal" class="modal-overlay" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">下書き保存</h3>
+                <button type="button" class="modal-close" onclick="closeSaveAsDraftModal()">
+                    <span>×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>入力中の商品情報を下書きとして保存しますか？</p>
+                <div class="form-group">
+                    <label for="draftName" class="form-label">下書き名</label>
+                    <input type="text" 
+                           id="draftName" 
+                           class="form-input" 
+                           placeholder="下書きの名前を入力してください"
+                           maxlength="50" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeSaveAsDraftModal()">
+                    キャンセル
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveAsDraft()">
+                    下書き保存
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // フォーム初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeProductCreateForm();
+        });
+        
+        // 商品登録フォームの初期化
+        function initializeProductCreateForm() {
+            // フォームバリデーションの設定
+            setupFormValidation();
+            
+            // 画像アップロードの設定
+            setupImageUpload();
+            
+            // オートセーブの設定
+            setupAutoSave();
+            
+            // フォーム変更検知の設定
+            setupFormChangeDetection();
+        }
+        
+        // フォーム送信前のバリデーション
+        document.getElementById('productCreateForm').addEventListener('submit', function(event) {
+            const validateBeforeSave = document.getElementById('validateBeforeSave').checked;
+            
+            if (validateBeforeSave) {
+                event.preventDefault();
+                
+                if (validateProductForm()) {
+                    submitProductForm();
+                }
+            }
+        });
+        
+        // 商品フォームのバリデーション
+        function validateProductForm() {
+            let isValid = true;
+            const errors = [];
+            
+            // 商品名のバリデーション
+            const nameInput = document.querySelector('input[name="Name"]');
+            if (!nameInput.value.trim()) {
+                errors.push('商品名は必須です');
+                highlightFieldError(nameInput);
+                isValid = false;
+            }
+            
+            // 価格のバリデーション
+            const priceInput = document.querySelector('input[name="Price"]');
+            const price = parseInt(priceInput.value);
+            if (isNaN(price) || price < 0) {
+                errors.push('価格は0以上の数値で入力してください');
+                highlightFieldError(priceInput);
+                isValid = false;
+            }
+            
+            // カテゴリのバリデーション
+            const categorySelect = document.querySelector('select[name="CategoryId"]');
+            if (!categorySelect.value) {
+                errors.push('カテゴリは必須です');
+                highlightFieldError(categorySelect);
+                isValid = false;
+            }
+            
+            // JANコードのバリデーション（入力されている場合）
+            const janCodeInput = document.querySelector('input[name="JanCode"]');
+            if (janCodeInput.value && !/^[0-9]{8,13}$/.test(janCodeInput.value)) {
+                errors.push('JANコードは8〜13桁の数字で入力してください');
+                highlightFieldError(janCodeInput);
+                isValid = false;
+            }
+            
+            // エラー表示
+            if (!isValid) {
+                showValidationErrors(errors);
+            } else {
+                hideValidationErrors();
+            }
+            
+            return isValid;
+        }
+        
+        // 商品フォーム送信
+        async function submitProductForm() {
+            try {
+                showLoadingModal('商品を登録しています...');
+                
+                const formData = new FormData(document.getElementById('productCreateForm'));
+                
+                const response = await fetch('/Product/Create', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                hideLoadingModal();
+                
+                if (response.ok) {
+                    const saveAndContinue = document.getElementById('saveAndContinue').checked;
+                    
+                    showSuccess('商品が正常に登録されました');
+                    
+                    if (saveAndContinue) {
+                        // フォームをリセットして続行
+                        resetForm();
+                    } else {
+                        // 商品一覧に戻る
+                        setTimeout(() => {
+                            window.location.href = '/Product';
+                        }, 1500);
+                    }
+                } else {
+                    const errorText = await response.text();
+                    showError('商品の登録に失敗しました: ' + errorText);
+                }
+            } catch (error) {
+                hideLoadingModal();
+                console.error('商品登録エラー:', error);
+                showError('商品登録中にエラーが発生しました');
+            }
+        }
+        
+        // プレビュー表示
+        function previewProduct() {
+            const formData = collectFormData();
+            const previewContent = generatePreviewContent(formData);
+            
+            document.getElementById('productPreviewContent').innerHTML = previewContent;
+            document.getElementById('productPreviewModal').style.display = 'block';
+        }
+        
+        // プレビューから登録
+        function submitFromPreview() {
+            closePreviewModal();
+            
+            if (validateProductForm()) {
+                submitProductForm();
+            }
+        }
+        
+        // プレビューモーダルを閉じる
+        function closePreviewModal() {
+            document.getElementById('productPreviewModal').style.display = 'none';
+        }
+        
+        // 下書き保存モーダル表示
+        function showSaveAsDraftModal() {
+            const productName = document.querySelector('input[name="Name"]').value;
+            const draftName = productName ? `${productName}_下書き_${new Date().toLocaleDateString()}` : `商品下書き_${new Date().toLocaleDateString()}`;
+            
+            document.getElementById('draftName').value = draftName;
+            document.getElementById('saveAsDraftModal').style.display = 'block';
+        }
+        
+        // 下書き保存モーダルを閉じる
+        function closeSaveAsDraftModal() {
+            document.getElementById('saveAsDraftModal').style.display = 'none';
+        }
+        
+        // 下書き保存実行
+        function saveAsDraft() {
+            const draftName = document.getElementById('draftName').value;
+            const formData = collectFormData();
+            
+            // ローカルストレージに保存
+            const draftData = {
+                name: draftName,
+                data: formData,
+                savedAt: new Date().toISOString()
+            };
+            
+            localStorage.setItem(`product_draft_${Date.now()}`, JSON.stringify(draftData));
+            
+            showSuccess(`下書き「${draftName}」を保存しました`);
+            closeSaveAsDraftModal();
+        }
+        
+        // フォームリセット
+        function resetForm() {
+            if (confirm('入力内容をすべてリセットしますか？')) {
+                document.getElementById('productCreateForm').reset();
+                clearImagePreviews();
+                hideValidationErrors();
+            }
+        }
+        
+        // フォームデータ収集
+        function collectFormData() {
+            const form = document.getElementById('productCreateForm');
+            const formData = new FormData(form);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            return data;
+        }
+        
+        // プレビューコンテンツ生成
+        function generatePreviewContent(data) {
+            return `
+                <div class="product-preview">
+                    <div class="preview-header">
+                        <h2>${data.Name || '商品名未入力'}</h2>
+                        <div class="preview-price">¥${parseInt(data.Price || 0).toLocaleString()}</div>
+                    </div>
+                    <div class="preview-body">
+                        <div class="preview-section">
+                            <h3>商品説明</h3>
+                            <p>${data.Description || '説明なし'}</p>
+                        </div>
+                        <div class="preview-section">
+                            <h3>商品情報</h3>
+                            <dl class="preview-details">
+                                <dt>カテゴリ</dt>
+                                <dd>${getCategoryName(data.CategoryId) || '未選択'}</dd>
+                                <dt>JANコード</dt>
+                                <dd>${data.JanCode || 'なし'}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // カテゴリ名取得
+        function getCategoryName(categoryId) {
+            const categorySelect = document.querySelector('select[name="CategoryId"]');
+            const option = categorySelect.querySelector(`option[value="${categoryId}"]`);
+            return option ? option.textContent : null;
+        }
+    </script>
+}

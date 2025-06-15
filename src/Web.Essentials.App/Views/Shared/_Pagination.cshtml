@@ -1,0 +1,193 @@
+@model Web.Essentials.App.DTOs.PagingDto
+
+<!-- ページング部分ビュー -->
+<!-- Ajax検索結果のページング用 -->
+@if (Model != null && Model.TotalPages > 1)
+{
+    <div class="pagination-container">
+        <div class="pagination-info">
+            <span class="pagination-text">
+                @Model.TotalCount 件中 @((Model.CurrentPage - 1) * Model.PageSize + 1) - @Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalCount) 件を表示
+            </span>
+        </div>
+        
+        <nav class="pagination-nav" aria-label="ページネーション">
+            <ul class="pagination-list">
+                <!-- 最初のページへ -->
+                @if (Model.CurrentPage > 1)
+                {
+                    <li class="pagination-item">
+                        <button type="button" class="pagination-link" onclick="loadPage(1)" title="最初のページ">
+                            ≪
+                        </button>
+                    </li>
+                }
+                else
+                {
+                    <li class="pagination-item disabled">
+                        <span class="pagination-link">≪</span>
+                    </li>
+                }
+                
+                <!-- 前のページへ -->
+                @if (Model.HasPreviousPage)
+                {
+                    <li class="pagination-item">
+                        <button type="button" class="pagination-link" onclick="loadPage(@(Model.CurrentPage - 1))" title="前のページ">
+                            ‹
+                        </button>
+                    </li>
+                }
+                else
+                {
+                    <li class="pagination-item disabled">
+                        <span class="pagination-link">‹</span>
+                    </li>
+                }
+                
+                <!-- ページ番号 -->
+                @{
+                    var startPage = Math.Max(1, Model.CurrentPage - 2);
+                    var endPage = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
+                    
+                    // 表示ページ数を調整（最大5ページ表示）
+                    if (endPage - startPage < 4)
+                    {
+                        if (startPage == 1)
+                        {
+                            endPage = Math.Min(Model.TotalPages, startPage + 4);
+                        }
+                        else if (endPage == Model.TotalPages)
+                        {
+                            startPage = Math.Max(1, endPage - 4);
+                        }
+                    }
+                }
+                
+                <!-- 最初のページが表示範囲外の場合の省略表示 -->
+                @if (startPage > 1)
+                {
+                    <li class="pagination-item">
+                        <button type="button" class="pagination-link" onclick="loadPage(1)">1</button>
+                    </li>
+                    @if (startPage > 2)
+                    {
+                        <li class="pagination-item disabled">
+                            <span class="pagination-link">...</span>
+                        </li>
+                    }
+                }
+                
+                <!-- ページ番号表示 -->
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    @if (i == Model.CurrentPage)
+                    {
+                        <li class="pagination-item active">
+                            <span class="pagination-link current">@i</span>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="pagination-item">
+                            <button type="button" class="pagination-link" onclick="loadPage(@i)">@i</button>
+                        </li>
+                    }
+                }
+                
+                <!-- 最後のページが表示範囲外の場合の省略表示 -->
+                @if (endPage < Model.TotalPages)
+                {
+                    @if (endPage < Model.TotalPages - 1)
+                    {
+                        <li class="pagination-item disabled">
+                            <span class="pagination-link">...</span>
+                        </li>
+                    }
+                    <li class="pagination-item">
+                        <button type="button" class="pagination-link" onclick="loadPage(@Model.TotalPages)">@Model.TotalPages</button>
+                    </li>
+                }
+                
+                <!-- 次のページへ -->
+                @if (Model.HasNextPage)
+                {
+                    <li class="pagination-item">
+                        <button type="button" class="pagination-link" onclick="loadPage(@(Model.CurrentPage + 1))" title="次のページ">
+                            ›
+                        </button>
+                    </li>
+                }
+                else
+                {
+                    <li class="pagination-item disabled">
+                        <span class="pagination-link">›</span>
+                    </li>
+                }
+                
+                <!-- 最後のページへ -->
+                @if (Model.CurrentPage < Model.TotalPages)
+                {
+                    <li class="pagination-item">
+                        <button type="button" class="pagination-link" onclick="loadPage(@Model.TotalPages)" title="最後のページ">
+                            ≫
+                        </button>
+                    </li>
+                }
+                else
+                {
+                    <li class="pagination-item disabled">
+                        <span class="pagination-link">≫</span>
+                    </li>
+                }
+            </ul>
+        </nav>
+        
+        <!-- ページサイズ選択 -->
+        <div class="page-size-selector">
+            <label for="pageSizeSelect">表示件数:</label>
+            <select id="pageSizeSelect" class="page-size-select" onchange="changePageSize(this.value)">
+                @if (Model.PageSize == 10)
+                {
+                    <option value="10" selected>10件</option>
+                }
+                else
+                {
+                    <option value="10">10件</option>
+                }
+                @if (Model.PageSize == 20)
+                {
+                    <option value="20" selected>20件</option>
+                }
+                else
+                {
+                    <option value="20">20件</option>
+                }
+                @if (Model.PageSize == 50)
+                {
+                    <option value="50" selected>50件</option>
+                }
+                else
+                {
+                    <option value="50">50件</option>
+                }
+                @if (Model.PageSize == 100)
+                {
+                    <option value="100" selected>100件</option>
+                }
+                else
+                {
+                    <option value="100">100件</option>
+                }
+            </select>
+        </div>
+    </div>
+}
+else if (Model != null && Model.TotalCount == 0)
+{
+    <div class="pagination-container">
+        <div class="pagination-info">
+            <span class="pagination-text">検索結果が見つかりませんでした</span>
+        </div>
+    </div>
+}

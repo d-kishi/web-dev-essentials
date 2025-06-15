@@ -1,0 +1,188 @@
+@model Web.Essentials.App.ViewModels.ProductCreateViewModel
+
+<!-- 商品フォーム部分ビュー -->
+<!-- Create/Edit画面で共通利用する商品入力フォーム -->
+<div class="product-form-container">
+    <!-- 基本情報セクション -->
+    <div class="form-section">
+        <h3 class="section-title">基本情報</h3>
+        <div class="form-grid">
+            <!-- 商品名 -->
+            <div class="form-group">
+                <label asp-for="Name" class="form-label required">商品名</label>
+                <input asp-for="Name" 
+                       class="form-input" 
+                       placeholder="商品名を入力してください"
+                       maxlength="100"
+                       autocomplete="off" />
+                <span asp-validation-for="Name" class="validation-error"></span>
+                <div class="field-help">
+                    <small>最大100文字まで入力可能です</small>
+                </div>
+            </div>
+            
+            <!-- 価格 -->
+            <div class="form-group">
+                <label asp-for="Price" class="form-label required">価格</label>
+                <div class="price-input-group">
+                    <span class="price-currency">¥</span>
+                    <input asp-for="Price" 
+                           class="form-input price-input" 
+                           type="number"
+                           min="0"
+                           max="9999999"
+                           step="1"
+                           placeholder="0"
+                           oninput="formatPrice(this)" />
+                </div>
+                <span asp-validation-for="Price" class="validation-error"></span>
+                <div class="field-help">
+                    <small>税込価格を入力してください（円）</small>
+                </div>
+            </div>
+            
+            <!-- カテゴリ -->
+            <div class="form-group">
+                <label asp-for="CategoryId" class="form-label required">カテゴリ</label>
+                <select asp-for="CategoryId" class="form-select">
+                    <option value="">カテゴリを選択してください</option>
+                    @if (Model?.Categories != null)
+                    {
+                        @foreach (var category in Model.Categories)
+                        {
+                            <option value="@category.Id">@category.Name</option>
+                        }
+                    }
+                </select>
+                <span asp-validation-for="CategoryId" class="validation-error"></span>
+                <div class="field-help">
+                    <small>商品が属するカテゴリを選択してください</small>
+                </div>
+            </div>
+            
+            <!-- JANコード -->
+            <div class="form-group">
+                <label asp-for="JanCode" class="form-label">JANコード</label>
+                <input asp-for="JanCode" 
+                       class="form-input" 
+                       placeholder="JANコードを入力してください（任意）"
+                       maxlength="13"
+                       pattern="[0-9]{8,13}"
+                       autocomplete="off"
+                       oninput="validateJanCode(this)" />
+                <span asp-validation-for="JanCode" class="validation-error"></span>
+                <div id="janCodeValidation" class="field-validation" style="display: none;"></div>
+                <div class="field-help">
+                    <small>8〜13桁の数字で入力してください（任意）</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 商品説明セクション -->
+    <div class="form-section">
+        <h3 class="section-title">商品説明</h3>
+        <div class="form-group">
+            <label asp-for="Description" class="form-label">商品説明</label>
+            <textarea asp-for="Description" 
+                      class="form-textarea" 
+                      rows="5"
+                      placeholder="商品の詳細説明を入力してください（任意）"
+                      maxlength="1000"
+                      oninput="updateCharacterCount(this, 'descriptionCount')"></textarea>
+            <span asp-validation-for="Description" class="validation-error"></span>
+            <div class="character-count">
+                <span id="descriptionCount">0</span> / 1000文字
+            </div>
+            <div class="field-help">
+                <small>商品の特徴、使用方法、注意事項などを記載してください</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 商品画像セクション -->
+    <div class="form-section">
+        <h3 class="section-title">商品画像</h3>
+        <div class="form-group">
+            <label for="imageFiles" class="form-label">画像ファイル</label>
+            <div class="image-upload-area">
+                <input type="file" 
+                       id="imageFiles" 
+                       name="ImageFiles" 
+                       class="image-input" 
+                       accept="image/*" 
+                       multiple
+                       onchange="handleImageUpload(this)" />
+                <label for="imageFiles" class="image-upload-label">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">
+                        <strong>画像ファイルを選択</strong><br>
+                        <small>または、ここにドラッグ&ドロップ</small>
+                    </div>
+                </label>
+            </div>
+            <div class="field-help">
+                <small>JPEG、PNG、GIF形式の画像ファイルを複数選択可能です（最大5MB/ファイル）</small>
+            </div>
+            
+            <!-- 画像プレビューエリア -->
+            <div id="imagePreviewArea" class="image-preview-area" style="display: none;">
+                <h4 class="preview-title">選択された画像</h4>
+                <div id="imagePreviewList" class="image-preview-list">
+                    <!-- プレビュー画像がここに表示される -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- バリデーション結果表示エリア -->
+    <div id="formValidationSummary" class="form-validation-summary" style="display: none;">
+        <h4 class="validation-title">入力エラー</h4>
+        <ul id="validationErrorList" class="validation-error-list">
+            <!-- バリデーションエラーがここに表示される -->
+        </ul>
+    </div>
+</div>
+
+<!-- 既存画像表示用（編集時のみ） -->
+@{
+    var hasExistingImages = false;
+    object existingImages = null;
+    try 
+    {
+        var existingImagesProperty = Model.GetType().GetProperty("ExistingImages");
+        existingImages = existingImagesProperty?.GetValue(Model);
+        hasExistingImages = existingImages != null && ((IEnumerable<object>)existingImages).Any();
+    }
+    catch
+    {
+        hasExistingImages = false;
+    }
+}
+@if (hasExistingImages)
+{
+    <div class="form-section">
+        <h3 class="section-title">現在の商品画像</h3>
+        <div class="existing-images-area">
+            @foreach (var image in ((IEnumerable<Web.Essentials.App.ViewModels.ProductImageViewModel>)existingImages).OrderBy(img => img.DisplayOrder))
+            {
+                <div class="existing-image-item" data-image-id="@image.Id">
+                    <div class="image-container">
+                        <img src="@image.ImagePath" alt="商品画像" class="existing-image" />
+                        <div class="image-overlay">
+                            <button type="button" 
+                                    class="btn btn-danger btn-sm delete-image-btn" 
+                                    onclick="deleteExistingImage(@image.Id)"
+                                    title="この画像を削除">
+                                削除
+                            </button>
+                        </div>
+                    </div>
+                    <div class="image-info">
+                        <small>表示順: @image.DisplayOrder</small>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}

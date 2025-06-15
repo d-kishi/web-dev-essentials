@@ -1,0 +1,356 @@
+@model Web.Essentials.App.ViewModels.ProductIndexViewModel
+@{
+    ViewData["Title"] = "商品一覧";
+    // 検索フォーム用のViewBagデータ設定
+    ViewBag.SearchKeyword = Model?.SearchKeyword ?? "";
+    ViewBag.CategoryId = Model?.CategoryId;
+    ViewBag.ShowCategoryFilter = true;
+    ViewBag.Categories = Model?.Categories ?? new List<Web.Essentials.App.ViewModels.CategorySelectItem>();
+}
+
+<!-- 商品一覧画面 -->
+<div class="page-header">
+    <div class="page-title-section">
+        <h1 class="page-title">商品一覧</h1>
+        <p class="page-description">登録されている商品の一覧を表示します。検索やフィルタリングが可能です。</p>
+    </div>
+    <div class="page-actions">
+        <a href="@Url.Action("Create", "Product")" class="btn btn-primary">
+            <span class="btn-icon">➕</span>
+            新規商品登録
+        </a>
+    </div>
+</div>
+
+<!-- 検索フォーム -->
+@Html.Partial("_SearchForm")
+
+<!-- 商品一覧コンテナ -->
+<div class="product-list-container">
+    <!-- ローディング表示 -->
+    <div id="productListLoading" class="loading-container" style="display: none;">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>商品を読み込み中...</p>
+        </div>
+    </div>
+    
+    <!-- 商品一覧テーブル -->
+    <div id="productListContent" class="list-content">
+        <div class="list-header">
+            <div class="list-controls">
+                <div class="view-options">
+                    <button type="button" 
+                            class="view-toggle active" 
+                            data-view="table" 
+                            onclick="switchView('table')"
+                            title="テーブル表示">
+                        📋
+                    </button>
+                    <button type="button" 
+                            class="view-toggle" 
+                            data-view="grid" 
+                            onclick="switchView('grid')"
+                            title="グリッド表示">
+                        🔳
+                    </button>
+                </div>
+                <div class="sort-options">
+                    <label for="sortBy">並び順:</label>
+                    <select id="sortBy" class="sort-select" onchange="changeSortOrder(this.value)">
+                        <option value="updated_desc">更新日時（新しい順）</option>
+                        <option value="updated_asc">更新日時（古い順）</option>
+                        <option value="name_asc">商品名（昇順）</option>
+                        <option value="name_desc">商品名（降順）</option>
+                        <option value="price_asc">価格（安い順）</option>
+                        <option value="price_desc">価格（高い順）</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- テーブル表示 -->
+        <div id="tableView" class="table-container">
+            <table class="product-table">
+                <thead>
+                    <tr>
+                        <th class="col-thumbnail">画像</th>
+                        <th class="col-name sortable" onclick="sortBy('name')">
+                            商品名
+                            <span class="sort-indicator" data-column="name"></span>
+                        </th>
+                        <th class="col-category sortable" onclick="sortBy('category')">
+                            カテゴリ
+                            <span class="sort-indicator" data-column="category"></span>
+                        </th>
+                        <th class="col-price sortable" onclick="sortBy('price')">
+                            価格
+                            <span class="sort-indicator" data-column="price"></span>
+                        </th>
+                        <th class="col-jan">JANコード</th>
+                        <th class="col-updated sortable" onclick="sortBy('updated')">
+                            更新日時
+                            <span class="sort-indicator" data-column="updated"></span>
+                        </th>
+                        <th class="col-actions">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="productTableBody">
+                    @if (Model?.Products?.Any() == true)
+                    {
+                        @foreach (var product in Model.Products)
+                        {
+                            <tr class="product-row" data-product-id="@product.Id">
+                                <td class="col-thumbnail">
+                                    <div class="thumbnail-container">
+                                        <img src="/images/no-image.png" alt="商品画像" class="product-thumbnail" />
+                                    </div>
+                                </td>
+                                <td class="col-name">
+                                    <div class="product-name">
+                                        <a href="@Url.Action("Details", "Product", new { id = product.Id })" class="product-link">
+                                            @product.Name
+                                        </a>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(product.Description))
+                                    {
+                                        <div class="product-description">
+                                            @(product.Description.Length > 50 ? product.Description.Substring(0, 50) + "..." : product.Description)
+                                        </div>
+                                    }
+                                </td>
+                                <td class="col-category">
+                                    <span class="category-badge">@product.CategoryName</span>
+                                </td>
+                                <td class="col-price">
+                                    <span class="price-value">¥@product.Price.ToString("N0")</span>
+                                </td>
+                                <td class="col-jan">
+                                    @if (!string.IsNullOrEmpty(product.JanCode))
+                                    {
+                                        <code class="jan-code">@product.JanCode</code>
+                                    }
+                                    else
+                                    {
+                                        <span class="no-data">-</span>
+                                    }
+                                </td>
+                                <td class="col-updated">
+                                    <time class="updated-time" datetime="@product.UpdatedAt.ToString("yyyy-MM-dd")">
+                                        @product.UpdatedAt.ToString("yyyy/MM/dd")
+                                    </time>
+                                </td>
+                                <td class="col-actions">
+                                    <div class="action-buttons">
+                                        <a href="@Url.Action("Details", "Product", new { id = product.Id })" 
+                                           class="btn btn-info btn-sm" 
+                                           title="詳細表示">
+                                            詳細
+                                        </a>
+                                        <a href="@Url.Action("Edit", "Product", new { id = product.Id })" 
+                                           class="btn btn-warning btn-sm" 
+                                           title="編集">
+                                            編集
+                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-danger btn-sm" 
+                                                onclick="confirmDeleteProduct(@product.Id, '@product.Name')"
+                                                title="削除">
+                                            削除
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr class="no-data-row">
+                            <td colspan="7" class="no-data-cell">
+                                <div class="no-data-message">
+                                    <div class="no-data-icon">📦</div>
+                                    <h3>商品が見つかりません</h3>
+                                    <p>検索条件を変更するか、新しい商品を登録してください。</p>
+                                    <a href="@Url.Action("Create", "Product")" class="btn btn-primary">
+                                        商品を登録する
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- グリッド表示 -->
+        <div id="gridView" class="grid-container" style="display: none;">
+            <div id="productGrid" class="product-grid">
+                <!-- Ajax でデータを読み込む -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- ページング -->
+    <div id="paginationContainer" class="pagination-wrapper">
+        @if (Model?.Paging != null)
+        {
+            @Html.Partial("_Pagination", Model.Paging)
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // 現在の検索条件を保持
+        let currentSearchParams = {
+            searchKeyword: '@Model?.SearchKeyword',
+            categoryId: @(Model?.CategoryId?.ToString() ?? "null"),
+            page: @(Model?.CurrentPage ?? 1),
+            pageSize: @(Model?.PageSize ?? 10),
+            sortBy: 'updated_desc'
+        };
+        
+        // ページ読み込み時の初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeProductList();
+        });
+        
+        // 商品一覧の初期化
+        function initializeProductList() {
+            // 検索フォームの初期化
+            setupSearchForm();
+            
+            // ソート機能の初期化
+            setupSortFeatures();
+            
+            // ビュー切り替えの初期化
+            setupViewToggle();
+            
+            // 商品削除の初期化
+            setupProductDeletion();
+        }
+        
+        // 検索実行
+        function performSearch() {
+            const searchKeyword = document.getElementById('searchKeyword').value;
+            const categoryId = document.getElementById('categoryFilter').value;
+            
+            currentSearchParams.searchKeyword = searchKeyword;
+            currentSearchParams.categoryId = categoryId || null;
+            currentSearchParams.page = 1; // 検索時は1ページ目に戻る
+            
+            loadProductList();
+        }
+        
+        // 検索リセット
+        function resetSearch() {
+            document.getElementById('searchForm').reset();
+            currentSearchParams = {
+                searchKeyword: '',
+                categoryId: null,
+                page: 1,
+                pageSize: currentSearchParams.pageSize,
+                sortBy: 'updated_desc'
+            };
+            loadProductList();
+        }
+        
+        // ページ読み込み
+        function loadPage(page) {
+            currentSearchParams.page = page;
+            loadProductList();
+        }
+        
+        // ページサイズ変更
+        function changePageSize(pageSize) {
+            currentSearchParams.pageSize = parseInt(pageSize);
+            currentSearchParams.page = 1; // 1ページ目に戻る
+            loadProductList();
+        }
+        
+        // ソート順変更
+        function changeSortOrder(sortBy) {
+            currentSearchParams.sortBy = sortBy;
+            currentSearchParams.page = 1; // 1ページ目に戻る
+            loadProductList();
+        }
+        
+        // 商品一覧をAjaxで読み込み
+        async function loadProductList() {
+            try {
+                showLoading();
+                
+                const params = new URLSearchParams();
+                if (currentSearchParams.searchKeyword) {
+                    params.append('searchKeyword', currentSearchParams.searchKeyword);
+                }
+                if (currentSearchParams.categoryId) {
+                    params.append('categoryId', currentSearchParams.categoryId);
+                }
+                params.append('page', currentSearchParams.page);
+                params.append('pageSize', currentSearchParams.pageSize);
+                params.append('sortBy', currentSearchParams.sortBy);
+                
+                const response = await fetch(`/api/product?${params.toString()}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateProductList(result.data);
+                } else {
+                    showError('商品一覧の取得に失敗しました: ' + result.message);
+                }
+            } catch (error) {
+                console.error('商品一覧読み込みエラー:', error);
+                showError('商品一覧の読み込み中にエラーが発生しました');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // 商品削除確認
+        function confirmDeleteProduct(productId, productName) {
+            showConfirmationModal(
+                '商品削除の確認',
+                `商品「${productName}」を削除しますか？`,
+                '削除すると元に戻せません。',
+                '削除',
+                () => deleteProduct(productId)
+            );
+        }
+        
+        // 商品削除実行
+        async function deleteProduct(productId) {
+            try {
+                const response = await fetch(`/Product/Delete/${productId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': getAntiForgeryToken()
+                    }
+                });
+                
+                if (response.ok) {
+                    showSuccess('商品が正常に削除されました');
+                    loadProductList(); // 一覧を再読み込み
+                } else {
+                    showError('商品の削除に失敗しました');
+                }
+            } catch (error) {
+                console.error('商品削除エラー:', error);
+                showError('商品削除中にエラーが発生しました');
+            }
+        }
+        
+        // ローディング表示
+        function showLoading() {
+            document.getElementById('productListLoading').style.display = 'block';
+            document.getElementById('productListContent').style.opacity = '0.5';
+        }
+        
+        // ローディング非表示
+        function hideLoading() {
+            document.getElementById('productListLoading').style.display = 'none';
+            document.getElementById('productListContent').style.opacity = '1';
+        }
+    </script>
+}

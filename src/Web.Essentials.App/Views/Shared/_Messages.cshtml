@@ -1,0 +1,75 @@
+<!-- メッセージ表示エリア -->
+<!-- TempDataからメッセージを取得して表示 -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="message-container success-message" id="successMessage">
+        <div class="message-content">
+            <span class="message-icon">✓</span>
+            <span class="message-text">@TempData["SuccessMessage"]</span>
+            <button type="button" class="message-close" onclick="closeMessage('successMessage')" aria-label="閉じる">
+                <span aria-hidden="true">×</span>
+            </button>
+        </div>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="message-container error-message" id="errorMessage">
+        <div class="message-content">
+            <span class="message-icon">⚠</span>
+            <span class="message-text">@TempData["ErrorMessage"]</span>
+            <button type="button" class="message-close" onclick="closeMessage('errorMessage')" aria-label="閉じる">
+                <span aria-hidden="true">×</span>
+            </button>
+        </div>
+    </div>
+}
+
+@if (TempData["InfoMessage"] != null)
+{
+    <div class="message-container info-message" id="infoMessage">
+        <div class="message-content">
+            <span class="message-icon">ℹ</span>
+            <span class="message-text">@TempData["InfoMessage"]</span>
+            <button type="button" class="message-close" onclick="closeMessage('infoMessage')" aria-label="閉じる">
+                <span aria-hidden="true">×</span>
+            </button>
+        </div>
+    </div>
+}
+
+@if (TempData["WarningMessage"] != null)
+{
+    <div class="message-container warning-message" id="warningMessage">
+        <div class="message-content">
+            <span class="message-icon">⚠</span>
+            <span class="message-text">@TempData["WarningMessage"]</span>
+            <button type="button" class="message-close" onclick="closeMessage('warningMessage')" aria-label="閉じる">
+                <span aria-hidden="true">×</span>
+            </button>
+        </div>
+    </div>
+}
+
+<!-- バリデーションサマリー表示エリア -->
+@if (ViewData.ModelState != null && !ViewData.ModelState.IsValid)
+{
+    <div class="message-container validation-error-message" id="validationErrorMessage">
+        <div class="message-content">
+            <span class="message-icon">⚠</span>
+            <div class="message-text">
+                <strong>入力エラーがあります:</strong>
+                <ul class="validation-list">
+                    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        <li>@error.ErrorMessage</li>
+                    }
+                </ul>
+            </div>
+            <button type="button" class="message-close" onclick="closeMessage('validationErrorMessage')" aria-label="閉じる">
+                <span aria-hidden="true">×</span>
+            </button>
+        </div>
+    </div>
+}

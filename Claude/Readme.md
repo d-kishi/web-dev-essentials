@@ -48,9 +48,39 @@ $ npm -v
 4. テーマ選択(お好きなものでOK)
 5. ログイン方法選択、事前に登録しておいたClaudeアカウント紐づけ
 
+## SDK
+
+VSCodeのPowershellで`dotnet`コマンドを実行するには.NET CLIをインストールする必要がある。  
+
+- [.NET 8.0 SDK](https://dotnet.microsoft.com/ja-jp/download/dotnet/8.0)
+  - これはWSL環境にも入れる必要がある  
+
+### WSL環境インストール
+
+WSLターミナルで以下実行
+
+Microsoftのパッケージリポジトリを追加
+``` bash
+wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+sudo dpkg -i packages-microsoft-prod.deb
+rm packages-microsoft-prod.deb
+```
+
+必要なパッケージをインストール
+``` bash
+sudo apt-get update
+sudo apt-get install -y apt-transport-https
+```
+
+.NET 8 SDKをインストール
+``` bash
+sudo apt-get update
+sudo apt-get install -y dotnet-sdk-8.0
+```
+
 ## VSCode拡張機能
 
-.NET 9 C# MVC開発に導入した拡張機能：
+.NET 8 C# MVC開発に導入した拡張機能：
 
 ### 必須
 - **C# Dev Kit** (`ms-dotnettools.csdevkit`) - 公式のC#開発環境
@@ -72,3 +102,29 @@ code --install-extension eamodio.gitlens
 ```
 
 **注意**: Bracket Pair Colorizerは廃止されており、現在はVSCode組み込み機能で代替されています。
+
+## 所感
+
+- Claude Codeはゲームチェンジャ、シンギュラリティ。
+- Claude Proだとトークン制限がきついかも
+  - 今回レベルの内容でも2日間で2回上限に到達した。一度上限到達すると数時間待たされるのはきつい。
+    - 変なところで中断されると、前回の内容をリテイクさせるのが難しい。  
+    これがClaude側に今後の改善を期待したいところ
+  - 合理的に情報を教えること、レールを引く事が人間に求められるスキルになる
+    - 安い価格帯で最高の効率を求めるならそうなる
+- AIが「知らない」ことを整備して、伝えてやることが今後最も開発の重要なポイントになるのは確実。
+  - 知らないことは何か？
+    - ドメイン層の業務知識
+    - AIの管轄外で作成されたもの（パッと思い浮かぶところだと旧時代のDBとか）
+- 向き合い方は以下のように実施した
+  - AIエージェントをエンジニアと見立てて、この人に何を作ってもらうか依頼する
+    - リーダー経験ある人材だと、使いこなすのには苦労しない印象  
+    自分のチームに、エンジニアリング分野では自分よりも仕事が早くて技術的知識もあり、意見・質問・FBのアウトプットもうまいクッソ優秀なメンバが増えたと思えばいい
+      - そんな人材が$20～$200/月で働いてくれるって?雇うに決まってんだろ！
+    - 開発の一連の仕事（要件定義～リリース～運用）まで一通りのチーム開発をこなしてきた経験があれば、どういう情報をエンジニアに与えたらいいかは普通にわかる
+  - この人が何を知れば作れるのかをヒアリングし、予測して情報を共有する
+  - 要件定義にしろコードにしろ、成果物をレビューしてこの人が何を考えているか読み解く
+    - こっちの想定と違っていたならば、訂正を要求する
+- 昔からそうだが、製造に入る前段階までの事前準備が重要  
+それに加えて、AIコーディングのために伝達するスキルが必要になった
+- 人間に伝えるアウトプットとしては図化するのが非常に有効だったけど、AIコーディングにおいて図化がどの程度有効なのかは検証の必要がある
