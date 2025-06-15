@@ -47,10 +47,12 @@
 
 ### 1.2 アーキテクチャ分離
 - **APIコントローラー** (`Microsoft.AspNetCore.Mvc.ControllerBase`継承)
+  - **配置場所**: `Web.Essentials.App.Controllers.Api`
   - `/api`ベースURL
   - JSON レスポンス
   - 商品一覧、カテゴリ一覧のみ
 - **MVCコントローラー** (`Microsoft.AspNetCore.Mvc.Controller`継承)
+  - **配置場所**: `Web.Essentials.App.Controllers.Mvc`
   - 通常のMVCパターン
   - HTMLビュー レスポンス
   - CRUD操作全般

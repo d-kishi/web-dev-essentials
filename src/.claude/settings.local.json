@@ -6,7 +6,8 @@
       "Bash(ls:*)",
       "Bash(/mnt/c/Program\\ Files/dotnet/dotnet.exe --version)",
       "Bash(dotnet --version)",
-      "Bash(dotnet --info)"
+      "Bash(dotnet --info)",
+      "Bash(find:*)"
     ],
     "deny": []
   }

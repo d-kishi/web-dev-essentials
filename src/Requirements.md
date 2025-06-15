@@ -269,11 +269,15 @@ Web.Essentials.App
 #### 8.1.1 Presentation Layer (プレゼンテーション層)
 - **Controllers** - MVCコントローラー (`Web.Essentials.App.Controllers`)
 - **ViewModels** - 画面表示用モデル (`Web.Essentials.App.ViewModels`)
+  - **特性**: MVC画面専用、バリデーション属性あり、ファイルアップロード対応、画面制御用プロパティ含む
+  - **用途**: Razorビューでの画面表示、フォーム操作、サーバーサイドバリデーション
 - **Views** - Razorビュー
 
 #### 8.1.2 Application Layer (アプリケーション層)
 - **Services** - アプリケーションサービス (`Web.Essentials.App.Services`)
 - **DTOs** - データ転送オブジェクト (`Web.Essentials.App.DTOs`)
+  - **特性**: API応答専用、軽量、バリデーション属性なし
+  - **用途**: Ajax通信のJSON応答、API間データ転送
 - **Interfaces** - サービスインターフェース (`Web.Essentials.App.Interfaces`)
 
 #### 8.1.3 Domain Layer (ドメイン層)

@@ -464,7 +464,11 @@ new ProductImage[]
 ## 6. Entity Framework Core 設定
 
 ### 6.1 DbContext 設定例
+**配置場所**: `Web.Essentials.Infrastructure.Data.ApplicationDbContext`
+
 ```csharp
+namespace Web.Essentials.Infrastructure.Data;
+
 public class ApplicationDbContext : DbContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
