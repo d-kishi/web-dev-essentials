@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet new:*)",
+      "Bash(echo $PATH)",
+      "Bash(ls:*)",
+      "Bash(/mnt/c/Program\\ Files/dotnet/dotnet.exe --version)"
+    ],
+    "deny": []
+  }
+}
