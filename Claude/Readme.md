@@ -47,3 +47,28 @@ $ npm -v
 3. `claude`コマンド実行
 4. テーマ選択(お好きなものでOK)
 5. ログイン方法選択、事前に登録しておいたClaudeアカウント紐づけ
+
+## VSCode拡張機能
+
+.NET 9 C# MVC開発に導入した拡張機能：
+
+### 必須
+- **C# Dev Kit** (`ms-dotnettools.csdevkit`) - 公式のC#開発環境
+  - IntelliSense、デバッグ、テスト実行機能を提供
+- **C#** (`ms-dotnettools.csharp`) - 基本的なC#言語サポート
+
+### 強く推奨
+- **NuGet Package Manager** (`jmrog.vscode-nuget-package-manager`) - NuGetパッケージの管理
+- **Auto Rename Tag** (`formulahendry.auto-rename-tag`) - HTMLタグの自動リネーム
+- **GitLens** (`eamodio.gitlens`) - Git履歴の可視化とブランチ管理
+
+### インストール方法
+```bash
+code --install-extension ms-dotnettools.csdevkit
+code --install-extension ms-dotnettools.csharp
+code --install-extension jmrog.vscode-nuget-package-manager
+code --install-extension formulahendry.auto-rename-tag
+code --install-extension eamodio.gitlens
+```
+
+**注意**: Bracket Pair Colorizerは廃止されており、現在はVSCode組み込み機能で代替されています。
