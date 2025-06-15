@@ -267,14 +267,14 @@ Web.Essentials.App
 アプリケーションは以下のレイヤーに分割して実装：
 
 #### 8.1.1 Presentation Layer (プレゼンテーション層)
-- **Controllers** - MVCコントローラー (`Web.Essentials.Presentation.Controllers`)
-- **ViewModels** - 画面表示用モデル (`Web.Essentials.Presentation.ViewModels`)
+- **Controllers** - MVCコントローラー (`Web.Essentials.App.Controllers`)
+- **ViewModels** - 画面表示用モデル (`Web.Essentials.App.ViewModels`)
 - **Views** - Razorビュー
 
 #### 8.1.2 Application Layer (アプリケーション層)
-- **Services** - アプリケーションサービス (`Web.Essentials.Application.Services`)
-- **DTOs** - データ転送オブジェクト (`Web.Essentials.Application.DTOs`)
-- **Interfaces** - サービスインターフェース (`Web.Essentials.Application.Interfaces`)
+- **Services** - アプリケーションサービス (`Web.Essentials.App.Services`)
+- **DTOs** - データ転送オブジェクト (`Web.Essentials.App.DTOs`)
+- **Interfaces** - サービスインターフェース (`Web.Essentials.App.Interfaces`)
 
 #### 8.1.3 Domain Layer (ドメイン層)
 - **Entities** - ドメインエンティティ (`Web.Essentials.Domain.Entities`)

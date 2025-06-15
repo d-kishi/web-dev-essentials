@@ -4,7 +4,9 @@
       "Bash(dotnet new:*)",
       "Bash(echo $PATH)",
       "Bash(ls:*)",
-      "Bash(/mnt/c/Program\\ Files/dotnet/dotnet.exe --version)"
+      "Bash(/mnt/c/Program\\ Files/dotnet/dotnet.exe --version)",
+      "Bash(dotnet --version)",
+      "Bash(dotnet --info)"
     ],
     "deny": []
   }
