@@ -1,0 +1,38 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Web.Essentials.App - Debug",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/Web.Essentials.App/bin/Debug/net8.0/Web.Essentials.App.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/Web.Essentials.App",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+        "uriFormat": "%s"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "sourceFileMap": {
+        "/Views": "${workspaceFolder}/Web.Essentials.App/Views"
+      },
+      "externalConsole": false,
+      "launchBrowser": {
+        "enabled": true,
+        "windows": {
+          "command": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+          "args": "--remote-debugging-port=9222 --user-data-dir=\"${workspaceFolder}\\.vscode\\chrome-debug\" --new-window --no-first-run --disable-default-apps --disable-extensions https://localhost:7136"
+        },
+        "linux": {
+          "command": "google-chrome",
+          "args": "--new-window"
+        }
+      }
+    }
+  ]
+}
