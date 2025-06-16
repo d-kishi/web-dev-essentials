@@ -1,0 +1,713 @@
+@model IEnumerable<Web.Essentials.App.ViewModels.CategorySelectItem>
+<!-- 階層カテゴリ選択部分ビュー -->
+<!-- 階層構造対応のカテゴリ選択UI -->
+<!-- 商品Create/Edit画面で共通利用 -->
+
+@{
+    var categories = Model ?? new List<Web.Essentials.App.ViewModels.CategorySelectItem>();
+    var selectedCategoryId = ViewBag.SelectedCategoryId as int?;
+    var fieldName = ViewBag.FieldName as string ?? "CategoryId";
+    var isRequired = ViewBag.IsRequired as bool? ?? true;
+    var allowMultiple = ViewBag.AllowMultiple as bool? ?? false;
+    var showSearch = ViewBag.ShowSearch as bool? ?? true;
+}
+
+<div class="category-select-container">
+    <div class="category-select-header">
+        <label for="@fieldName" class="form-label @(isRequired ? "required" : "")">
+            @(ViewBag.Label ?? "カテゴリ")
+        </label>
+        @if (showSearch)
+        {
+            <div class="category-search">
+                <input type="text" 
+                       id="categorySearchInput" 
+                       class="category-search-input" 
+                       placeholder="カテゴリを検索..."
+                       oninput="filterCategories(this.value)" />
+                <span class="search-icon">🔍</span>
+            </div>
+        }
+    </div>
+    
+    <!-- カテゴリ選択方式切り替え -->
+    <div class="category-select-modes">
+        <div class="mode-tabs">
+            <button type="button" 
+                    class="mode-tab active" 
+                    data-mode="select" 
+                    onclick="switchCategoryMode('select')">
+                選択リスト
+            </button>
+            <button type="button" 
+                    class="mode-tab" 
+                    data-mode="tree" 
+                    onclick="switchCategoryMode('tree')">
+                階層ツリー
+            </button>
+            @if (allowMultiple)
+            {
+                <button type="button" 
+                        class="mode-tab" 
+                        data-mode="checkbox" 
+                        onclick="switchCategoryMode('checkbox')">
+                    複数選択
+                </button>
+            }
+        </div>
+    </div>
+    
+    <!-- 選択リストモード -->
+    <div id="selectMode" class="category-mode select-mode active">
+        <select name="@fieldName" 
+                id="@fieldName" 
+                class="form-select category-select"
+                @(isRequired ? "required" : "")
+                @(allowMultiple ? "multiple" : "")
+                onchange="updateCategorySelection()">
+            @if (!allowMultiple)
+            {
+                <option value="">カテゴリを選択してください</option>
+            }
+            @foreach (var category in categories.OrderBy(c => c.Level).ThenBy(c => c.Name))
+            {
+                <option value="@category.Id" 
+                        data-level="@category.Level"
+                        data-full-path="@category.FullPath"
+                        @(selectedCategoryId == category.Id ? "selected" : "")>
+                    @(new string('　', category.Level * 2))@category.Name
+                </option>
+            }
+        </select>
+        <div class="selected-category-info" id="selectedCategoryInfo" style="display: none;">
+            <div class="info-label">選択中のカテゴリ:</div>
+            <div class="info-path" id="selectedCategoryPath"></div>
+        </div>
+    </div>
+    
+    <!-- 階層ツリーモード -->
+    <div id="treeMode" class="category-mode tree-mode">
+        <div class="category-tree-container">
+            <div id="categoryTree" class="category-tree">
+                @if (categories.Any())
+                {
+                    @Html.Partial("_CategoryHierarchy", categories.Where(c => c.Level == 0))
+                }
+                else
+                {
+                    <div class="no-categories">
+                        <p>カテゴリが登録されていません</p>
+                    </div>
+                }
+            </div>
+        </div>
+        <!-- 隠しフィールド（ツリーモード用） -->
+        <input type="hidden" name="@fieldName" id="@(fieldName)_Tree" value="@selectedCategoryId" />
+    </div>
+    
+    <!-- 複数選択モード -->
+    @if (allowMultiple)
+    {
+        <div id="checkboxMode" class="category-mode checkbox-mode">
+            <div class="category-checkbox-container">
+                @foreach (var category in categories.OrderBy(c => c.Level).ThenBy(c => c.Name))
+                {
+                    <div class="category-checkbox-item level-@category.Level" data-category-id="@category.Id">
+                        <label class="checkbox-label">
+                            <input type="checkbox" 
+                                   name="@fieldName" 
+                                   value="@category.Id" 
+                                   class="checkbox-input category-checkbox"
+                                   data-level="@category.Level"
+                                   data-full-path="@category.FullPath"
+                                   onchange="updateMultipleSelection()" />
+                            <span class="checkbox-custom"></span>
+                            <span class="category-name">
+                                @(new string('　', category.Level * 2))@category.Name
+                            </span>
+                            <span class="category-path">(@category.FullPath)</span>
+                        </label>
+                    </div>
+                }
+            </div>
+            <div class="selected-categories-summary" id="selectedCategoriesSummary" style="display: none;">
+                <div class="summary-label">選択中のカテゴリ:</div>
+                <div class="summary-list" id="selectedCategoriesList"></div>
+            </div>
+        </div>
+    }
+    
+    <!-- カテゴリ階層情報表示 -->
+    <div class="category-hierarchy-info" id="categoryHierarchyInfo" style="display: none;">
+        <div class="hierarchy-label">階層情報:</div>
+        <div class="hierarchy-details">
+            <div class="hierarchy-level">
+                レベル: <span id="categoryLevel">-</span>
+            </div>
+            <div class="hierarchy-path">
+                パス: <span id="categoryFullPath">-</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- バリデーションエラー表示 -->
+    <div id="categoryValidationError" class="validation-error" style="display: none;"></div>
+    
+    <!-- ヘルプテキスト -->
+    <div class="category-help">
+        <small>
+            @if (allowMultiple)
+            {
+                <span>複数のカテゴリを選択できます。階層の深いカテゴリを選択することを推奨します。</span>
+            }
+            else
+            {
+                <span>商品に最も適したカテゴリを選択してください。階層の深いカテゴリを選択することを推奨します。</span>
+            }
+        </small>
+    </div>
+</div>
+
+<script>
+    // カテゴリ選択関連の変数
+    let categoryData = @Html.Raw(Json.Serialize(categories));
+    let currentMode = 'select';
+    let selectedCategories = [];
+    
+    // カテゴリ選択の初期化
+    function initializeCategorySelect() {
+        setupCategoryModes();
+        setupTreeInteraction();
+        updateCategorySelection();
+        
+        // 初期選択値の設定
+        @if (selectedCategoryId.HasValue)
+        {
+            <text>
+            setInitialSelection(@selectedCategoryId.Value);
+            </text>
+        }
+    }
+    
+    // モード切り替え
+    function switchCategoryMode(mode) {
+        // タブの状態更新
+        document.querySelectorAll('.mode-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+        
+        // モードコンテンツの表示切り替え
+        document.querySelectorAll('.category-mode').forEach(modeDiv => {
+            modeDiv.classList.remove('active');
+        });
+        document.getElementById(mode + 'Mode').classList.add('active');
+        
+        currentMode = mode;
+        updateCategorySelection();
+    }
+    
+    // カテゴリフィルタリング
+    function filterCategories(searchTerm) {
+        const term = searchTerm.toLowerCase();
+        
+        if (currentMode === 'select') {
+            // 選択リストのフィルタリング
+            const select = document.getElementById('@fieldName');
+            const options = select.querySelectorAll('option');
+            
+            options.forEach(option => {
+                if (option.value === '') return; // 空のオプションはスキップ
+                
+                const categoryName = option.textContent.toLowerCase();
+                const fullPath = option.dataset.fullPath?.toLowerCase() || '';
+                
+                if (categoryName.includes(term) || fullPath.includes(term)) {
+                    option.style.display = '';
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+        } else if (currentMode === 'checkbox') {
+            // チェックボックスリストのフィルタリング
+            const checkboxItems = document.querySelectorAll('.category-checkbox-item');
+            
+            checkboxItems.forEach(item => {
+                const categoryName = item.querySelector('.category-name').textContent.toLowerCase();
+                const fullPath = item.querySelector('.category-path').textContent.toLowerCase();
+                
+                if (categoryName.includes(term) || fullPath.includes(term)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        } else if (currentMode === 'tree') {
+            // ツリーのフィルタリング
+            filterTreeNodes(term);
+        }
+    }
+    
+    // ツリーノードフィルタリング
+    function filterTreeNodes(searchTerm) {
+        const treeItems = document.querySelectorAll('.tree-item');
+        
+        treeItems.forEach(item => {
+            const categoryName = item.querySelector('.tree-label').textContent.toLowerCase();
+            
+            if (categoryName.includes(searchTerm)) {
+                item.style.display = '';
+                // 親ノードも表示
+                showParentNodes(item);
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+    
+    // 親ノード表示
+    function showParentNodes(element) {
+        let parent = element.parentElement;
+        while (parent && parent.classList.contains('tree-children')) {
+            parent.style.display = '';
+            parent = parent.parentElement.parentElement; // tree-item > tree-children
+        }
+    }
+    
+    // カテゴリ選択更新
+    function updateCategorySelection() {
+        const selectedId = getCurrentSelectedId();
+        
+        if (selectedId) {
+            const category = categoryData.find(c => c.Id == selectedId);
+            if (category) {
+                updateCategoryInfo(category);
+            }
+        } else {
+            hideCategoryInfo();
+        }
+        
+        // バリデーション
+        validateCategorySelection();
+    }
+    
+    // 現在選択中のID取得
+    function getCurrentSelectedId() {
+        if (currentMode === 'select') {
+            return document.getElementById('@fieldName').value;
+        } else if (currentMode === 'tree') {
+            return document.getElementById('@(fieldName)_Tree').value;
+        }
+        return null;
+    }
+    
+    // 複数選択更新
+    function updateMultipleSelection() {
+        const checkedBoxes = document.querySelectorAll('.category-checkbox:checked');
+        selectedCategories = Array.from(checkedBoxes).map(cb => {
+            return {
+                id: cb.value,
+                name: cb.parentElement.querySelector('.category-name').textContent.trim(),
+                fullPath: cb.dataset.fullPath
+            };
+        });
+        
+        updateMultipleSelectionDisplay();
+        validateCategorySelection();
+    }
+    
+    // 複数選択表示更新
+    function updateMultipleSelectionDisplay() {
+        const summary = document.getElementById('selectedCategoriesSummary');
+        const list = document.getElementById('selectedCategoriesList');
+        
+        if (selectedCategories.length > 0) {
+            summary.style.display = 'block';
+            list.innerHTML = selectedCategories.map(cat => `
+                <div class="selected-category-tag">
+                    <span class="tag-name">${cat.name}</span>
+                    <span class="tag-path">(${cat.fullPath})</span>
+                    <button type="button" class="tag-remove" onclick="removeSelectedCategory('${cat.id}')">×</button>
+                </div>
+            `).join('');
+        } else {
+            summary.style.display = 'none';
+        }
+    }
+    
+    // 選択カテゴリ削除
+    function removeSelectedCategory(categoryId) {
+        const checkbox = document.querySelector(`.category-checkbox[value="${categoryId}"]`);
+        if (checkbox) {
+            checkbox.checked = false;
+            updateMultipleSelection();
+        }
+    }
+    
+    // カテゴリ情報更新
+    function updateCategoryInfo(category) {
+        const info = document.getElementById('selectedCategoryInfo');
+        const hierarchyInfo = document.getElementById('categoryHierarchyInfo');
+        
+        if (currentMode === 'select') {
+            document.getElementById('selectedCategoryPath').textContent = category.FullPath;
+            info.style.display = 'block';
+        }
+        
+        // 階層情報更新
+        document.getElementById('categoryLevel').textContent = category.Level;
+        document.getElementById('categoryFullPath').textContent = category.FullPath;
+        hierarchyInfo.style.display = 'block';
+    }
+    
+    // カテゴリ情報非表示
+    function hideCategoryInfo() {
+        document.getElementById('selectedCategoryInfo').style.display = 'none';
+        document.getElementById('categoryHierarchyInfo').style.display = 'none';
+    }
+    
+    // ツリーインタラクション設定
+    function setupTreeInteraction() {
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('tree-toggle')) {
+                toggleTreeNode(e.target);
+            } else if (e.target.classList.contains('tree-label')) {
+                selectTreeNode(e.target);
+            }
+        });
+    }
+    
+    // ツリーノード開閉
+    function toggleTreeNode(toggleElement) {
+        const treeItem = toggleElement.closest('.tree-item');
+        const children = treeItem.querySelector('.tree-children');
+        
+        if (children) {
+            const isExpanded = toggleElement.textContent === '▼';
+            toggleElement.textContent = isExpanded ? '▶' : '▼';
+            children.style.display = isExpanded ? 'none' : 'block';
+            treeItem.classList.toggle('expanded', !isExpanded);
+        }
+    }
+    
+    // ツリーノード選択
+    function selectTreeNode(labelElement) {
+        const treeItem = labelElement.closest('.tree-item');
+        const categoryId = treeItem.dataset.categoryId;
+        
+        // 他の選択を解除
+        document.querySelectorAll('.tree-item.selected').forEach(item => {
+            item.classList.remove('selected');
+        });
+        
+        // 新しい選択を設定
+        treeItem.classList.add('selected');
+        document.getElementById('@(fieldName)_Tree').value = categoryId;
+        
+        updateCategorySelection();
+    }
+    
+    // 初期選択設定
+    function setInitialSelection(categoryId) {
+        if (currentMode === 'select') {
+            document.getElementById('@fieldName').value = categoryId;
+        } else if (currentMode === 'tree') {
+            document.getElementById('@(fieldName)_Tree').value = categoryId;
+            const treeItem = document.querySelector(`[data-category-id="${categoryId}"]`);
+            if (treeItem) {
+                treeItem.classList.add('selected');
+            }
+        } else if (currentMode === 'checkbox') {
+            const checkbox = document.querySelector(`.category-checkbox[value="${categoryId}"]`);
+            if (checkbox) {
+                checkbox.checked = true;
+                updateMultipleSelection();
+            }
+        }
+    }
+    
+    // バリデーション
+    function validateCategorySelection() {
+        const errorDiv = document.getElementById('categoryValidationError');
+        let isValid = true;
+        let errorMessage = '';
+        
+        @if (isRequired)
+        {
+            <text>
+            if (currentMode === 'checkbox') {
+                if (selectedCategories.length === 0) {
+                    isValid = false;
+                    errorMessage = 'カテゴリを少なくとも1つ選択してください';
+                }
+            } else {
+                const selectedId = getCurrentSelectedId();
+                if (!selectedId) {
+                    isValid = false;
+                    errorMessage = 'カテゴリを選択してください';
+                }
+            }
+            </text>
+        }
+        
+        if (isValid) {
+            errorDiv.style.display = 'none';
+        } else {
+            errorDiv.textContent = errorMessage;
+            errorDiv.style.display = 'block';
+        }
+        
+        return isValid;
+    }
+    
+    // 初期化（ページ読み込み時に呼び出し）
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeCategorySelect();
+    });
+</script>
+
+<style>
+    /* カテゴリ選択関連のスタイル */
+    .category-select-container {
+        margin-bottom: 1.5rem;
+    }
+    
+    .category-select-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .category-search {
+        position: relative;
+        max-width: 300px;
+    }
+    
+    .category-search-input {
+        padding: 0.5rem 2rem 0.5rem 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        width: 100%;
+    }
+    
+    .search-icon {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #666;
+    }
+    
+    .category-select-modes {
+        margin-bottom: 1rem;
+    }
+    
+    .mode-tabs {
+        display: flex;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .mode-tab {
+        padding: 0.75rem 1rem;
+        border: none;
+        background: none;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .mode-tab.active {
+        border-bottom-color: #007bff;
+        color: #007bff;
+        font-weight: 500;
+    }
+    
+    .category-mode {
+        display: none;
+        padding: 1rem 0;
+    }
+    
+    .category-mode.active {
+        display: block;
+    }
+    
+    .category-select {
+        min-height: 2.5rem;
+    }
+    
+    .selected-category-info {
+        margin-top: 0.75rem;
+        padding: 0.75rem;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        border-left: 3px solid #007bff;
+    }
+    
+    .info-label {
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+    
+    .info-path {
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .category-tree-container {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 1rem;
+    }
+    
+    .category-checkbox-container {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 1rem;
+    }
+    
+    .category-checkbox-item {
+        margin-bottom: 0.5rem;
+        padding-left: calc(var(--level, 0) * 1.5rem);
+    }
+    
+    .category-checkbox-item.level-0 { --level: 0; }
+    .category-checkbox-item.level-1 { --level: 1; }
+    .category-checkbox-item.level-2 { --level: 2; }
+    .category-checkbox-item.level-3 { --level: 3; }
+    
+    .category-name {
+        font-weight: 500;
+    }
+    
+    .category-path {
+        color: #666;
+        font-size: 0.85rem;
+        margin-left: 0.5rem;
+    }
+    
+    .selected-categories-summary {
+        margin-top: 1rem;
+        padding: 1rem;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        border-left: 3px solid #28a745;
+    }
+    
+    .summary-label {
+        font-weight: 500;
+        margin-bottom: 0.75rem;
+    }
+    
+    .summary-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .selected-category-tag {
+        display: inline-flex;
+        align-items: center;
+        background-color: #007bff;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 16px;
+        font-size: 0.85rem;
+    }
+    
+    .tag-name {
+        font-weight: 500;
+    }
+    
+    .tag-path {
+        margin-left: 0.25rem;
+        opacity: 0.8;
+    }
+    
+    .tag-remove {
+        background: none;
+        border: none;
+        color: white;
+        margin-left: 0.5rem;
+        cursor: pointer;
+        font-weight: bold;
+        padding: 0;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .tag-remove:hover {
+        background-color: rgba(255,255,255,0.2);
+    }
+    
+    .category-hierarchy-info {
+        margin-top: 1rem;
+        padding: 0.75rem;
+        background-color: #e9ecef;
+        border-radius: 4px;
+    }
+    
+    .hierarchy-label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+    
+    .hierarchy-details {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .category-help {
+        margin-top: 0.75rem;
+        color: #666;
+    }
+    
+    .no-categories {
+        text-align: center;
+        padding: 2rem;
+        color: #666;
+    }
+    
+    /* ツリー関連のスタイル */
+    .tree-item {
+        margin: 0.25rem 0;
+    }
+    
+    .tree-item.selected > .tree-label {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .tree-toggle {
+        cursor: pointer;
+        margin-right: 0.5rem;
+        user-select: none;
+    }
+    
+    .tree-label {
+        cursor: pointer;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        transition: background-color 0.2s ease;
+    }
+    
+    .tree-label:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .tree-children {
+        margin-left: 1.5rem;
+        border-left: 1px solid #ddd;
+        padding-left: 0.5rem;
+    }
+</style>

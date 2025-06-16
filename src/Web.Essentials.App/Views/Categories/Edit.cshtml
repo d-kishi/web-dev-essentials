@@ -1,0 +1,631 @@
+@model Web.Essentials.App.ViewModels.CategoryEditViewModel
+@{
+    ViewData["Title"] = $"カテゴリ編集 - {Model.Name}";
+}
+
+<!-- カテゴリ編集画面 -->
+<div class="page-header">
+    <div class="page-title-section">
+        <h1 class="page-title">カテゴリ編集</h1>
+        <p class="page-description">カテゴリ「@Model.Name」の情報を編集します。</p>
+    </div>
+    <div class="page-actions">
+        <a href="@Url.Action("Details", "Categories", new { id = Model.Id })" class="btn btn-info">
+            <span class="btn-icon">👁</span>
+            詳細表示
+        </a>
+        <a href="@Url.Action("Index", "Categories")" class="btn btn-secondary">
+            <span class="btn-icon">←</span>
+            カテゴリ一覧に戻る
+        </a>
+    </div>
+</div>
+
+<!-- パンくずナビ -->
+<nav class="breadcrumb-nav" aria-label="パンくずナビ">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="@Url.Action("Index", "Home")">ホーム</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="@Url.Action("Index", "Categories")">カテゴリ一覧</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="@Url.Action("Details", "Categories", new { id = Model.Id })">@Model.Name</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            編集
+        </li>
+    </ol>
+</nav>
+
+<!-- カテゴリ編集フォーム -->
+<div class="form-container">
+    <form asp-action="Edit" 
+          method="post" 
+          id="categoryEditForm" 
+          class="category-form"
+          novalidate>
+        
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(model => model.Id)
+        
+        <!-- 編集履歴情報 -->
+        <div class="form-section info-section">
+            <h3 class="section-title">カテゴリ情報</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label class="info-label">カテゴリID</label>
+                    <span class="info-value">@Model.Id</span>
+                </div>
+                <div class="info-item">
+                    <label class="info-label">現在の階層レベル</label>
+                    <span class="info-value">
+                        <span class="level-badge level-@Model.Level">レベル @Model.Level</span>
+                    </span>
+                </div>
+                <div class="info-item">
+                    <label class="info-label">作成日時</label>
+                    <span class="info-value">@Model.CreatedAt.ToString("yyyy/MM/dd HH:mm:ss")</span>
+                </div>
+                <div class="info-item">
+                    <label class="info-label">最終更新日時</label>
+                    <span class="info-value">@Model.UpdatedAt.ToString("yyyy/MM/dd HH:mm:ss")</span>
+                </div>
+                @if (Model.ProductCount > 0)
+                {
+                    <div class="info-item">
+                        <label class="info-label">関連商品数</label>
+                        <span class="info-value">@Model.ProductCount 個</span>
+                    </div>
+                }
+                @if (Model.ChildCategories?.Any() == true)
+                {
+                    <div class="info-item">
+                        <label class="info-label">子カテゴリ数</label>
+                        <span class="info-value">@Model.ChildCategories.Count 個</span>
+                    </div>
+                }
+            </div>
+        </div>
+        
+        <!-- 階層設定セクション -->
+        <div class="form-section">
+            <h3 class="section-title">階層設定</h3>
+            
+            @if (Model.ChildCategories?.Any() == true)
+            {
+                <div class="warning-message">
+                    <div class="warning-icon">⚠️</div>
+                    <div class="warning-content">
+                        <strong>階層変更の制限</strong>
+                        <p>このカテゴリには子カテゴリが存在するため、親カテゴリの変更はできません。子カテゴリを先に移動または削除してください。</p>
+                    </div>
+                </div>
+            }
+            
+            <div class="form-group">
+                <label asp-for="ParentCategoryId" class="form-label">親カテゴリ</label>
+                <select asp-for="ParentCategoryId" 
+                        class="form-select" 
+                        id="parentCategorySelect"
+                        onchange="updateCategoryLevel()"
+                        @(Model.ChildCategories?.Any() == true ? "disabled" : "")>
+                    <option value="">ルートカテゴリとして設定</option>
+                    @if (Model.ParentCategories?.Any() == true)
+                    {
+                        @foreach (var parentCategory in Model.ParentCategories)
+                        {
+                            <option value="@parentCategory.Id" 
+                                    data-level="@parentCategory.Level"
+                                    @(Model.ParentCategoryId == parentCategory.Id ? "selected" : "")>
+                                @parentCategory.FullPath
+                            </option>
+                        }
+                    }
+                </select>
+                <span asp-validation-for="ParentCategoryId" class="validation-error"></span>
+                @if (Model.ChildCategories?.Any() == true)
+                {
+                    <div class="field-help">
+                        <small class="text-warning">子カテゴリが存在するため、親カテゴリの変更は無効化されています。</small>
+                    </div>
+                }
+                else
+                {
+                    <div class="field-help">
+                        <small>親カテゴリを変更すると、階層構造が変更されます。</small>
+                    </div>
+                }
+            </div>
+            
+            <!-- 階層レベル表示 -->
+            <div class="hierarchy-preview">
+                <div class="hierarchy-info">
+                    <label class="form-label">更新後の階層レベル</label>
+                    <div id="hierarchyLevelDisplay" class="level-display">
+                        <span id="levelBadge" class="level-badge level-@Model.Level">レベル @Model.Level</span>
+                        <span id="levelDescription" class="level-description"></span>
+                    </div>
+                </div>
+                <div id="hierarchyPathPreview" class="hierarchy-path-preview">
+                    <label class="form-label">階層パス</label>
+                    <div id="pathPreview" class="path-preview">@Model.FullPath</div>
+                </div>
+            </div>
+            
+            <!-- 子カテゴリ一覧（編集制限の説明用） -->
+            @if (Model.ChildCategories?.Any() == true)
+            {
+                <div class="child-categories-info">
+                    <h4 class="subsection-title">子カテゴリ一覧</h4>
+                    <div class="child-categories-list">
+                        @foreach (var child in Model.ChildCategories)
+                        {
+                            <div class="child-category-item">
+                                <span class="child-category-name">@child.Name</span>
+                                <span class="child-category-path">(@child.FullPath)</span>
+                                <a href="@Url.Action("Edit", "Categories", new { id = child.Id })" 
+                                   class="btn btn-sm btn-outline">編集</a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+        
+        <!-- カテゴリフォーム（部分ビュー） -->
+        @Html.Partial("_CategoryForm", Model)
+        
+        <!-- 変更履歴セクション -->
+        <div class="form-section">
+            <h3 class="section-title">変更履歴</h3>
+            <div class="change-history">
+                <div id="changeHistory" class="history-list">
+                    <!-- 変更内容がここに表示される -->
+                    <p class="no-changes">変更はありません</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- フォーム操作ボタン -->
+        <div class="form-actions">
+            <div class="action-buttons">
+                <button type="submit" class="btn btn-primary btn-large" id="saveButton">
+                    <span class="btn-icon">💾</span>
+                    変更を保存
+                </button>
+                <button type="button" class="btn btn-warning btn-large" onclick="showSaveAsNewModal()">
+                    <span class="btn-icon">📋</span>
+                    別カテゴリとして保存
+                </button>
+                <button type="button" class="btn btn-outline btn-large" onclick="previewCategory()">
+                    <span class="btn-icon">👁</span>
+                    プレビュー
+                </button>
+                <button type="button" class="btn btn-light btn-large" onclick="resetForm()">
+                    <span class="btn-icon">↻</span>
+                    変更を破棄
+                </button>
+            </div>
+            
+            <!-- 保存オプション -->
+            <div class="save-options">
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="validateBeforeSave" class="checkbox-input" checked>
+                        <span class="checkbox-custom"></span>
+                        保存前にバリデーションを実行する
+                    </label>
+                </div>
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="keepEditingAfterSave" class="checkbox-input">
+                        <span class="checkbox-custom"></span>
+                        保存後も編集画面に留まる
+                    </label>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- 別カテゴリとして保存モーダル -->
+<div id="saveAsNewModal" class="modal-overlay" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">別カテゴリとして保存</h3>
+                <button type="button" class="modal-close" onclick="closeSaveAsNewModal()">
+                    <span>×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>現在の編集内容を新しいカテゴリとして保存しますか？</p>
+                <div class="form-group">
+                    <label for="newCategoryName" class="form-label">新しいカテゴリ名</label>
+                    <input type="text" 
+                           id="newCategoryName" 
+                           class="form-input" 
+                           value="@Model.Name のコピー"
+                           maxlength="50" />
+                </div>
+                <div class="form-group">
+                    <label for="newParentCategory" class="form-label">親カテゴリ</label>
+                    <select id="newParentCategory" class="form-select">
+                        <option value="">ルートカテゴリとして作成</option>
+                        @if (Model.ParentCategories?.Any() == true)
+                        {
+                            @foreach (var parentCategory in Model.ParentCategories)
+                            {
+                                <option value="@parentCategory.Id">@parentCategory.FullPath</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="warning-message">
+                    <p><strong>注意:</strong> 元のカテゴリは変更されません。新しいカテゴリとして別途作成されます。</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeSaveAsNewModal()">
+                    キャンセル
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveAsNewCategory()">
+                    新しいカテゴリとして保存
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- プレビューモーダル -->
+<div id="categoryPreviewModal" class="modal-overlay preview-modal" style="display: none;">
+    <div class="modal-dialog modal-large">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">カテゴリプレビュー</h3>
+                <button type="button" class="modal-close" onclick="closePreviewModal()">
+                    <span>×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="categoryPreviewContent" class="preview-content">
+                    <!-- プレビュー内容がここに表示される -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closePreviewModal()">
+                    閉じる
+                </button>
+                <button type="button" class="btn btn-primary" onclick="submitFromPreview()">
+                    このまま保存する
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // 初期値を保存（変更検知用）
+        let originalFormData = {};
+        
+        // フォーム初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCategoryEditForm();
+        });
+        
+        // カテゴリ編集フォームの初期化
+        function initializeCategoryEditForm() {
+            // 初期値を保存
+            originalFormData = collectFormData();
+            
+            // フォームバリデーションの設定
+            setupFormValidation();
+            
+            // 変更検知の設定
+            setupChangeDetection();
+            
+            // 階層レベル表示の初期化
+            updateCategoryLevel();
+            
+            // ページ離脱警告の設定
+            setupUnloadWarning();
+        }
+        
+        // 階層レベル更新
+        function updateCategoryLevel() {
+            const parentSelect = document.getElementById('parentCategorySelect');
+            const selectedOption = parentSelect.options[parentSelect.selectedIndex];
+            
+            const levelBadge = document.getElementById('levelBadge');
+            const levelDescription = document.getElementById('levelDescription');
+            const pathPreview = document.getElementById('pathPreview');
+            
+            if (selectedOption.value === '') {
+                // ルートカテゴリ
+                levelBadge.textContent = 'レベル 0';
+                levelBadge.className = 'level-badge level-0';
+                levelDescription.textContent = '（ルートカテゴリ）';
+                
+                const currentName = document.querySelector('input[name="Name"]').value || '@Model.Name';
+                pathPreview.textContent = currentName;
+            } else {
+                // 子カテゴリ
+                const parentLevel = parseInt(selectedOption.dataset.level) || 0;
+                const newLevel = parentLevel + 1;
+                
+                levelBadge.textContent = `レベル ${newLevel}`;
+                levelBadge.className = `level-badge level-${newLevel}`;
+                levelDescription.textContent = `（${newLevel} 階層目）`;
+                
+                // 階層パス更新
+                const parentPath = selectedOption.textContent;
+                const currentName = document.querySelector('input[name="Name"]').value || '@Model.Name';
+                pathPreview.textContent = `${parentPath} > ${currentName}`;
+            }
+        }
+        
+        // 変更検知の設定
+        function setupChangeDetection() {
+            const form = document.getElementById('categoryEditForm');
+            const inputs = form.querySelectorAll('input, select, textarea');
+            
+            inputs.forEach(input => {
+                input.addEventListener('input', detectChanges);
+                input.addEventListener('change', detectChanges);
+            });
+        }
+        
+        // 変更検知
+        function detectChanges() {
+            const currentData = collectFormData();
+            const changes = compareFormData(originalFormData, currentData);
+            updateChangeHistory(changes);
+            
+            // 階層パス更新
+            if (document.querySelector('input[name="Name"]')) {
+                updateCategoryLevel();
+            }
+        }
+        
+        // フォームデータ比較
+        function compareFormData(original, current) {
+            const changes = [];
+            
+            for (let key in current) {
+                if (original[key] !== current[key]) {
+                    changes.push({
+                        field: key,
+                        from: original[key],
+                        to: current[key],
+                        timestamp: new Date()
+                    });
+                }
+            }
+            
+            return changes;
+        }
+        
+        // 変更履歴更新
+        function updateChangeHistory(changes) {
+            const historyContainer = document.getElementById('changeHistory');
+            
+            if (changes.length === 0) {
+                historyContainer.innerHTML = '<p class="no-changes">変更はありません</p>';
+                return;
+            }
+            
+            const historyHtml = changes.map(change => `
+                <div class="history-item">
+                    <div class="history-field">${getFieldDisplayName(change.field)}</div>
+                    <div class="history-change">
+                        <span class="change-from">${change.from || '(空)'}</span>
+                        <span class="change-arrow">→</span>
+                        <span class="change-to">${change.to || '(空)'}</span>
+                    </div>
+                    <div class="history-time">${change.timestamp.toLocaleTimeString()}</div>
+                </div>
+            `).join('');
+            
+            historyContainer.innerHTML = historyHtml;
+        }
+        
+        // フィールド表示名取得
+        function getFieldDisplayName(fieldName) {
+            const fieldNames = {
+                'Name': 'カテゴリ名',
+                'Description': 'カテゴリ説明',
+                'ParentCategoryId': '親カテゴリ'
+            };
+            
+            return fieldNames[fieldName] || fieldName;
+        }
+        
+        // フォーム送信前のバリデーション
+        document.getElementById('categoryEditForm').addEventListener('submit', function(event) {
+            const validateBeforeSave = document.getElementById('validateBeforeSave').checked;
+            
+            if (validateBeforeSave) {
+                event.preventDefault();
+                
+                if (validateCategoryForm()) {
+                    submitCategoryForm();
+                }
+            }
+        });
+        
+        // カテゴリフォームのバリデーション
+        function validateCategoryForm() {
+            let isValid = true;
+            const errors = [];
+            
+            // カテゴリ名のバリデーション
+            const nameInput = document.querySelector('input[name="Name"]');
+            if (!nameInput.value.trim()) {
+                errors.push('カテゴリ名は必須です');
+                highlightFieldError(nameInput);
+                isValid = false;
+            } else if (nameInput.value.length > 50) {
+                errors.push('カテゴリ名は50文字以内で入力してください');
+                highlightFieldError(nameInput);
+                isValid = false;
+            }
+            
+            // 説明のバリデーション
+            const descriptionInput = document.querySelector('textarea[name="Description"]');
+            if (descriptionInput.value && descriptionInput.value.length > 500) {
+                errors.push('カテゴリ説明は500文字以内で入力してください');
+                highlightFieldError(descriptionInput);
+                isValid = false;
+            }
+            
+            // エラー表示
+            if (!isValid) {
+                showValidationErrors(errors);
+            } else {
+                hideValidationErrors();
+            }
+            
+            return isValid;
+        }
+        
+        // カテゴリフォーム送信
+        async function submitCategoryForm() {
+            try {
+                showLoadingModal('カテゴリを更新しています...');
+                
+                const formData = new FormData(document.getElementById('categoryEditForm'));
+                
+                const response = await fetch('/Categories/Edit/@Model.Id', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                hideLoadingModal();
+                
+                if (response.ok) {
+                    const keepEditing = document.getElementById('keepEditingAfterSave').checked;
+                    
+                    showSuccess('カテゴリが正常に更新されました');
+                    
+                    if (keepEditing) {
+                        // 初期値を更新
+                        originalFormData = collectFormData();
+                        updateChangeHistory([]);
+                    } else {
+                        // カテゴリ詳細に戻る
+                        setTimeout(() => {
+                            window.location.href = '/Categories/Details/@Model.Id';
+                        }, 1500);
+                    }
+                } else {
+                    const errorText = await response.text();
+                    showError('カテゴリの更新に失敗しました: ' + errorText);
+                }
+            } catch (error) {
+                hideLoadingModal();
+                console.error('カテゴリ更新エラー:', error);
+                showError('カテゴリ更新中にエラーが発生しました');
+            }
+        }
+        
+        // 別カテゴリとして保存モーダル表示
+        function showSaveAsNewModal() {
+            document.getElementById('saveAsNewModal').style.display = 'block';
+        }
+        
+        // 別カテゴリとして保存モーダルを閉じる
+        function closeSaveAsNewModal() {
+            document.getElementById('saveAsNewModal').style.display = 'none';
+        }
+        
+        // 別カテゴリとして保存実行
+        async function saveAsNewCategory() {
+            try {
+                const newCategoryName = document.getElementById('newCategoryName').value;
+                const newParentCategory = document.getElementById('newParentCategory').value;
+                
+                if (!newCategoryName.trim()) {
+                    showError('新しいカテゴリ名を入力してください');
+                    return;
+                }
+                
+                showLoadingModal('新しいカテゴリとして保存しています...');
+                
+                const formData = new FormData(document.getElementById('categoryEditForm'));
+                formData.set('Name', newCategoryName); // カテゴリ名を更新
+                formData.set('ParentCategoryId', newParentCategory); // 親カテゴリを更新
+                formData.delete('Id'); // IDを削除（新規作成）
+                
+                const response = await fetch('/Categories/Create', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                hideLoadingModal();
+                
+                if (response.ok) {
+                    showSuccess(`新しいカテゴリ「${newCategoryName}」として保存されました`);
+                    closeSaveAsNewModal();
+                    
+                    // カテゴリ一覧に戻る
+                    setTimeout(() => {
+                        window.location.href = '/Categories';
+                    }, 1500);
+                } else {
+                    const errorText = await response.text();
+                    showError('新しいカテゴリの保存に失敗しました: ' + errorText);
+                }
+            } catch (error) {
+                hideLoadingModal();
+                console.error('新しいカテゴリ保存エラー:', error);
+                showError('新しいカテゴリ保存中にエラーが発生しました');
+            }
+        }
+        
+        // フォームリセット
+        function resetForm() {
+            if (confirm('変更内容を破棄して元の状態に戻しますか？')) {
+                // 元の値に戻す
+                for (let key in originalFormData) {
+                    const input = document.querySelector(`[name="${key}"]`);
+                    if (input) {
+                        input.value = originalFormData[key];
+                    }
+                }
+                
+                updateCategoryLevel();
+                updateChangeHistory([]);
+                hideValidationErrors();
+            }
+        }
+        
+        // ページ離脱警告の設定
+        function setupUnloadWarning() {
+            window.addEventListener('beforeunload', function(event) {
+                const currentData = collectFormData();
+                const changes = compareFormData(originalFormData, currentData);
+                
+                if (changes.length > 0) {
+                    event.preventDefault();
+                    event.returnValue = '変更が保存されていません。ページを離れますか？';
+                }
+            });
+        }
+        
+        // フォームデータ収集
+        function collectFormData() {
+            const form = document.getElementById('categoryEditForm');
+            const formData = new FormData(form);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            return data;
+        }
+    </script>
+}

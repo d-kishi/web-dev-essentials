@@ -1,0 +1,448 @@
+@model Web.Essentials.App.ViewModels.ProductDetailsViewModel
+@{
+    ViewData["Title"] = $"商品削除確認 - {Model.Name}";
+}
+
+<!-- 商品削除確認画面 -->
+<div class="page-header">
+    <div class="page-title-section">
+        <h1 class="page-title">商品削除確認</h1>
+        <p class="page-description">商品「@Model.Name」の削除確認です。削除すると元に戻せません。</p>
+    </div>
+</div>
+
+<!-- パンくずナビ -->
+<nav class="breadcrumb-nav" aria-label="パンくずナビ">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="@Url.Action("Index", "Home")">ホーム</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="@Url.Action("Index", "Product")">商品一覧</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="@Url.Action("Details", "Product", new { id = Model.Id })">@Model.Name</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            削除確認
+        </li>
+    </ol>
+</nav>
+
+<!-- 削除警告メッセージ -->
+<div class="alert alert-danger delete-warning">
+    <div class="alert-icon">⚠️</div>
+    <div class="alert-content">
+        <h3 class="alert-title">削除の確認</h3>
+        <p class="alert-message">
+            この操作は元に戻すことができません。商品に関連するすべての情報（画像、カテゴリ関連付けなど）も同時に削除されます。
+        </p>
+    </div>
+</div>
+
+<!-- 商品詳細表示（削除確認用） -->
+<div class="delete-confirmation-container">
+    <div class="product-summary">
+        <div class="summary-header">
+            <h2 class="summary-title">削除対象の商品</h2>
+        </div>
+        
+        <div class="summary-content">
+            <!-- 商品基本情報 -->
+            <div class="product-info-card">
+                <div class="product-overview">
+                    @if (Model.Images?.Any() == true)
+                    {
+                        var mainImage = Model.Images.FirstOrDefault(img => img.IsMain) ?? Model.Images.First();
+                        <div class="product-image">
+                            <img src="@mainImage.ImagePath" 
+                                 alt="@mainImage.AltText" 
+                                 class="summary-image" />
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="product-image">
+                            <img src="/images/no-image.png" alt="画像なし" class="summary-image no-image" />
+                        </div>
+                    }
+                    
+                    <div class="product-details">
+                        <h3 class="product-name">@Model.Name</h3>
+                        <div class="product-price">¥@Model.Price.ToString("N0")</div>
+                        
+                        @if (!string.IsNullOrEmpty(Model.Description))
+                        {
+                            <div class="product-description">
+                                @(Model.Description.Length > 100 ? Model.Description.Substring(0, 100) + "..." : Model.Description)
+                            </div>
+                        }
+                        
+                        <div class="product-status">
+                            @switch (Model.Status)
+                            {
+                                case 0:
+                                    <span class="status-badge status-pending">販売開始前</span>
+                                    break;
+                                case 1:
+                                    <span class="status-badge status-active">販売中</span>
+                                    break;
+                                case 2:
+                                    <span class="status-badge status-discontinued">取扱終了</span>
+                                    break;
+                            }
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 詳細情報 -->
+                <div class="product-metadata">
+                    <div class="metadata-grid">
+                        <div class="metadata-item">
+                            <label class="metadata-label">商品ID</label>
+                            <span class="metadata-value">@Model.Id</span>
+                        </div>
+                        
+                        @if (!string.IsNullOrEmpty(Model.JanCode))
+                        {
+                            <div class="metadata-item">
+                                <label class="metadata-label">JANコード</label>
+                                <span class="metadata-value">
+                                    <code class="jan-code">@Model.JanCode</code>
+                                </span>
+                            </div>
+                        }
+                        
+                        <div class="metadata-item">
+                            <label class="metadata-label">作成日時</label>
+                            <span class="metadata-value">
+                                @Model.CreatedAt.ToString("yyyy/MM/dd HH:mm:ss")
+                            </span>
+                        </div>
+                        
+                        <div class="metadata-item">
+                            <label class="metadata-label">最終更新日時</label>
+                            <span class="metadata-value">
+                                @Model.UpdatedAt.ToString("yyyy/MM/dd HH:mm:ss")
+                            </span>
+                        </div>
+                        
+                        @if (Model.Categories?.Any() == true)
+                        {
+                            <div class="metadata-item metadata-categories">
+                                <label class="metadata-label">カテゴリ</label>
+                                <div class="categories-list">
+                                    @foreach (var category in Model.Categories)
+                                    {
+                                        <span class="category-badge">@category.FullPath</span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        
+                        @if (Model.Images?.Any() == true && Model.Images.Count > 1)
+                        {
+                            <div class="metadata-item">
+                                <label class="metadata-label">関連画像</label>
+                                <span class="metadata-value">@Model.Images.Count 枚</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 削除影響範囲 -->
+    <div class="deletion-impact">
+        <h3 class="impact-title">削除される内容</h3>
+        <div class="impact-list">
+            <div class="impact-item">
+                <span class="impact-icon">📝</span>
+                <div class="impact-content">
+                    <strong>商品基本情報</strong>
+                    <p>商品名、説明、価格、JANコード、ステータスなどの基本情報</p>
+                </div>
+            </div>
+            
+            @if (Model.Images?.Any() == true)
+            {
+                <div class="impact-item">
+                    <span class="impact-icon">🖼️</span>
+                    <div class="impact-content">
+                        <strong>商品画像</strong>
+                        <p>@Model.Images.Count 枚の商品画像ファイル</p>
+                    </div>
+                </div>
+            }
+            
+            @if (Model.Categories?.Any() == true)
+            {
+                <div class="impact-item">
+                    <span class="impact-icon">🏷️</span>
+                    <div class="impact-content">
+                        <strong>カテゴリ関連付け</strong>
+                        <p>@Model.Categories.Count 個のカテゴリとの関連付け</p>
+                    </div>
+                </div>
+            }
+            
+            <div class="impact-item">
+                <span class="impact-icon">📊</span>
+                <div class="impact-content">
+                    <strong>履歴・ログ情報</strong>
+                    <p>商品に関連するすべての変更履歴とログ情報</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 削除実行フォーム -->
+    <div class="deletion-form">
+        <form asp-action="Delete" method="post" id="deleteForm" class="delete-confirmation-form">
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(model => model.Id)
+            
+            <!-- 削除確認チェックボックス -->
+            <div class="confirmation-checks">
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="confirmUnderstand" class="checkbox-input" required>
+                        <span class="checkbox-custom"></span>
+                        削除の影響を理解し、この操作が元に戻せないことを確認しました
+                    </label>
+                </div>
+                
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="confirmProductName" class="checkbox-input" required>
+                        <span class="checkbox-custom"></span>
+                        削除対象の商品が「@Model.Name」であることを確認しました
+                    </label>
+                </div>
+            </div>
+            
+            <!-- 削除理由（任意） -->
+            <div class="deletion-reason">
+                <label for="deletionReason" class="form-label">削除理由（任意）</label>
+                <textarea id="deletionReason" 
+                          name="DeletionReason" 
+                          class="form-textarea"
+                          placeholder="削除理由を入力してください（ログに記録されます）"
+                          rows="3"
+                          maxlength="500"></textarea>
+                <div class="field-hint">最大500文字まで入力できます</div>
+            </div>
+            
+            <!-- アクションボタン -->
+            <div class="form-actions">
+                <div class="action-buttons">
+                    <button type="submit" 
+                            class="btn btn-danger btn-large" 
+                            id="deleteButton"
+                            disabled>
+                        <span class="btn-icon">🗑️</span>
+                        商品を削除する
+                    </button>
+                    <a href="@Url.Action("Details", "Product", new { id = Model.Id })" 
+                       class="btn btn-secondary btn-large">
+                        <span class="btn-icon">↩️</span>
+                        キャンセル（詳細に戻る）
+                    </a>
+                    <a href="@Url.Action("Index", "Product")" 
+                       class="btn btn-light btn-large">
+                        <span class="btn-icon">📋</span>
+                        商品一覧に戻る
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ページ読み込み時の初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDeleteConfirmation();
+        });
+        
+        // 削除確認の初期化
+        function initializeDeleteConfirmation() {
+            // チェックボックスの状態監視
+            setupConfirmationValidation();
+            
+            // フォーム送信の処理
+            setupFormSubmission();
+            
+            // ページ離脱警告
+            setupUnloadWarning();
+        }
+        
+        // 確認チェックボックスの検証設定
+        function setupConfirmationValidation() {
+            const confirmUnderstand = document.getElementById('confirmUnderstand');
+            const confirmProductName = document.getElementById('confirmProductName');
+            const deleteButton = document.getElementById('deleteButton');
+            
+            function validateConfirmations() {
+                const allChecked = confirmUnderstand.checked && confirmProductName.checked;
+                deleteButton.disabled = !allChecked;
+                
+                if (allChecked) {
+                    deleteButton.classList.remove('btn-disabled');
+                } else {
+                    deleteButton.classList.add('btn-disabled');
+                }
+            }
+            
+            confirmUnderstand.addEventListener('change', validateConfirmations);
+            confirmProductName.addEventListener('change', validateConfirmations);
+        }
+        
+        // フォーム送信の設定
+        function setupFormSubmission() {
+            const deleteForm = document.getElementById('deleteForm');
+            
+            deleteForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                
+                // 最終確認ダイアログ
+                showFinalConfirmation();
+            });
+        }
+        
+        // 最終確認ダイアログ
+        function showFinalConfirmation() {
+            const productName = '@Model.Name';
+            const confirmMessage = `本当に商品「${productName}」を削除しますか？\n\nこの操作は元に戻すことができません。`;
+            
+            showConfirmationModal(
+                '最終確認',
+                confirmMessage,
+                '削除後は商品に関連するすべてのデータが失われます。',
+                '削除する',
+                () => executeDelete()
+            );
+        }
+        
+        // 削除実行
+        async function executeDelete() {
+            try {
+                showLoadingModal('商品を削除しています...\nしばらくお待ちください。');
+                
+                const formData = new FormData(document.getElementById('deleteForm'));
+                
+                const response = await fetch('/Product/Delete/@Model.Id', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                hideLoadingModal();
+                
+                if (response.ok) {
+                    // 削除成功
+                    showSuccessModal(
+                        '削除完了',
+                        '商品「@Model.Name」が正常に削除されました。',
+                        () => {
+                            window.location.href = '/Product';
+                        }
+                    );
+                } else {
+                    // 削除失敗
+                    const errorText = await response.text();
+                    showError('削除に失敗しました: ' + errorText);
+                }
+            } catch (error) {
+                hideLoadingModal();
+                console.error('商品削除エラー:', error);
+                showError('削除処理中にエラーが発生しました');
+            }
+        }
+        
+        // ページ離脱警告の設定
+        function setupUnloadWarning() {
+            let formInteracted = false;
+            
+            // フォーム操作の検知
+            document.querySelectorAll('input, textarea').forEach(element => {
+                element.addEventListener('input', () => {
+                    formInteracted = true;
+                });
+                element.addEventListener('change', () => {
+                    formInteracted = true;
+                });
+            });
+            
+            // ページ離脱時の警告
+            window.addEventListener('beforeunload', function(event) {
+                if (formInteracted) {
+                    event.preventDefault();
+                    event.returnValue = '削除確認画面から離れますか？';
+                }
+            });
+        }
+        
+        // 成功モーダル表示
+        function showSuccessModal(title, message, callback) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay success-modal';
+            modal.innerHTML = `
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title">${title}</h3>
+                        </div>
+                        <div class="modal-body">
+                            <div class="success-icon">✅</div>
+                            <p class="success-message">${message}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" onclick="this.closest('.modal-overlay').remove(); ${callback ? callback.toString() + '()' : ''}">
+                                確認
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            modal.style.display = 'block';
+        }
+        
+        // エラーメッセージ表示
+        function showError(message) {
+            const errorContainer = document.createElement('div');
+            errorContainer.className = 'alert alert-danger error-message';
+            errorContainer.innerHTML = `
+                <div class="alert-icon">❌</div>
+                <div class="alert-content">
+                    <strong>エラー</strong>
+                    <p>${message}</p>
+                </div>
+                <button type="button" class="alert-close" onclick="this.parentElement.remove()">×</button>
+            `;
+            
+            // ページ上部に挿入
+            const pageHeader = document.querySelector('.page-header');
+            pageHeader.insertAdjacentElement('afterend', errorContainer);
+            
+            // 自動削除（10秒後）
+            setTimeout(() => {
+                if (errorContainer.parentElement) {
+                    errorContainer.remove();
+                }
+            }, 10000);
+        }
+        
+        // ESCキーでキャンセル
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                if (confirm('削除確認をキャンセルして詳細画面に戻りますか？')) {
+                    window.location.href = '/Product/Details/@Model.Id';
+                }
+            }
+        });
+    </script>
+}

@@ -1,0 +1,397 @@
+@model Web.Essentials.App.ViewModels.CategoryCreateViewModel
+@{
+    ViewData["Title"] = "カテゴリ登録";
+}
+
+<!-- カテゴリ登録画面 -->
+<div class="page-header">
+    <div class="page-title-section">
+        <h1 class="page-title">カテゴリ登録</h1>
+        <p class="page-description">新しいカテゴリを登録します。必須項目を入力してください。</p>
+    </div>
+    <div class="page-actions">
+        <a href="@Url.Action("Index", "Categories")" class="btn btn-secondary">
+            <span class="btn-icon">←</span>
+            カテゴリ一覧に戻る
+        </a>
+    </div>
+</div>
+
+<!-- パンくずナビ -->
+<nav class="breadcrumb-nav" aria-label="パンくずナビ">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="@Url.Action("Index", "Home")">ホーム</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="@Url.Action("Index", "Categories")">カテゴリ一覧</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            カテゴリ登録
+        </li>
+    </ol>
+</nav>
+
+<!-- カテゴリ登録フォーム -->
+<div class="form-container">
+    <form asp-action="Create" 
+          method="post" 
+          id="categoryCreateForm" 
+          class="category-form"
+          novalidate>
+        
+        @Html.AntiForgeryToken()
+        
+        <!-- 親カテゴリ選択セクション -->
+        <div class="form-section">
+            <h3 class="section-title">階層設定</h3>
+            <div class="form-group">
+                <label asp-for="ParentCategoryId" class="form-label">親カテゴリ</label>
+                <select asp-for="ParentCategoryId" 
+                        class="form-select" 
+                        id="parentCategorySelect"
+                        onchange="updateCategoryLevel()">
+                    <option value="">ルートカテゴリとして作成</option>
+                    @if (Model.ParentCategories?.Any() == true)
+                    {
+                        @foreach (var parentCategory in Model.ParentCategories)
+                        {
+                            <option value="@parentCategory.Id" 
+                                    data-level="@parentCategory.Level"
+                                    @(Model.ParentCategoryId == parentCategory.Id ? "selected" : "")>
+                                @parentCategory.FullPath
+                            </option>
+                        }
+                    }
+                </select>
+                <span asp-validation-for="ParentCategoryId" class="validation-error"></span>
+                <div class="field-help">
+                    <small>親カテゴリを選択すると、そのカテゴリの子カテゴリとして作成されます。</small>
+                </div>
+            </div>
+            
+            <!-- 階層レベル表示 -->
+            <div class="hierarchy-preview">
+                <div class="hierarchy-info">
+                    <label class="form-label">作成されるカテゴリの階層レベル</label>
+                    <div id="hierarchyLevelDisplay" class="level-display">
+                        <span id="levelBadge" class="level-badge level-0">レベル 0</span>
+                        <span id="levelDescription" class="level-description">（ルートカテゴリ）</span>
+                    </div>
+                </div>
+                <div id="hierarchyPathPreview" class="hierarchy-path-preview" style="display: none;">
+                    <label class="form-label">階層パス</label>
+                    <div id="pathPreview" class="path-preview"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- カテゴリフォーム（部分ビュー） -->
+        @Html.Partial("_CategoryForm", Model)
+        
+        <!-- フォーム操作ボタン -->
+        <div class="form-actions">
+            <div class="action-buttons">
+                <button type="submit" class="btn btn-primary btn-large" id="saveButton">
+                    <span class="btn-icon">💾</span>
+                    カテゴリを登録
+                </button>
+                <button type="button" class="btn btn-outline btn-large" onclick="previewCategory()">
+                    <span class="btn-icon">👁</span>
+                    プレビュー
+                </button>
+                <button type="button" class="btn btn-light btn-large" onclick="resetForm()">
+                    <span class="btn-icon">↻</span>
+                    リセット
+                </button>
+            </div>
+            
+            <!-- 保存オプション -->
+            <div class="save-options">
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="saveAndContinue" class="checkbox-input">
+                        <span class="checkbox-custom"></span>
+                        保存後、続けて新しいカテゴリを登録する
+                    </label>
+                </div>
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="createAsChild" class="checkbox-input">
+                        <span class="checkbox-custom"></span>
+                        保存後、このカテゴリの子カテゴリを作成する
+                    </label>
+                </div>
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="validateBeforeSave" class="checkbox-input" checked>
+                        <span class="checkbox-custom"></span>
+                        保存前にバリデーションを実行する
+                    </label>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- プレビューモーダル -->
+<div id="categoryPreviewModal" class="modal-overlay preview-modal" style="display: none;">
+    <div class="modal-dialog modal-large">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">カテゴリプレビュー</h3>
+                <button type="button" class="modal-close" onclick="closePreviewModal()">
+                    <span>×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="categoryPreviewContent" class="preview-content">
+                    <!-- プレビュー内容がここに表示される -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closePreviewModal()">
+                    閉じる
+                </button>
+                <button type="button" class="btn btn-primary" onclick="submitFromPreview()">
+                    このまま登録する
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // フォーム初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCategoryCreateForm();
+        });
+        
+        // カテゴリ登録フォームの初期化
+        function initializeCategoryCreateForm() {
+            // フォームバリデーションの設定
+            setupFormValidation();
+            
+            // 階層レベル表示の初期化
+            updateCategoryLevel();
+            
+            // フォーム変更検知の設定
+            setupFormChangeDetection();
+        }
+        
+        // 階層レベル更新
+        function updateCategoryLevel() {
+            const parentSelect = document.getElementById('parentCategorySelect');
+            const selectedOption = parentSelect.options[parentSelect.selectedIndex];
+            
+            const levelBadge = document.getElementById('levelBadge');
+            const levelDescription = document.getElementById('levelDescription');
+            const hierarchyPathPreview = document.getElementById('hierarchyPathPreview');
+            const pathPreview = document.getElementById('pathPreview');
+            
+            if (selectedOption.value === '') {
+                // ルートカテゴリ
+                levelBadge.textContent = 'レベル 0';
+                levelBadge.className = 'level-badge level-0';
+                levelDescription.textContent = '（ルートカテゴリ）';
+                hierarchyPathPreview.style.display = 'none';
+            } else {
+                // 子カテゴリ
+                const parentLevel = parseInt(selectedOption.dataset.level) || 0;
+                const newLevel = parentLevel + 1;
+                
+                levelBadge.textContent = `レベル ${newLevel}`;
+                levelBadge.className = `level-badge level-${newLevel}`;
+                levelDescription.textContent = `（${newLevel} 階層目）`;
+                
+                // 階層パスプレビュー
+                const parentPath = selectedOption.textContent;
+                const currentName = document.querySelector('input[name="Name"]').value || '[新しいカテゴリ名]';
+                pathPreview.textContent = `${parentPath} > ${currentName}`;
+                hierarchyPathPreview.style.display = 'block';
+            }
+        }
+        
+        // フォーム送信前のバリデーション
+        document.getElementById('categoryCreateForm').addEventListener('submit', function(event) {
+            const validateBeforeSave = document.getElementById('validateBeforeSave').checked;
+            
+            if (validateBeforeSave) {
+                event.preventDefault();
+                
+                if (validateCategoryForm()) {
+                    submitCategoryForm();
+                }
+            }
+        });
+        
+        // カテゴリフォームのバリデーション
+        function validateCategoryForm() {
+            let isValid = true;
+            const errors = [];
+            
+            // カテゴリ名のバリデーション
+            const nameInput = document.querySelector('input[name="Name"]');
+            if (!nameInput.value.trim()) {
+                errors.push('カテゴリ名は必須です');
+                highlightFieldError(nameInput);
+                isValid = false;
+            } else if (nameInput.value.length > 50) {
+                errors.push('カテゴリ名は50文字以内で入力してください');
+                highlightFieldError(nameInput);
+                isValid = false;
+            }
+            
+            // 説明のバリデーション
+            const descriptionInput = document.querySelector('textarea[name="Description"]');
+            if (descriptionInput.value && descriptionInput.value.length > 500) {
+                errors.push('カテゴリ説明は500文字以内で入力してください');
+                highlightFieldError(descriptionInput);
+                isValid = false;
+            }
+            
+            // エラー表示
+            if (!isValid) {
+                showValidationErrors(errors);
+            } else {
+                hideValidationErrors();
+            }
+            
+            return isValid;
+        }
+        
+        // カテゴリフォーム送信
+        async function submitCategoryForm() {
+            try {
+                showLoadingModal('カテゴリを登録しています...');
+                
+                const formData = new FormData(document.getElementById('categoryCreateForm'));
+                
+                const response = await fetch('/Categories/Create', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                hideLoadingModal();
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    const saveAndContinue = document.getElementById('saveAndContinue').checked;
+                    const createAsChild = document.getElementById('createAsChild').checked;
+                    
+                    showSuccess('カテゴリが正常に登録されました');
+                    
+                    if (createAsChild && result.categoryId) {
+                        // 子カテゴリ作成画面に移動
+                        setTimeout(() => {
+                            window.location.href = `/Categories/Create?parentId=${result.categoryId}`;
+                        }, 1500);
+                    } else if (saveAndContinue) {
+                        // フォームをリセットして続行
+                        resetForm();
+                    } else {
+                        // カテゴリ一覧に戻る
+                        setTimeout(() => {
+                            window.location.href = '/Categories';
+                        }, 1500);
+                    }
+                } else {
+                    const errorText = await response.text();
+                    showError('カテゴリの登録に失敗しました: ' + errorText);
+                }
+            } catch (error) {
+                hideLoadingModal();
+                console.error('カテゴリ登録エラー:', error);
+                showError('カテゴリ登録中にエラーが発生しました');
+            }
+        }
+        
+        // プレビュー表示
+        function previewCategory() {
+            const formData = collectFormData();
+            const previewContent = generatePreviewContent(formData);
+            
+            document.getElementById('categoryPreviewContent').innerHTML = previewContent;
+            document.getElementById('categoryPreviewModal').style.display = 'block';
+        }
+        
+        // プレビューから登録
+        function submitFromPreview() {
+            closePreviewModal();
+            
+            if (validateCategoryForm()) {
+                submitCategoryForm();
+            }
+        }
+        
+        // プレビューモーダルを閉じる
+        function closePreviewModal() {
+            document.getElementById('categoryPreviewModal').style.display = 'none';
+        }
+        
+        // フォームリセット
+        function resetForm() {
+            if (confirm('入力内容をすべてリセットしますか？')) {
+                document.getElementById('categoryCreateForm').reset();
+                updateCategoryLevel();
+                hideValidationErrors();
+            }
+        }
+        
+        // フォームデータ収集
+        function collectFormData() {
+            const form = document.getElementById('categoryCreateForm');
+            const formData = new FormData(form);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            return data;
+        }
+        
+        // プレビューコンテンツ生成
+        function generatePreviewContent(data) {
+            const parentSelect = document.getElementById('parentCategorySelect');
+            const selectedOption = parentSelect.options[parentSelect.selectedIndex];
+            const parentPath = selectedOption.value ? selectedOption.textContent : '';
+            const fullPath = parentPath ? `${parentPath} > ${data.Name || '[カテゴリ名]'}` : (data.Name || '[カテゴリ名]');
+            const level = selectedOption.value ? (parseInt(selectedOption.dataset.level) + 1) : 0;
+            
+            return `
+                <div class="category-preview">
+                    <div class="preview-header">
+                        <h2>${data.Name || 'カテゴリ名未入力'}</h2>
+                        <span class="level-badge level-${level}">レベル ${level}</span>
+                    </div>
+                    <div class="preview-body">
+                        <div class="preview-section">
+                            <h3>階層パス</h3>
+                            <p class="hierarchy-path">${fullPath}</p>
+                        </div>
+                        <div class="preview-section">
+                            <h3>カテゴリ説明</h3>
+                            <p>${data.Description || '説明なし'}</p>
+                        </div>
+                        <div class="preview-section">
+                            <h3>階層情報</h3>
+                            <dl class="preview-details">
+                                <dt>階層レベル</dt>
+                                <dd>${level} ${level === 0 ? '（ルートカテゴリ）' : '（子カテゴリ）'}</dd>
+                                <dt>親カテゴリ</dt>
+                                <dd>${parentPath || 'なし（ルートカテゴリ）'}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // カテゴリ名変更時の階層パス更新
+        document.querySelector('input[name="Name"]').addEventListener('input', function() {
+            updateCategoryLevel();
+        });
+    </script>
+}

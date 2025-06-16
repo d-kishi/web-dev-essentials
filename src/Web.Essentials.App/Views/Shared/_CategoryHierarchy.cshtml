@@ -1,0 +1,778 @@
+@model IEnumerable<dynamic>
+<!-- カテゴリ階層表示部分ビュー -->
+<!-- ツリー構造での階層表示 -->
+<!-- Index/Details画面で共通利用 -->
+
+@{
+    var categories = Model ?? new List<dynamic>();
+    var showActions = ViewBag.ShowActions as bool? ?? true;
+    var isSelectable = ViewBag.IsSelectable as bool? ?? false;
+    var selectedId = ViewBag.SelectedId as int?;
+    var showProductCount = ViewBag.ShowProductCount as bool? ?? true;
+    var expandAll = ViewBag.ExpandAll as bool? ?? false;
+}
+
+<div class="category-hierarchy-container">
+    @if (categories.Any())
+    {
+        <div class="category-tree">
+            @foreach (var category in categories.OrderBy(c => c.SortOrder ?? 0))
+            {
+                @Html.Partial("_CategoryTreeNode", category, new ViewDataDictionary(ViewData) 
+                {
+                    {"ShowActions", showActions},
+                    {"IsSelectable", isSelectable},
+                    {"SelectedId", selectedId},
+                    {"ShowProductCount", showProductCount},
+                    {"ExpandAll", expandAll}
+                })
+            }
+        </div>
+    }
+    else
+    {
+        <div class="no-categories-message">
+            <div class="no-data-icon">🏷️</div>
+            <p>カテゴリが登録されていません</p>
+        </div>
+    }
+</div>
+
+<!-- カテゴリツリーノード部分ビュー -->
+@helper CategoryTreeNode(dynamic category)
+{
+    var showActions = ViewBag.ShowActions as bool? ?? true;
+    var isSelectable = ViewBag.IsSelectable as bool? ?? false;
+    var selectedId = ViewBag.SelectedId as int?;
+    var showProductCount = ViewBag.ShowProductCount as bool? ?? true;
+    var expandAll = ViewBag.ExpandAll as bool? ?? false;
+    
+    var hasChildren = category.ChildCategories?.Any() == true;
+    var isSelected = isSelectable && selectedId == category.Id;
+    var nodeId = $"tree-node-{category.Id}";
+    
+    <div class="tree-item @(hasChildren ? "expandable" : "") @(expandAll ? "" : "collapsed") @(isSelected ? "selected" : "")" 
+         data-category-id="@category.Id" 
+         data-level="@category.Level"
+         id="@nodeId">
+        
+        <div class="tree-node">
+            <!-- 展開/縮小ボタン -->
+            @if (hasChildren)
+            {
+                <button type="button" 
+                        class="tree-toggle" 
+                        onclick="toggleTreeNode('@nodeId')"
+                        title="@(expandAll ? "縮小" : "展開")">
+                    @(expandAll ? "▼" : "▶")
+                </button>
+            }
+            else
+            {
+                <span class="tree-spacer">　</span>
+            }
+            
+            <!-- カテゴリアイコン -->
+            <span class="tree-icon">
+                @if (category.Level == 0)
+                {
+                    <span class="icon-root">📁</span>
+                }
+                else if (hasChildren)
+                {
+                    <span class="icon-branch">📂</span>
+                }
+                else
+                {
+                    <span class="icon-leaf">🏷️</span>
+                }
+            </span>
+            
+            <!-- カテゴリ名 -->
+            <div class="tree-content">
+                @if (isSelectable)
+                {
+                    <button type="button" 
+                            class="tree-label selectable @(isSelected ? "selected" : "")"
+                            onclick="selectCategory(@category.Id, '@category.Name', '@category.FullPath')"
+                            title="このカテゴリを選択">
+                        <span class="category-name">@category.Name</span>
+                    </button>
+                }
+                else
+                {
+                    <div class="tree-label">
+                        <span class="category-name">@category.Name</span>
+                    </div>
+                }
+                
+                <!-- カテゴリ情報 -->
+                <div class="tree-meta">
+                    <!-- 階層レベル -->
+                    <span class="level-indicator level-@category.Level">L@category.Level</span>
+                    
+                    <!-- 商品数 -->
+                    @if (showProductCount)
+                    {
+                        <span class="product-count" title="関連商品数">
+                            📦 @(category.ProductCount ?? 0)
+                        </span>
+                    }
+                    
+                    <!-- 子カテゴリ数 -->
+                    @if (hasChildren)
+                    {
+                        <span class="children-count" title="子カテゴリ数">
+                            🏷️ @category.ChildCategories.Count
+                        </span>
+                    }
+                </div>
+                
+                <!-- カテゴリ説明（折りたたみ可能） -->
+                @if (!string.IsNullOrEmpty(category.Description))
+                {
+                    <div class="tree-description" id="desc-@category.Id" style="display: none;">
+                        <small>@category.Description</small>
+                    </div>
+                    <button type="button" 
+                            class="description-toggle" 
+                            onclick="toggleDescription('@category.Id')"
+                            title="説明を表示/非表示">
+                        💬
+                    </button>
+                }
+                
+                <!-- アクションボタン -->
+                @if (showActions)
+                {
+                    <div class="tree-actions">
+                        <a href="@Url.Action("Details", "Categories", new { id = category.Id })" 
+                           class="tree-action-btn detail-btn" 
+                           title="詳細表示">
+                            👁️
+                        </a>
+                        <a href="@Url.Action("Edit", "Categories", new { id = category.Id })" 
+                           class="tree-action-btn edit-btn" 
+                           title="編集">
+                            ✏️
+                        </a>
+                        <a href="@Url.Action("Create", "Categories", new { parentId = category.Id })" 
+                           class="tree-action-btn add-btn" 
+                           title="子カテゴリを追加">
+                            ➕
+                        </a>
+                        <button type="button" 
+                                class="tree-action-btn delete-btn" 
+                                onclick="confirmDeleteCategory(@category.Id, '@category.Name', @(category.ProductCount ?? 0), @(hasChildren ? "true" : "false"))"
+                                title="削除"
+                                @((category.ProductCount ?? 0) > 0 || hasChildren ? "disabled" : "")>
+                            🗑️
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+        
+        <!-- 子カテゴリ -->
+        @if (hasChildren)
+        {
+            <div class="tree-children" style="display: @(expandAll ? "block" : "none");">
+                @foreach (var child in category.ChildCategories.OrderBy(c => c.SortOrder ?? 0))
+                {
+                    @CategoryTreeNode(child)
+                }
+            </div>
+        }
+    </div>
+}
+
+<script>
+    // カテゴリ階層の初期化
+    function initializeCategoryHierarchy() {
+        setupTreeInteractions();
+        setupKeyboardNavigation();
+    }
+    
+    // ツリー操作の設定
+    function setupTreeInteractions() {
+        // ドラッグ&ドロップによる並び替え（管理画面の場合）
+        if (@Json.Serialize(showActions)) {
+            setupTreeSorting();
+        }
+    }
+    
+    // ツリーノード展開/縮小
+    function toggleTreeNode(nodeId) {
+        const node = document.getElementById(nodeId);
+        const toggle = node.querySelector('.tree-toggle');
+        const children = node.querySelector('.tree-children');
+        
+        if (!children) return;
+        
+        const isExpanded = children.style.display === 'block';
+        
+        if (isExpanded) {
+            // 縮小
+            children.style.display = 'none';
+            toggle.textContent = '▶';
+            toggle.title = '展開';
+            node.classList.add('collapsed');
+        } else {
+            // 展開
+            children.style.display = 'block';
+            toggle.textContent = '▼';
+            toggle.title = '縮小';
+            node.classList.remove('collapsed');
+        }
+        
+        // アニメーション効果
+        children.style.maxHeight = isExpanded ? '0' : children.scrollHeight + 'px';
+    }
+    
+    // すべて展開
+    function expandAllNodes() {
+        document.querySelectorAll('.tree-item.expandable').forEach(node => {
+            const children = node.querySelector('.tree-children');
+            const toggle = node.querySelector('.tree-toggle');
+            
+            if (children && children.style.display !== 'block') {
+                children.style.display = 'block';
+                toggle.textContent = '▼';
+                toggle.title = '縮小';
+                node.classList.remove('collapsed');
+            }
+        });
+    }
+    
+    // すべて縮小
+    function collapseAllNodes() {
+        document.querySelectorAll('.tree-item.expandable').forEach(node => {
+            const children = node.querySelector('.tree-children');
+            const toggle = node.querySelector('.tree-toggle');
+            
+            if (children && children.style.display === 'block') {
+                children.style.display = 'none';
+                toggle.textContent = '▶';
+                toggle.title = '展開';
+                node.classList.add('collapsed');
+            }
+        });
+    }
+    
+    // カテゴリ選択（選択可能モードの場合）
+    function selectCategory(categoryId, categoryName, fullPath) {
+        @if (isSelectable)
+        {
+            <text>
+            // 他の選択を解除
+            document.querySelectorAll('.tree-label.selected').forEach(label => {
+                label.classList.remove('selected');
+            });
+            
+            // 新しい選択を設定
+            event.target.closest('.tree-label').classList.add('selected');
+            
+            // 選択値を隠しフィールドに設定
+            const hiddenField = document.querySelector('input[type="hidden"][name*="CategoryId"]');
+            if (hiddenField) {
+                hiddenField.value = categoryId;
+            }
+            
+            // 選択イベントを発火
+            const selectEvent = new CustomEvent('categorySelected', {
+                detail: {
+                    id: categoryId,
+                    name: categoryName,
+                    fullPath: fullPath
+                }
+            });
+            document.dispatchEvent(selectEvent);
+            </text>
+        }
+    }
+    
+    // 説明表示切り替え
+    function toggleDescription(categoryId) {
+        const description = document.getElementById(`desc-${categoryId}`);
+        const isVisible = description.style.display === 'block';
+        
+        description.style.display = isVisible ? 'none' : 'block';
+        
+        // ボタンの状態更新
+        const button = event.target;
+        button.title = isVisible ? '説明を表示' : '説明を非表示';
+        button.style.opacity = isVisible ? '0.7' : '1';
+    }
+    
+    // キーボードナビゲーション
+    function setupKeyboardNavigation() {
+        document.addEventListener('keydown', function(event) {
+            const focusedElement = document.activeElement;
+            
+            if (focusedElement.classList.contains('tree-label')) {
+                const currentNode = focusedElement.closest('.tree-item');
+                
+                switch (event.key) {
+                    case 'ArrowUp':
+                        event.preventDefault();
+                        navigateToPrevious(currentNode);
+                        break;
+                    case 'ArrowDown':
+                        event.preventDefault();
+                        navigateToNext(currentNode);
+                        break;
+                    case 'ArrowRight':
+                        event.preventDefault();
+                        expandNode(currentNode);
+                        break;
+                    case 'ArrowLeft':
+                        event.preventDefault();
+                        collapseNode(currentNode);
+                        break;
+                    case 'Enter':
+                    case ' ':
+                        event.preventDefault();
+                        if (@Json.Serialize(isSelectable)) {
+                            focusedElement.click();
+                        }
+                        break;
+                }
+            }
+        });
+    }
+    
+    // 前のノードに移動
+    function navigateToPrevious(currentNode) {
+        const allLabels = Array.from(document.querySelectorAll('.tree-label'));
+        const currentLabel = currentNode.querySelector('.tree-label');
+        const currentIndex = allLabels.indexOf(currentLabel);
+        
+        if (currentIndex > 0) {
+            allLabels[currentIndex - 1].focus();
+        }
+    }
+    
+    // 次のノードに移動
+    function navigateToNext(currentNode) {
+        const allLabels = Array.from(document.querySelectorAll('.tree-label'));
+        const currentLabel = currentNode.querySelector('.tree-label');
+        const currentIndex = allLabels.indexOf(currentLabel);
+        
+        if (currentIndex < allLabels.length - 1) {
+            allLabels[currentIndex + 1].focus();
+        }
+    }
+    
+    // ノード展開
+    function expandNode(node) {
+        const toggle = node.querySelector('.tree-toggle');
+        const children = node.querySelector('.tree-children');
+        
+        if (toggle && children && children.style.display !== 'block') {
+            toggle.click();
+        }
+    }
+    
+    // ノード縮小
+    function collapseNode(node) {
+        const toggle = node.querySelector('.tree-toggle');
+        const children = node.querySelector('.tree-children');
+        
+        if (toggle && children && children.style.display === 'block') {
+            toggle.click();
+        }
+    }
+    
+    // ツリーソート機能（管理画面用）
+    function setupTreeSorting() {
+        // ドラッグ&ドロップによる並び替え実装
+        // 実装は複雑になるため、基本機能のみ
+    }
+    
+    // カテゴリ削除確認
+    function confirmDeleteCategory(categoryId, categoryName, productCount, hasChildren) {
+        if (productCount > 0 || hasChildren) {
+            let message = '';
+            if (productCount > 0 && hasChildren) {
+                message = `カテゴリ「${categoryName}」には${productCount}個の商品と子カテゴリが存在するため削除できません。`;
+            } else if (productCount > 0) {
+                message = `カテゴリ「${categoryName}」には${productCount}個の商品が存在するため削除できません。`;
+            } else if (hasChildren) {
+                message = `カテゴリ「${categoryName}」には子カテゴリが存在するため削除できません。`;
+            }
+            
+            showError(message);
+            return;
+        }
+        
+        if (confirm(`カテゴリ「${categoryName}」を削除しますか？\n\nこの操作は元に戻せません。`)) {
+            // 削除処理を実行
+            deleteCategory(categoryId);
+        }
+    }
+    
+    // カテゴリ削除実行
+    async function deleteCategory(categoryId) {
+        try {
+            const response = await fetch(`/Categories/Delete/${categoryId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': getAntiForgeryToken()
+                }
+            });
+            
+            if (response.ok) {
+                showSuccess('カテゴリが正常に削除されました');
+                
+                // ノードを画面から削除
+                const node = document.querySelector(`[data-category-id="${categoryId}"]`);
+                if (node) {
+                    node.remove();
+                }
+            } else {
+                const errorText = await response.text();
+                showError('カテゴリの削除に失敗しました: ' + errorText);
+            }
+        } catch (error) {
+            console.error('カテゴリ削除エラー:', error);
+            showError('カテゴリ削除中にエラーが発生しました');
+        }
+    }
+    
+    // 初期化（ページ読み込み時に呼び出し）
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeCategoryHierarchy();
+    });
+</script>
+
+<style>
+    /* カテゴリ階層表示のスタイル */
+    .category-hierarchy-container {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .category-tree {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        background: white;
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    
+    .tree-item {
+        border-bottom: 1px solid #f0f0f0;
+        transition: all 0.3s ease;
+    }
+    
+    .tree-item:last-child {
+        border-bottom: none;
+    }
+    
+    .tree-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .tree-item.selected {
+        background-color: #e3f2fd;
+        border-left: 4px solid #2196f3;
+    }
+    
+    .tree-node {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        gap: 0.5rem;
+        position: relative;
+    }
+    
+    .tree-toggle {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background-color 0.2s ease;
+    }
+    
+    .tree-toggle:hover {
+        background-color: #e0e0e0;
+    }
+    
+    .tree-spacer {
+        width: 20px;
+        height: 20px;
+        display: inline-block;
+    }
+    
+    .tree-icon {
+        font-size: 1.1rem;
+        line-height: 1;
+    }
+    
+    .icon-root {
+        color: #ff9800;
+    }
+    
+    .icon-branch {
+        color: #2196f3;
+    }
+    
+    .icon-leaf {
+        color: #4caf50;
+    }
+    
+    .tree-content {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        min-width: 0;
+    }
+    
+    .tree-label {
+        flex: 1;
+        min-width: 0;
+        cursor: default;
+        border-radius: 4px;
+        padding: 0.25rem 0.5rem;
+        transition: all 0.2s ease;
+    }
+    
+    .tree-label.selectable {
+        cursor: pointer;
+        border: none;
+        background: none;
+        text-align: left;
+        font: inherit;
+    }
+    
+    .tree-label.selectable:hover {
+        background-color: #e3f2fd;
+    }
+    
+    .tree-label.selected {
+        background-color: #2196f3;
+        color: white;
+    }
+    
+    .category-name {
+        font-weight: 500;
+        color: #333;
+        word-break: break-word;
+    }
+    
+    .tree-label.selected .category-name {
+        color: white;
+    }
+    
+    .tree-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        color: #666;
+        flex-shrink: 0;
+    }
+    
+    .level-indicator {
+        background: #f0f0f0;
+        color: #666;
+        padding: 0.125rem 0.375rem;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 500;
+    }
+    
+    .level-indicator.level-0 {
+        background: #ffecb3;
+        color: #f57c00;
+    }
+    
+    .level-indicator.level-1 {
+        background: #e1f5fe;
+        color: #0277bd;
+    }
+    
+    .level-indicator.level-2 {
+        background: #e8f5e8;
+        color: #2e7d32;
+    }
+    
+    .product-count,
+    .children-count {
+        display: flex;
+        align-items: center;
+        gap: 0.125rem;
+        font-size: 0.75rem;
+    }
+    
+    .tree-description {
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+        background: #f8f9fa;
+        border-radius: 4px;
+        border-left: 3px solid #dee2e6;
+        font-size: 0.85rem;
+        color: #666;
+        line-height: 1.4;
+    }
+    
+    .description-toggle {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+        padding: 0;
+        margin-left: 0.25rem;
+    }
+    
+    .description-toggle:hover {
+        opacity: 1;
+    }
+    
+    .tree-actions {
+        display: flex;
+        gap: 0.25rem;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+    
+    .tree-item:hover .tree-actions {
+        opacity: 1;
+    }
+    
+    .tree-action-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+        padding: 0.25rem;
+        border-radius: 4px;
+        text-decoration: none;
+        transition: background-color 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+    }
+    
+    .tree-action-btn:hover {
+        background-color: rgba(0,0,0,0.1);
+    }
+    
+    .tree-action-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+    
+    .detail-btn:hover {
+        background-color: rgba(33, 150, 243, 0.1);
+    }
+    
+    .edit-btn:hover {
+        background-color: rgba(255, 193, 7, 0.1);
+    }
+    
+    .add-btn:hover {
+        background-color: rgba(76, 175, 80, 0.1);
+    }
+    
+    .delete-btn:hover:not(:disabled) {
+        background-color: rgba(244, 67, 54, 0.1);
+    }
+    
+    .tree-children {
+        border-left: 2px solid #e0e0e0;
+        margin-left: 1rem;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+    }
+    
+    .tree-item.level-0 > .tree-children {
+        border-left-color: #ff9800;
+    }
+    
+    .tree-item.level-1 > .tree-children {
+        border-left-color: #2196f3;
+    }
+    
+    .tree-item.level-2 > .tree-children {
+        border-left-color: #4caf50;
+    }
+    
+    .no-categories-message {
+        text-align: center;
+        padding: 3rem;
+        color: #666;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 2px dashed #dee2e6;
+    }
+    
+    .no-data-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    /* レスポンシブ対応 */
+    @media (max-width: 768px) {
+        .tree-node {
+            padding: 0.5rem;
+        }
+        
+        .tree-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+        }
+        
+        .tree-actions {
+            opacity: 1;
+        }
+        
+        .tree-action-btn {
+            font-size: 1.1rem;
+        }
+    }
+    
+    /* アニメーション */
+    @keyframes slideDown {
+        from {
+            max-height: 0;
+            opacity: 0;
+        }
+        to {
+            max-height: 1000px;
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideUp {
+        from {
+            max-height: 1000px;
+            opacity: 1;
+        }
+        to {
+            max-height: 0;
+            opacity: 0;
+        }
+    }
+    
+    .tree-children.expanding {
+        animation: slideDown 0.3s ease-out;
+    }
+    
+    .tree-children.collapsing {
+        animation: slideUp 0.3s ease-out;
+    }
+</style>

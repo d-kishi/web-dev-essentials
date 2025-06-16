@@ -1,0 +1,581 @@
+@model Web.Essentials.App.ViewModels.CategoryDetailsViewModel
+@{
+    ViewData["Title"] = $"カテゴリ詳細 - {Model.Name}";
+}
+
+<!-- カテゴリ詳細画面 -->
+<div class="page-header">
+    <div class="page-title-section">
+        <h1 class="page-title">カテゴリ詳細</h1>
+        <p class="page-description">カテゴリ「@Model.Name」の詳細情報を表示します。</p>
+    </div>
+    <div class="page-actions">
+        <a href="@Url.Action("Edit", "Categories", new { id = Model.Id })" class="btn btn-warning">
+            <span class="btn-icon">✏</span>
+            編集
+        </a>
+        <button type="button" 
+                class="btn btn-danger" 
+                onclick="confirmDeleteCategory(@Model.Id, '@Model.Name', @Model.ProductCount, @(Model.ChildCategories?.Any() == true ? "true" : "false"))"
+                @(Model.ProductCount > 0 || Model.ChildCategories?.Any() == true ? "disabled title='関連商品または子カテゴリが存在するため削除できません'" : "")>
+            <span class="btn-icon">🗑</span>
+            削除
+        </button>
+        <a href="@Url.Action("Index", "Categories")" class="btn btn-secondary">
+            <span class="btn-icon">←</span>
+            カテゴリ一覧に戻る
+        </a>
+    </div>
+</div>
+
+<!-- パンくずナビ -->
+<nav class="breadcrumb-nav" aria-label="パンくずナビ">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="@Url.Action("Index", "Home")">ホーム</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="@Url.Action("Index", "Categories")">カテゴリ一覧</a>
+        </li>
+        @if (!string.IsNullOrEmpty(Model.FullPath))
+        {
+            @{
+                var pathParts = Model.FullPath.Split(" > ");
+                for (int i = 0; i < pathParts.Length - 1; i++)
+                {
+                    <li class="breadcrumb-item">
+                        <span>@pathParts[i]</span>
+                    </li>
+                }
+            }
+        }
+        <li class="breadcrumb-item active" aria-current="page">
+            @Model.Name
+        </li>
+    </ol>
+</nav>
+
+<!-- カテゴリ詳細コンテンツ -->
+<div class="category-details-container">
+    <div class="category-overview">
+        <!-- カテゴリ基本情報 -->
+        <div class="category-basic-info">
+            <div class="category-header">
+                <h2 class="category-name">@Model.Name</h2>
+                <div class="category-level">
+                    <span class="level-badge level-@Model.Level">レベル @Model.Level</span>
+                    @if (Model.Level == 0)
+                    {
+                        <span class="level-description">（ルートカテゴリ）</span>
+                    }
+                    else
+                    {
+                        <span class="level-description">（@Model.Level 階層目）</span>
+                    }
+                </div>
+            </div>
+            
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                <div class="category-description">
+                    <h3 class="description-title">カテゴリ説明</h3>
+                    <div class="description-content">
+                        @Html.Raw(Model.Description.Replace("\n", "<br />"))
+                    </div>
+                </div>
+            }
+            
+            <!-- 階層パス -->
+            @if (!string.IsNullOrEmpty(Model.FullPath))
+            {
+                <div class="category-path">
+                    <h3 class="path-title">階層パス</h3>
+                    <div class="path-content">
+                        <nav class="category-path-nav">
+                            @{
+                                var pathParts = Model.FullPath.Split(" > ");
+                                for (int i = 0; i < pathParts.Length; i++)
+                                {
+                                    if (i > 0)
+                                    {
+                                        <span class="path-separator">▶</span>
+                                    }
+                                    if (i == pathParts.Length - 1)
+                                    {
+                                        <span class="path-current">@pathParts[i]</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="path-ancestor">@pathParts[i]</span>
+                                    }
+                                }
+                            }
+                        </nav>
+                    </div>
+                </div>
+            }
+            
+            <!-- 統計情報 -->
+            <div class="category-statistics">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-icon">📦</span>
+                        <div class="stat-content">
+                            <div class="stat-value">@Model.ProductCount</div>
+                            <div class="stat-label">登録商品数</div>
+                        </div>
+                    </div>
+                    
+                    @if (Model.ChildCategories?.Any() == true)
+                    {
+                        <div class="stat-item">
+                            <span class="stat-icon">🏷️</span>
+                            <div class="stat-content">
+                                <div class="stat-value">@Model.ChildCategories.Count</div>
+                                <div class="stat-label">子カテゴリ数</div>
+                            </div>
+                        </div>
+                    }
+                    
+                    <div class="stat-item">
+                        <span class="stat-icon">📅</span>
+                        <div class="stat-content">
+                            <div class="stat-value">
+                                @{
+                                    var daysSinceCreated = (DateTime.Now - Model.CreatedAt).Days;
+                                }
+                                @daysSinceCreated 日
+                            </div>
+                            <div class="stat-label">作成からの日数</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- アクションボタン -->
+            <div class="category-actions">
+                <div class="action-buttons">
+                    <a href="@Url.Action("Edit", "Categories", new { id = Model.Id })" 
+                       class="btn btn-primary btn-large">
+                        <span class="btn-icon">✏</span>
+                        このカテゴリを編集
+                    </a>
+                    <a href="@Url.Action("Create", "Categories", new { parentId = Model.Id })" 
+                       class="btn btn-outline btn-large">
+                        <span class="btn-icon">➕</span>
+                        子カテゴリを作成
+                    </a>
+                    <button type="button" 
+                            class="btn btn-light btn-large" 
+                            onclick="duplicateCategory(@Model.Id)">
+                        <span class="btn-icon">📋</span>
+                        複製
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 詳細情報タブ -->
+    <div class="category-details-info">
+        <div class="details-tabs">
+            <div class="tab-navigation">
+                <button class="tab-button active" onclick="showTab('products')" data-tab="products">
+                    関連商品 (@Model.ProductCount)
+                </button>
+                @if (Model.ChildCategories?.Any() == true)
+                {
+                    <button class="tab-button" onclick="showTab('children')" data-tab="children">
+                        子カテゴリ (@Model.ChildCategories.Count)
+                    </button>
+                }
+                <button class="tab-button" onclick="showTab('hierarchy')" data-tab="hierarchy">
+                    階層情報
+                </button>
+                <button class="tab-button" onclick="showTab('metadata')" data-tab="metadata">
+                    管理情報
+                </button>
+            </div>
+            
+            <!-- 関連商品タブ -->
+            <div id="productsTab" class="tab-content active">
+                <div class="products-container">
+                    @if (Model.Products?.Any() == true)
+                    {
+                        <div class="products-grid">
+                            @foreach (var product in Model.Products)
+                            {
+                                <div class="product-card">
+                                    <div class="product-image">
+                                        @if (product.MainImagePath != null)
+                                        {
+                                            <img src="@product.MainImagePath" alt="@product.Name" class="product-thumbnail" />
+                                        }
+                                        else
+                                        {
+                                            <img src="/images/no-image.png" alt="画像なし" class="product-thumbnail no-image" />
+                                        }
+                                    </div>
+                                    <div class="product-info">
+                                        <h4 class="product-name">
+                                            <a href="@Url.Action("Details", "Product", new { id = product.Id })">
+                                                @product.Name
+                                            </a>
+                                        </h4>
+                                        <div class="product-price">¥@product.Price.ToString("N0")</div>
+                                        @if (!string.IsNullOrEmpty(product.Description))
+                                        {
+                                            <div class="product-description">
+                                                @(product.Description.Length > 60 ? product.Description.Substring(0, 60) + "..." : product.Description)
+                                            </div>
+                                        }
+                                        <div class="product-status">
+                                            @switch (product.Status)
+                                            {
+                                                case 0:
+                                                    <span class="status-badge status-pending">販売開始前</span>
+                                                    break;
+                                                case 1:
+                                                    <span class="status-badge status-active">販売中</span>
+                                                    break;
+                                                case 2:
+                                                    <span class="status-badge status-discontinued">取扱終了</span>
+                                                    break;
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="product-actions">
+                                        <a href="@Url.Action("Details", "Product", new { id = product.Id })" 
+                                           class="btn btn-info btn-sm">詳細</a>
+                                        <a href="@Url.Action("Edit", "Product", new { id = product.Id })" 
+                                           class="btn btn-warning btn-sm">編集</a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        
+                        <!-- 商品一覧へのリンク -->
+                        <div class="view-all-products">
+                            <a href="@Url.Action("Index", "Product", new { categoryId = Model.Id })" 
+                               class="btn btn-outline">
+                                このカテゴリの商品をすべて表示
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="no-products-message">
+                            <div class="no-data-icon">📦</div>
+                            <h3>このカテゴリには商品がありません</h3>
+                            <p>新しい商品を登録するか、既存の商品をこのカテゴリに関連付けてください。</p>
+                            <div class="action-buttons">
+                                <a href="@Url.Action("Create", "Product", new { categoryId = Model.Id })" 
+                                   class="btn btn-primary">
+                                    新しい商品を登録
+                                </a>
+                                <a href="@Url.Action("Index", "Product")" 
+                                   class="btn btn-outline">
+                                    既存商品を関連付け
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            <!-- 子カテゴリタブ -->
+            @if (Model.ChildCategories?.Any() == true)
+            {
+                <div id="childrenTab" class="tab-content">
+                    <div class="children-container">
+                        <div class="children-grid">
+                            @foreach (var childCategory in Model.ChildCategories.OrderBy(c => c.SortOrder))
+                            {
+                                <div class="child-category-card">
+                                    <div class="child-category-header">
+                                        <h4 class="child-category-name">
+                                            <a href="@Url.Action("Details", "Categories", new { id = childCategory.Id })">
+                                                @childCategory.Name
+                                            </a>
+                                        </h4>
+                                        <span class="level-badge level-@childCategory.Level">L@childCategory.Level</span>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(childCategory.Description))
+                                    {
+                                        <div class="child-category-description">
+                                            @(childCategory.Description.Length > 80 ? childCategory.Description.Substring(0, 80) + "..." : childCategory.Description)
+                                        </div>
+                                    }
+                                    <div class="child-category-stats">
+                                        <span class="stat-item">
+                                            <span class="stat-icon">📦</span>
+                                            @childCategory.ProductCount 商品
+                                        </span>
+                                        @if (childCategory.HasChildren)
+                                        {
+                                            <span class="stat-item">
+                                                <span class="stat-icon">🏷️</span>
+                                                子カテゴリあり
+                                            </span>
+                                        }
+                                    </div>
+                                    <div class="child-category-actions">
+                                        <a href="@Url.Action("Details", "Categories", new { id = childCategory.Id })" 
+                                           class="btn btn-info btn-sm">詳細</a>
+                                        <a href="@Url.Action("Edit", "Categories", new { id = childCategory.Id })" 
+                                           class="btn btn-warning btn-sm">編集</a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        
+                        <!-- 子カテゴリ追加 -->
+                        <div class="add-child-category">
+                            <a href="@Url.Action("Create", "Categories", new { parentId = Model.Id })" 
+                               class="btn btn-primary">
+                                <span class="btn-icon">➕</span>
+                                新しい子カテゴリを作成
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+            
+            <!-- 階層情報タブ -->
+            <div id="hierarchyTab" class="tab-content">
+                <div class="hierarchy-container">
+                    <!-- 親カテゴリ情報 -->
+                    @if (Model.ParentCategory != null)
+                    {
+                        <div class="hierarchy-section">
+                            <h3 class="hierarchy-title">親カテゴリ</h3>
+                            <div class="parent-category-card">
+                                <div class="parent-category-info">
+                                    <h4 class="parent-category-name">
+                                        <a href="@Url.Action("Details", "Categories", new { id = Model.ParentCategory.Id })">
+                                            @Model.ParentCategory.Name
+                                        </a>
+                                    </h4>
+                                    <span class="level-badge level-@Model.ParentCategory.Level">L@Model.ParentCategory.Level</span>
+                                </div>
+                                @if (!string.IsNullOrEmpty(Model.ParentCategory.Description))
+                                {
+                                    <div class="parent-category-description">
+                                        @Model.ParentCategory.Description
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                    
+                    <!-- 階層構造表示 -->
+                    <div class="hierarchy-section">
+                        <h3 class="hierarchy-title">階層構造</h3>
+                        <div class="hierarchy-tree">
+                            @Html.Partial("_CategoryHierarchy", new List<dynamic> { Model })
+                        </div>
+                    </div>
+                    
+                    <!-- 同階層カテゴリ -->
+                    @if (Model.SiblingCategories?.Any() == true)
+                    {
+                        <div class="hierarchy-section">
+                            <h3 class="hierarchy-title">同階層のカテゴリ</h3>
+                            <div class="siblings-list">
+                                @foreach (var sibling in Model.SiblingCategories)
+                                {
+                                    <div class="sibling-item @(sibling.Id == Model.Id ? "current" : "")">
+                                        @if (sibling.Id == Model.Id)
+                                        {
+                                            <span class="sibling-name current">@sibling.Name（現在のカテゴリ）</span>
+                                        }
+                                        else
+                                        {
+                                            <a href="@Url.Action("Details", "Categories", new { id = sibling.Id })" 
+                                               class="sibling-link">
+                                                @sibling.Name
+                                            </a>
+                                        }
+                                        <span class="sibling-stats">(@sibling.ProductCount 商品)</span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            <!-- 管理情報タブ -->
+            <div id="metadataTab" class="tab-content">
+                <div class="metadata-grid">
+                    <div class="metadata-item">
+                        <label class="metadata-label">カテゴリID</label>
+                        <span class="metadata-value">@Model.Id</span>
+                    </div>
+                    
+                    <div class="metadata-item">
+                        <label class="metadata-label">階層レベル</label>
+                        <span class="metadata-value">@Model.Level</span>
+                    </div>
+                    
+                    <div class="metadata-item">
+                        <label class="metadata-label">表示順序</label>
+                        <span class="metadata-value">@Model.SortOrder</span>
+                    </div>
+                    
+                    <div class="metadata-item">
+                        <label class="metadata-label">作成日時</label>
+                        <span class="metadata-value">
+                            <time datetime="@Model.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss")">
+                                @Model.CreatedAt.ToString("yyyy年MM月dd日 HH:mm:ss")
+                            </time>
+                        </span>
+                    </div>
+                    
+                    <div class="metadata-item">
+                        <label class="metadata-label">最終更新日時</label>
+                        <span class="metadata-value">
+                            <time datetime="@Model.UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ss")">
+                                @Model.UpdatedAt.ToString("yyyy年MM月dd日 HH:mm:ss")
+                            </time>
+                        </span>
+                    </div>
+                    
+                    @if (Model.CreatedAt != Model.UpdatedAt)
+                    {
+                        <div class="metadata-item">
+                            <label class="metadata-label">最終更新からの経過時間</label>
+                            <span class="metadata-value">
+                                @{
+                                    var timeDiff = DateTime.Now - Model.UpdatedAt;
+                                    var timeDiffText = timeDiff.Days > 0 ? $"{timeDiff.Days}日前" :
+                                                      timeDiff.Hours > 0 ? $"{timeDiff.Hours}時間前" :
+                                                      timeDiff.Minutes > 0 ? $"{timeDiff.Minutes}分前" : "1分以内";
+                                }
+                                @timeDiffText
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ページ読み込み時の初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCategoryDetails();
+        });
+        
+        // カテゴリ詳細の初期化
+        function initializeCategoryDetails() {
+            // タブ機能の初期化
+            setupTabs();
+        }
+        
+        // タブ表示切り替え
+        function showTab(tabName) {
+            // すべてのタブボタンとコンテンツを非アクティブに
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // 選択されたタブをアクティブに
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+        
+        // カテゴリ削除確認
+        function confirmDeleteCategory(categoryId, categoryName, productCount, hasChildren) {
+            if (productCount > 0 || hasChildren) {
+                let message = '';
+                if (productCount > 0 && hasChildren) {
+                    message = `カテゴリ「${categoryName}」には${productCount}個の商品と子カテゴリが存在するため削除できません。`;
+                } else if (productCount > 0) {
+                    message = `カテゴリ「${categoryName}」には${productCount}個の商品が存在するため削除できません。`;
+                } else if (hasChildren) {
+                    message = `カテゴリ「${categoryName}」には子カテゴリが存在するため削除できません。`;
+                }
+                
+                showError(message + '\n関連する商品や子カテゴリを先に削除または移動してください。');
+                return;
+            }
+            
+            showConfirmationModal(
+                'カテゴリ削除の確認',
+                `カテゴリ「${categoryName}」を削除しますか？`,
+                '削除すると元に戻せません。',
+                '削除',
+                () => deleteCategory(categoryId)
+            );
+        }
+        
+        // カテゴリ削除実行
+        async function deleteCategory(categoryId) {
+            try {
+                showLoadingModal('カテゴリを削除しています...');
+                
+                const response = await fetch(`/Categories/Delete/${categoryId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': getAntiForgeryToken()
+                    }
+                });
+                
+                hideLoadingModal();
+                
+                if (response.ok) {
+                    showSuccess('カテゴリが正常に削除されました');
+                    
+                    // カテゴリ一覧に戻る
+                    setTimeout(() => {
+                        window.location.href = '/Categories';
+                    }, 1500);
+                } else {
+                    const errorText = await response.text();
+                    showError('カテゴリの削除に失敗しました: ' + errorText);
+                }
+            } catch (error) {
+                hideLoadingModal();
+                console.error('カテゴリ削除エラー:', error);
+                showError('カテゴリ削除中にエラーが発生しました');
+            }
+        }
+        
+        // カテゴリ複製
+        async function duplicateCategory(categoryId) {
+            try {
+                showLoadingModal('カテゴリを複製しています...');
+                
+                const response = await fetch(`/Categories/Duplicate/${categoryId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': getAntiForgeryToken()
+                    }
+                });
+                
+                hideLoadingModal();
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    showSuccess('カテゴリが複製されました');
+                    
+                    // 複製されたカテゴリの編集画面に移動
+                    setTimeout(() => {
+                        window.location.href = `/Categories/Edit/${result.newCategoryId}`;
+                    }, 1500);
+                } else {
+                    const errorText = await response.text();
+                    showError('カテゴリの複製に失敗しました: ' + errorText);
+                }
+            } catch (error) {
+                hideLoadingModal();
+                console.error('カテゴリ複製エラー:', error);
+                showError('カテゴリ複製中にエラーが発生しました');
+            }
+        }
+    </script>
+}

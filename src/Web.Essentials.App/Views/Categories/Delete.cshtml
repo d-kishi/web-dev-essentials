@@ -1,0 +1,551 @@
+@model Web.Essentials.App.ViewModels.CategoryDetailsViewModel
+@{
+    ViewData["Title"] = $"カテゴリ削除確認 - {Model.Name}";
+}
+
+<!-- カテゴリ削除確認画面 -->
+<div class="page-header">
+    <div class="page-title-section">
+        <h1 class="page-title">カテゴリ削除確認</h1>
+        <p class="page-description">カテゴリ「@Model.Name」の削除確認です。削除すると元に戻せません。</p>
+    </div>
+</div>
+
+<!-- パンくずナビ -->
+<nav class="breadcrumb-nav" aria-label="パンくずナビ">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="@Url.Action("Index", "Home")">ホーム</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="@Url.Action("Index", "Categories")">カテゴリ一覧</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="@Url.Action("Details", "Categories", new { id = Model.Id })">@Model.Name</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            削除確認
+        </li>
+    </ol>
+</nav>
+
+<!-- 削除可否判定 -->
+@{
+    var canDelete = Model.ProductCount == 0 && (Model.ChildCategories?.Any() != true);
+    var blockingReasons = new List<string>();
+    
+    if (Model.ProductCount > 0)
+    {
+        blockingReasons.Add($"{Model.ProductCount}個の商品が関連付けられている");
+    }
+    
+    if (Model.ChildCategories?.Any() == true)
+    {
+        blockingReasons.Add($"{Model.ChildCategories.Count}個の子カテゴリが存在する");
+    }
+}
+
+<!-- 削除警告メッセージ -->
+@if (!canDelete)
+{
+    <div class="alert alert-error delete-blocked">
+        <div class="alert-icon">🚫</div>
+        <div class="alert-content">
+            <h3 class="alert-title">削除できません</h3>
+            <p class="alert-message">
+                このカテゴリは以下の理由により削除できません：
+            </p>
+            <ul class="blocking-reasons">
+                @foreach (var reason in blockingReasons)
+                {
+                    <li>@reason</li>
+                }
+            </ul>
+            <p class="resolution-message">
+                カテゴリを削除するには、関連する商品や子カテゴリを先に削除または移動してください。
+            </p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-danger delete-warning">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-content">
+            <h3 class="alert-title">削除の確認</h3>
+            <p class="alert-message">
+                この操作は元に戻すことができません。カテゴリに関連するすべての情報も同時に削除されます。
+            </p>
+        </div>
+    </div>
+}
+
+<!-- カテゴリ詳細表示（削除確認用） -->
+<div class="delete-confirmation-container">
+    <div class="category-summary">
+        <div class="summary-header">
+            <h2 class="summary-title">削除対象のカテゴリ</h2>
+        </div>
+        
+        <div class="summary-content">
+            <!-- カテゴリ基本情報 -->
+            <div class="category-info-card">
+                <div class="category-overview">
+                    <div class="category-header">
+                        <h3 class="category-name">@Model.Name</h3>
+                        <span class="level-badge level-@Model.Level">レベル @Model.Level</span>
+                    </div>
+                    
+                    @if (!string.IsNullOrEmpty(Model.Description))
+                    {
+                        <div class="category-description">
+                            @(Model.Description.Length > 150 ? Model.Description.Substring(0, 150) + "..." : Model.Description)
+                        </div>
+                    }
+                    
+                    @if (!string.IsNullOrEmpty(Model.FullPath))
+                    {
+                        <div class="category-path">
+                            <label class="path-label">階層パス:</label>
+                            <span class="path-value">@Model.FullPath</span>
+                        </div>
+                    }
+                </div>
+                
+                <!-- 詳細情報 -->
+                <div class="category-metadata">
+                    <div class="metadata-grid">
+                        <div class="metadata-item">
+                            <label class="metadata-label">カテゴリID</label>
+                            <span class="metadata-value">@Model.Id</span>
+                        </div>
+                        
+                        <div class="metadata-item">
+                            <label class="metadata-label">階層レベル</label>
+                            <span class="metadata-value">@Model.Level</span>
+                        </div>
+                        
+                        <div class="metadata-item">
+                            <label class="metadata-label">作成日時</label>
+                            <span class="metadata-value">
+                                @Model.CreatedAt.ToString("yyyy/MM/dd HH:mm:ss")
+                            </span>
+                        </div>
+                        
+                        <div class="metadata-item">
+                            <label class="metadata-label">最終更新日時</label>
+                            <span class="metadata-value">
+                                @Model.UpdatedAt.ToString("yyyy/MM/dd HH:mm:ss")
+                            </span>
+                        </div>
+                        
+                        <div class="metadata-item">
+                            <label class="metadata-label">関連商品数</label>
+                            <span class="metadata-value @(Model.ProductCount > 0 ? "text-warning" : "")">
+                                @Model.ProductCount 個
+                            </span>
+                        </div>
+                        
+                        <div class="metadata-item">
+                            <label class="metadata-label">子カテゴリ数</label>
+                            <span class="metadata-value @(Model.ChildCategories?.Any() == true ? "text-warning" : "")">
+                                @(Model.ChildCategories?.Count ?? 0) 個
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 削除影響範囲 -->
+    <div class="deletion-impact">
+        <h3 class="impact-title">削除される内容</h3>
+        <div class="impact-list">
+            <div class="impact-item">
+                <span class="impact-icon">🏷️</span>
+                <div class="impact-content">
+                    <strong>カテゴリ基本情報</strong>
+                    <p>カテゴリ名、説明、階層情報などの基本情報</p>
+                </div>
+            </div>
+            
+            @if (Model.ProductCount > 0)
+            {
+                <div class="impact-item impact-blocking">
+                    <span class="impact-icon">📦</span>
+                    <div class="impact-content">
+                        <strong>関連商品の関連付け</strong>
+                        <p>@Model.ProductCount 個の商品とのカテゴリ関連付け（商品自体は削除されません）</p>
+                        <div class="blocking-note">※ 商品が関連付けられているため削除できません</div>
+                    </div>
+                </div>
+            }
+            
+            @if (Model.ChildCategories?.Any() == true)
+            {
+                <div class="impact-item impact-blocking">
+                    <span class="impact-icon">🌳</span>
+                    <div class="impact-content">
+                        <strong>子カテゴリの階層構造</strong>
+                        <p>@Model.ChildCategories.Count 個の子カテゴリの親子関係</p>
+                        <div class="blocking-note">※ 子カテゴリが存在するため削除できません</div>
+                    </div>
+                </div>
+            }
+            
+            <div class="impact-item">
+                <span class="impact-icon">📊</span>
+                <div class="impact-content">
+                    <strong>履歴・ログ情報</strong>
+                    <p>カテゴリに関連するすべての変更履歴とログ情報</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 関連商品・子カテゴリの詳細 -->
+    @if (!canDelete)
+    {
+        <div class="blocking-details">
+            <h3 class="blocking-title">削除を阻害している要素</h3>
+            
+            @if (Model.ProductCount > 0 && Model.Products?.Any() == true)
+            {
+                <div class="blocking-section">
+                    <h4 class="blocking-subtitle">関連商品 (@Model.ProductCount 個)</h4>
+                    <div class="blocking-items">
+                        @foreach (var product in Model.Products.Take(5))
+                        {
+                            <div class="blocking-item">
+                                <span class="item-name">@product.Name</span>
+                                <span class="item-price">¥@product.Price.ToString("N0")</span>
+                                <a href="@Url.Action("Details", "Product", new { id = product.Id })" 
+                                   class="btn btn-sm btn-info">詳細</a>
+                                <a href="@Url.Action("Edit", "Product", new { id = product.Id })" 
+                                   class="btn btn-sm btn-warning">編集</a>
+                            </div>
+                        }
+                        @if (Model.Products.Count > 5)
+                        {
+                            <div class="more-items">
+                                他 @(Model.Products.Count - 5) 個の商品...
+                                <a href="@Url.Action("Index", "Product", new { categoryId = Model.Id })" 
+                                   class="view-all-link">すべて表示</a>
+                            </div>
+                        }
+                    </div>
+                    <div class="resolution-action">
+                        <p class="resolution-text">これらの商品のカテゴリ関連付けを削除または変更してください。</p>
+                        <a href="@Url.Action("Index", "Product", new { categoryId = Model.Id })" 
+                           class="btn btn-warning">関連商品を管理</a>
+                    </div>
+                </div>
+            }
+            
+            @if (Model.ChildCategories?.Any() == true)
+            {
+                <div class="blocking-section">
+                    <h4 class="blocking-subtitle">子カテゴリ (@Model.ChildCategories.Count 個)</h4>
+                    <div class="blocking-items">
+                        @foreach (var child in Model.ChildCategories)
+                        {
+                            <div class="blocking-item">
+                                <span class="item-name">@child.Name</span>
+                                <span class="item-path">(@child.FullPath)</span>
+                                <span class="item-products">@child.ProductCount 商品</span>
+                                <a href="@Url.Action("Details", "Categories", new { id = child.Id })" 
+                                   class="btn btn-sm btn-info">詳細</a>
+                                <a href="@Url.Action("Edit", "Categories", new { id = child.Id })" 
+                                   class="btn btn-sm btn-warning">編集</a>
+                            </div>
+                        }
+                    </div>
+                    <div class="resolution-action">
+                        <p class="resolution-text">これらの子カテゴリを削除するか、他の親カテゴリに移動してください。</p>
+                        <a href="@Url.Action("Index", "Categories")" 
+                           class="btn btn-warning">子カテゴリを管理</a>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    
+    <!-- 削除実行フォーム -->
+    @if (canDelete)
+    {
+        <div class="deletion-form">
+            <form asp-action="Delete" method="post" id="deleteForm" class="delete-confirmation-form">
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(model => model.Id)
+                
+                <!-- 削除確認チェックボックス -->
+                <div class="confirmation-checks">
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="confirmUnderstand" class="checkbox-input" required>
+                            <span class="checkbox-custom"></span>
+                            削除の影響を理解し、この操作が元に戻せないことを確認しました
+                        </label>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="confirmCategoryName" class="checkbox-input" required>
+                            <span class="checkbox-custom"></span>
+                            削除対象のカテゴリが「@Model.Name」であることを確認しました
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- 削除理由（任意） -->
+                <div class="deletion-reason">
+                    <label for="deletionReason" class="form-label">削除理由（任意）</label>
+                    <textarea id="deletionReason" 
+                              name="DeletionReason" 
+                              class="form-textarea"
+                              placeholder="削除理由を入力してください（ログに記録されます）"
+                              rows="3"
+                              maxlength="500"></textarea>
+                    <div class="field-hint">最大500文字まで入力できます</div>
+                </div>
+                
+                <!-- アクションボタン -->
+                <div class="form-actions">
+                    <div class="action-buttons">
+                        <button type="submit" 
+                                class="btn btn-danger btn-large" 
+                                id="deleteButton"
+                                disabled>
+                            <span class="btn-icon">🗑️</span>
+                            カテゴリを削除する
+                        </button>
+                        <a href="@Url.Action("Details", "Categories", new { id = Model.Id })" 
+                           class="btn btn-secondary btn-large">
+                            <span class="btn-icon">↩️</span>
+                            キャンセル（詳細に戻る）
+                        </a>
+                        <a href="@Url.Action("Index", "Categories")" 
+                           class="btn btn-light btn-large">
+                            <span class="btn-icon">📋</span>
+                            カテゴリ一覧に戻る
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    }
+    else
+    {
+        <!-- 削除不可の場合のアクション -->
+        <div class="cannot-delete-actions">
+            <div class="action-buttons">
+                <a href="@Url.Action("Details", "Categories", new { id = Model.Id })" 
+                   class="btn btn-secondary btn-large">
+                    <span class="btn-icon">↩️</span>
+                    詳細に戻る
+                </a>
+                <a href="@Url.Action("Index", "Categories")" 
+                   class="btn btn-light btn-large">
+                    <span class="btn-icon">📋</span>
+                    カテゴリ一覧に戻る
+                </a>
+                <a href="@Url.Action("Edit", "Categories", new { id = Model.Id })" 
+                   class="btn btn-warning btn-large">
+                    <span class="btn-icon">✏</span>
+                    カテゴリを編集
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+@if (canDelete)
+{
+    @section Scripts {
+        <script>
+            // ページ読み込み時の初期化
+            document.addEventListener('DOMContentLoaded', function() {
+                initializeDeleteConfirmation();
+            });
+            
+            // 削除確認の初期化
+            function initializeDeleteConfirmation() {
+                // チェックボックスの状態監視
+                setupConfirmationValidation();
+                
+                // フォーム送信の処理
+                setupFormSubmission();
+                
+                // ページ離脱警告
+                setupUnloadWarning();
+            }
+            
+            // 確認チェックボックスの検証設定
+            function setupConfirmationValidation() {
+                const confirmUnderstand = document.getElementById('confirmUnderstand');
+                const confirmCategoryName = document.getElementById('confirmCategoryName');
+                const deleteButton = document.getElementById('deleteButton');
+                
+                function validateConfirmations() {
+                    const allChecked = confirmUnderstand.checked && confirmCategoryName.checked;
+                    deleteButton.disabled = !allChecked;
+                    
+                    if (allChecked) {
+                        deleteButton.classList.remove('btn-disabled');
+                    } else {
+                        deleteButton.classList.add('btn-disabled');
+                    }
+                }
+                
+                confirmUnderstand.addEventListener('change', validateConfirmations);
+                confirmCategoryName.addEventListener('change', validateConfirmations);
+            }
+            
+            // フォーム送信の設定
+            function setupFormSubmission() {
+                const deleteForm = document.getElementById('deleteForm');
+                
+                deleteForm.addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    
+                    // 最終確認ダイアログ
+                    showFinalConfirmation();
+                });
+            }
+            
+            // 最終確認ダイアログ
+            function showFinalConfirmation() {
+                const categoryName = '@Model.Name';
+                const confirmMessage = `本当にカテゴリ「${categoryName}」を削除しますか？\n\nこの操作は元に戻すことができません。`;
+                
+                showConfirmationModal(
+                    '最終確認',
+                    confirmMessage,
+                    '削除後はカテゴリに関連するすべてのデータが失われます。',
+                    '削除する',
+                    () => executeDelete()
+                );
+            }
+            
+            // 削除実行
+            async function executeDelete() {
+                try {
+                    showLoadingModal('カテゴリを削除しています...\nしばらくお待ちください。');
+                    
+                    const formData = new FormData(document.getElementById('deleteForm'));
+                    
+                    const response = await fetch('/Categories/Delete/@Model.Id', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    hideLoadingModal();
+                    
+                    if (response.ok) {
+                        // 削除成功
+                        showSuccessModal(
+                            '削除完了',
+                            'カテゴリ「@Model.Name」が正常に削除されました。',
+                            () => {
+                                window.location.href = '/Categories';
+                            }
+                        );
+                    } else {
+                        // 削除失敗
+                        const errorText = await response.text();
+                        showError('削除に失敗しました: ' + errorText);
+                    }
+                } catch (error) {
+                    hideLoadingModal();
+                    console.error('カテゴリ削除エラー:', error);
+                    showError('削除処理中にエラーが発生しました');
+                }
+            }
+            
+            // ページ離脱警告の設定
+            function setupUnloadWarning() {
+                let formInteracted = false;
+                
+                // フォーム操作の検知
+                document.querySelectorAll('input, textarea').forEach(element => {
+                    element.addEventListener('input', () => {
+                        formInteracted = true;
+                    });
+                    element.addEventListener('change', () => {
+                        formInteracted = true;
+                    });
+                });
+                
+                // ページ離脱時の警告
+                window.addEventListener('beforeunload', function(event) {
+                    if (formInteracted) {
+                        event.preventDefault();
+                        event.returnValue = '削除確認画面から離れますか？';
+                    }
+                });
+            }
+            
+            // 成功モーダル表示
+            function showSuccessModal(title, message, callback) {
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay success-modal';
+                modal.innerHTML = `
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h3 class="modal-title">${title}</h3>
+                            </div>
+                            <div class="modal-body">
+                                <div class="success-icon">✅</div>
+                                <p class="success-message">${message}</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" onclick="this.closest('.modal-overlay').remove(); ${callback ? callback.toString() + '()' : ''}">
+                                    確認
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                modal.style.display = 'block';
+            }
+            
+            // エラーメッセージ表示
+            function showError(message) {
+                const errorContainer = document.createElement('div');
+                errorContainer.className = 'alert alert-danger error-message';
+                errorContainer.innerHTML = `
+                    <div class="alert-icon">❌</div>
+                    <div class="alert-content">
+                        <strong>エラー</strong>
+                        <p>${message}</p>
+                    </div>
+                    <button type="button" class="alert-close" onclick="this.parentElement.remove()">×</button>
+                `;
+                
+                // ページ上部に挿入
+                const pageHeader = document.querySelector('.page-header');
+                pageHeader.insertAdjacentElement('afterend', errorContainer);
+                
+                // 自動削除（10秒後）
+                setTimeout(() => {
+                    if (errorContainer.parentElement) {
+                        errorContainer.remove();
+                    }
+                }, 10000);
+            }
+            
+            // ESCキーでキャンセル
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    if (confirm('削除確認をキャンセルして詳細画面に戻りますか？')) {
+                        window.location.href = '/Categories/Details/@Model.Id';
+                    }
+                }
+            });
+        </script>
+    }
+}

@@ -8,11 +8,12 @@ namespace Web.Essentials.App.Controllers.Mvc;
 /// <summary>
 /// カテゴリ管理MVCコントローラー
 /// カテゴリの一覧表示、登録、編集、削除のMVC画面を提供
+/// ルーティング: /Categories/*
 /// </summary>
-public class CategoryController : Controller
+public class CategoriesController : Controller
 {
     private readonly ICategoryRepository _categoryRepository;
-    private readonly ILogger<CategoryController> _logger;
+    private readonly ILogger<CategoriesController> _logger;
 
     /// <summary>
     /// コンストラクタ
@@ -20,9 +21,9 @@ public class CategoryController : Controller
     /// </summary>
     /// <param name="categoryRepository">カテゴリリポジトリ</param>
     /// <param name="logger">ロガー</param>
-    public CategoryController(
+    public CategoriesController(
         ICategoryRepository categoryRepository,
-        ILogger<CategoryController> logger)
+        ILogger<CategoriesController> logger)
     {
         _categoryRepository = categoryRepository;
         _logger = logger;

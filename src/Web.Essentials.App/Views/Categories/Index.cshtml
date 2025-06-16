@@ -1,0 +1,476 @@
+@model Web.Essentials.App.ViewModels.CategoryIndexViewModel
+@{
+    ViewData["Title"] = "カテゴリ一覧";
+    // 検索フォーム用のViewBagデータ設定
+    ViewBag.SearchKeyword = Model?.SearchKeyword ?? "";
+    ViewBag.ShowCategoryFilter = false; // カテゴリ管理画面ではカテゴリフィルタは不要
+}
+
+<!-- カテゴリ一覧画面 -->
+<div class="page-header">
+    <div class="page-title-section">
+        <h1 class="page-title">カテゴリ一覧</h1>
+        <p class="page-description">登録されているカテゴリの一覧を階層構造で表示します。検索や並び替えが可能です。</p>
+    </div>
+    <div class="page-actions">
+        <a href="@Url.Action("Create", "Categories")" class="btn btn-primary">
+            <span class="btn-icon">➕</span>
+            新規カテゴリ登録
+        </a>
+    </div>
+</div>
+
+<!-- 検索フォーム -->
+@Html.Partial("_SearchForm")
+
+<!-- カテゴリ一覧コンテナ -->
+<div class="category-list-container">
+    <!-- ローディング表示 -->
+    <div id="categoryListLoading" class="loading-container" style="display: none;">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>カテゴリを読み込み中...</p>
+        </div>
+    </div>
+    
+    <!-- 表示オプション -->
+    <div class="list-controls">
+        <div class="view-options">
+            <button type="button" 
+                    class="view-toggle active" 
+                    data-view="tree" 
+                    onclick="switchView('tree')"
+                    title="階層表示">
+                🌳
+            </button>
+            <button type="button" 
+                    class="view-toggle" 
+                    data-view="table" 
+                    onclick="switchView('table')"
+                    title="テーブル表示">
+                📋
+            </button>
+        </div>
+        <div class="hierarchy-controls">
+            <button type="button" class="btn btn-sm btn-outline" onclick="expandAll()">
+                すべて展開
+            </button>
+            <button type="button" class="btn btn-sm btn-outline" onclick="collapseAll()">
+                すべて閉じる
+            </button>
+        </div>
+        <div class="sort-options">
+            <label for="sortBy">並び順:</label>
+            <select id="sortBy" class="sort-select" onchange="changeSortOrder(this.value)">
+                <option value="name_asc">カテゴリ名（昇順）</option>
+                <option value="name_desc">カテゴリ名（降順）</option>
+                <option value="level_asc">階層レベル（浅い順）</option>
+                <option value="level_desc">階層レベル（深い順）</option>
+                <option value="updated_desc">更新日時（新しい順）</option>
+                <option value="updated_asc">更新日時（古い順）</option>
+            </select>
+        </div>
+    </div>
+    
+    <!-- カテゴリ一覧コンテンツ -->
+    <div id="categoryListContent" class="list-content">
+        <!-- 階層表示 -->
+        <div id="treeView" class="tree-container">
+            <div id="categoryTree" class="category-tree">
+                @if (Model?.Categories?.Any() == true)
+                {
+                    @Html.Partial("_CategoryHierarchy", Model.Categories)
+                }
+                else
+                {
+                    <div class="no-data-message">
+                        <div class="no-data-icon">🏷️</div>
+                        <h3>カテゴリが見つかりません</h3>
+                        <p>検索条件を変更するか、新しいカテゴリを登録してください。</p>
+                        <a href="@Url.Action("Create", "Categories")" class="btn btn-primary">
+                            カテゴリを登録する
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+        
+        <!-- テーブル表示 -->
+        <div id="tableView" class="table-container" style="display: none;">
+            <table class="category-table">
+                <thead>
+                    <tr>
+                        <th class="col-hierarchy">階層</th>
+                        <th class="col-name sortable" onclick="sortBy('name')">
+                            カテゴリ名
+                            <span class="sort-indicator" data-column="name"></span>
+                        </th>
+                        <th class="col-description">説明</th>
+                        <th class="col-parent">親カテゴリ</th>
+                        <th class="col-products">商品数</th>
+                        <th class="col-updated sortable" onclick="sortBy('updated')">
+                            更新日時
+                            <span class="sort-indicator" data-column="updated"></span>
+                        </th>
+                        <th class="col-actions">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="categoryTableBody">
+                    @if (Model?.Categories?.Any() == true)
+                    {
+                        @foreach (var category in Model.Categories.OrderBy(c => c.Level).ThenBy(c => c.SortOrder))
+                        {
+                            <tr class="category-row" data-category-id="@category.Id" data-level="@category.Level">
+                                <td class="col-hierarchy">
+                                    <div class="hierarchy-indicator level-@category.Level">
+                                        @for (int i = 0; i < category.Level; i++)
+                                        {
+                                            <span class="hierarchy-spacer">│</span>
+                                        }
+                                        @if (category.Level > 0)
+                                        {
+                                            <span class="hierarchy-connector">├─</span>
+                                        }
+                                        <span class="level-badge">L@category.Level</span>
+                                    </div>
+                                </td>
+                                <td class="col-name">
+                                    <div class="category-name">
+                                        <a href="@Url.Action("Details", "Categories", new { id = category.Id })" class="category-link">
+                                            @category.Name
+                                        </a>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(category.FullPath))
+                                    {
+                                        <div class="category-path">
+                                            <small>@category.FullPath</small>
+                                        </div>
+                                    }
+                                </td>
+                                <td class="col-description">
+                                    @if (!string.IsNullOrEmpty(category.Description))
+                                    {
+                                        <span class="description-text">
+                                            @(category.Description.Length > 50 ? category.Description.Substring(0, 50) + "..." : category.Description)
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="no-data">-</span>
+                                    }
+                                </td>
+                                <td class="col-parent">
+                                    @if (category.ParentCategoryId.HasValue && !string.IsNullOrEmpty(category.ParentCategoryName))
+                                    {
+                                        <a href="@Url.Action("Details", "Categories", new { id = category.ParentCategoryId })" 
+                                           class="parent-link">
+                                            @category.ParentCategoryName
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="root-indicator">ルート</span>
+                                    }
+                                </td>
+                                <td class="col-products">
+                                    <span class="product-count">@category.ProductCount</span>
+                                </td>
+                                <td class="col-updated">
+                                    <time class="updated-time" datetime="@category.UpdatedAt.ToString("yyyy-MM-dd")">
+                                        @category.UpdatedAt.ToString("yyyy/MM/dd")
+                                    </time>
+                                </td>
+                                <td class="col-actions">
+                                    <div class="action-buttons">
+                                        <a href="@Url.Action("Details", "Categories", new { id = category.Id })" 
+                                           class="btn btn-info btn-sm" 
+                                           title="詳細表示">
+                                            詳細
+                                        </a>
+                                        <a href="@Url.Action("Edit", "Categories", new { id = category.Id })" 
+                                           class="btn btn-warning btn-sm" 
+                                           title="編集">
+                                            編集
+                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-danger btn-sm" 
+                                                onclick="confirmDeleteCategory(@category.Id, '@category.Name', @category.ProductCount, @(category.HasChildren ? "true" : "false"))"
+                                                title="削除"
+                                                @(category.ProductCount > 0 || category.HasChildren ? "disabled" : "")>
+                                            削除
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr class="no-data-row">
+                            <td colspan="7" class="no-data-cell">
+                                <div class="no-data-message">
+                                    <div class="no-data-icon">🏷️</div>
+                                    <h3>カテゴリが見つかりません</h3>
+                                    <p>検索条件を変更するか、新しいカテゴリを登録してください。</p>
+                                    <a href="@Url.Action("Create", "Categories")" class="btn btn-primary">
+                                        カテゴリを登録する
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- ページング -->
+    <div id="paginationContainer" class="pagination-wrapper">
+        @if (Model?.Paging != null)
+        {
+            @Html.Partial("_Pagination", Model.Paging)
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // 現在の検索条件を保持
+        let currentSearchParams = {
+            searchKeyword: '@Model?.SearchKeyword',
+            level: null,
+            parentId: null,
+            page: @(Model?.CurrentPage ?? 1),
+            pageSize: @(Model?.PageSize ?? 20),
+            sortBy: 'name_asc'
+        };
+        
+        // ページ読み込み時の初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCategoryList();
+        });
+        
+        // カテゴリ一覧の初期化
+        function initializeCategoryList() {
+            // 検索フォームの初期化
+            setupSearchForm();
+            
+            // ソート機能の初期化
+            setupSortFeatures();
+            
+            // ビュー切り替えの初期化
+            setupViewToggle();
+            
+            // 階層表示の初期化
+            setupTreeView();
+            
+            // カテゴリ削除の初期化
+            setupCategoryDeletion();
+        }
+        
+        // ビュー切り替え
+        function switchView(viewType) {
+            const treeView = document.getElementById('treeView');
+            const tableView = document.getElementById('tableView');
+            const viewButtons = document.querySelectorAll('.view-toggle');
+            
+            // ボタンの状態更新
+            viewButtons.forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-view="${viewType}"]`).classList.add('active');
+            
+            // ビューの切り替え
+            if (viewType === 'tree') {
+                treeView.style.display = 'block';
+                tableView.style.display = 'none';
+            } else {
+                treeView.style.display = 'none';
+                tableView.style.display = 'block';
+            }
+        }
+        
+        // すべて展開
+        function expandAll() {
+            document.querySelectorAll('.tree-item.expandable.collapsed').forEach(item => {
+                toggleTreeItem(item);
+            });
+        }
+        
+        // すべて閉じる
+        function collapseAll() {
+            document.querySelectorAll('.tree-item.expandable:not(.collapsed)').forEach(item => {
+                toggleTreeItem(item);
+            });
+        }
+        
+        // 検索実行
+        function performSearch() {
+            const searchKeyword = document.getElementById('searchKeyword').value;
+            
+            currentSearchParams.searchKeyword = searchKeyword;
+            currentSearchParams.page = 1; // 検索時は1ページ目に戻る
+            
+            loadCategoryList();
+        }
+        
+        // 検索リセット
+        function resetSearch() {
+            document.getElementById('searchForm').reset();
+            currentSearchParams = {
+                searchKeyword: '',
+                level: null,
+                parentId: null,
+                page: 1,
+                pageSize: currentSearchParams.pageSize,
+                sortBy: 'name_asc'
+            };
+            loadCategoryList();
+        }
+        
+        // ページ読み込み
+        function loadPage(page) {
+            currentSearchParams.page = page;
+            loadCategoryList();
+        }
+        
+        // ページサイズ変更
+        function changePageSize(pageSize) {
+            currentSearchParams.pageSize = parseInt(pageSize);
+            currentSearchParams.page = 1; // 1ページ目に戻る
+            loadCategoryList();
+        }
+        
+        // ソート順変更
+        function changeSortOrder(sortBy) {
+            currentSearchParams.sortBy = sortBy;
+            currentSearchParams.page = 1; // 1ページ目に戻る
+            loadCategoryList();
+        }
+        
+        // カテゴリ一覧をAjaxで読み込み
+        async function loadCategoryList() {
+            try {
+                showLoading();
+                
+                const params = new URLSearchParams();
+                if (currentSearchParams.searchKeyword) {
+                    params.append('nameTerm', currentSearchParams.searchKeyword);
+                }
+                if (currentSearchParams.level !== null) {
+                    params.append('level', currentSearchParams.level);
+                }
+                if (currentSearchParams.parentId !== null) {
+                    params.append('parentId', currentSearchParams.parentId);
+                }
+                params.append('includeProductCount', 'true');
+                
+                const response = await fetch(`/api/categories?${params.toString()}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateCategoryList(result.data);
+                } else {
+                    showError('カテゴリ一覧の取得に失敗しました: ' + result.message);
+                }
+            } catch (error) {
+                console.error('カテゴリ一覧読み込みエラー:', error);
+                showError('カテゴリ一覧の読み込み中にエラーが発生しました');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // カテゴリ削除確認
+        function confirmDeleteCategory(categoryId, categoryName, productCount, hasChildren) {
+            if (productCount > 0 || hasChildren) {
+                let message = '';
+                if (productCount > 0 && hasChildren) {
+                    message = `カテゴリ「${categoryName}」には${productCount}個の商品と子カテゴリが存在するため削除できません。`;
+                } else if (productCount > 0) {
+                    message = `カテゴリ「${categoryName}」には${productCount}個の商品が存在するため削除できません。`;
+                } else if (hasChildren) {
+                    message = `カテゴリ「${categoryName}」には子カテゴリが存在するため削除できません。`;
+                }
+                
+                showError(message + '\n関連する商品や子カテゴリを先に削除または移動してください。');
+                return;
+            }
+            
+            showConfirmationModal(
+                'カテゴリ削除の確認',
+                `カテゴリ「${categoryName}」を削除しますか？`,
+                '削除すると元に戻せません。',
+                '削除',
+                () => deleteCategory(categoryId)
+            );
+        }
+        
+        // カテゴリ削除実行
+        async function deleteCategory(categoryId) {
+            try {
+                const response = await fetch(`/Categories/Delete/${categoryId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': getAntiForgeryToken()
+                    }
+                });
+                
+                if (response.ok) {
+                    showSuccess('カテゴリが正常に削除されました');
+                    loadCategoryList(); // 一覧を再読み込み
+                } else {
+                    const errorText = await response.text();
+                    showError('カテゴリの削除に失敗しました: ' + errorText);
+                }
+            } catch (error) {
+                console.error('カテゴリ削除エラー:', error);
+                showError('カテゴリ削除中にエラーが発生しました');
+            }
+        }
+        
+        // ローディング表示
+        function showLoading() {
+            document.getElementById('categoryListLoading').style.display = 'block';
+            document.getElementById('categoryListContent').style.opacity = '0.5';
+        }
+        
+        // ローディング非表示
+        function hideLoading() {
+            document.getElementById('categoryListLoading').style.display = 'none';
+            document.getElementById('categoryListContent').style.opacity = '1';
+        }
+        
+        // 階層表示の設定
+        function setupTreeView() {
+            // ツリーアイテムのクリックイベント設定
+            document.addEventListener('click', function(event) {
+                const treeToggle = event.target.closest('.tree-toggle');
+                if (treeToggle) {
+                    const treeItem = treeToggle.closest('.tree-item');
+                    toggleTreeItem(treeItem);
+                }
+            });
+        }
+        
+        // ツリーアイテム展開/縮小
+        function toggleTreeItem(treeItem) {
+            if (!treeItem) return;
+            
+            const isCollapsed = treeItem.classList.contains('collapsed');
+            const children = treeItem.querySelector('.tree-children');
+            const toggle = treeItem.querySelector('.tree-toggle');
+            
+            if (isCollapsed) {
+                // 展開
+                treeItem.classList.remove('collapsed');
+                if (children) children.style.display = 'block';
+                if (toggle) toggle.textContent = '▼';
+            } else {
+                // 縮小
+                treeItem.classList.add('collapsed');
+                if (children) children.style.display = 'none';
+                if (toggle) toggle.textContent = '▶';
+            }
+        }
+    </script>
+}
