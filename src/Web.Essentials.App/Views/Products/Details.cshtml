@@ -65,7 +65,7 @@
                     </div>
                     
                     <!-- 画像サムネイル -->
-                    @if (Model.Images.Count > 1)
+                    @if (Model.Images.Count() > 1)
                     {
                         <div class="image-thumbnails">
                             @foreach (var image in Model.Images.OrderBy(img => img.DisplayOrder))
@@ -97,13 +97,13 @@
                 <div class="product-status">
                     @switch (Model.Status)
                     {
-                        case 0:
+                        case Web.Essentials.Domain.Entities.ProductStatus.PreSale:
                             <span class="status-badge status-pending">販売開始前</span>
                             break;
-                        case 1:
+                        case Web.Essentials.Domain.Entities.ProductStatus.OnSale:
                             <span class="status-badge status-active">販売中</span>
                             break;
-                        case 2:
+                        case Web.Essentials.Domain.Entities.ProductStatus.Discontinued:
                             <span class="status-badge status-discontinued">取扱終了</span>
                             break;
                     }
@@ -214,13 +214,13 @@
                         <span class="spec-value">
                             @switch (Model.Status)
                             {
-                                case 0:
+                                case Web.Essentials.Domain.Entities.ProductStatus.PreSale:
                                     <span class="status-text">販売開始前</span>
                                     break;
-                                case 1:
+                                case Web.Essentials.Domain.Entities.ProductStatus.OnSale:
                                     <span class="status-text">販売中</span>
                                     break;
-                                case 2:
+                                case Web.Essentials.Domain.Entities.ProductStatus.Discontinued:
                                     <span class="status-text">取扱終了</span>
                                     break;
                             }
@@ -231,7 +231,7 @@
                     {
                         <div class="spec-item">
                             <label class="spec-label">画像数</label>
-                            <span class="spec-value">@Model.Images.Count 枚</span>
+                            <span class="spec-value">@Model.Images.Count() 枚</span>
                         </div>
                     }
                 </div>

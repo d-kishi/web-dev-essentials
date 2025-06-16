@@ -41,7 +41,7 @@
     
     if (Model.ChildCategories?.Any() == true)
     {
-        blockingReasons.Add($"{Model.ChildCategories.Count}個の子カテゴリが存在する");
+        blockingReasons.Add($"{Model.ChildCategories.Count()}個の子カテゴリが存在する");
     }
 }
 
@@ -149,7 +149,7 @@ else
                         <div class="metadata-item">
                             <label class="metadata-label">子カテゴリ数</label>
                             <span class="metadata-value @(Model.ChildCategories?.Any() == true ? "text-warning" : "")">
-                                @(Model.ChildCategories?.Count ?? 0) 個
+                                @(Model.ChildCategories?.Count() ?? 0) 個
                             </span>
                         </div>
                     </div>
@@ -188,7 +188,7 @@ else
                     <span class="impact-icon">🌳</span>
                     <div class="impact-content">
                         <strong>子カテゴリの階層構造</strong>
-                        <p>@Model.ChildCategories.Count 個の子カテゴリの親子関係</p>
+                        <p>@Model.ChildCategories.Count() 個の子カテゴリの親子関係</p>
                         <div class="blocking-note">※ 子カテゴリが存在するため削除できません</div>
                     </div>
                 </div>
@@ -210,12 +210,12 @@ else
         <div class="blocking-details">
             <h3 class="blocking-title">削除を阻害している要素</h3>
             
-            @if (Model.ProductCount > 0 && Model.Products?.Any() == true)
+            @if (Model.ProductCount > 0 && Model.RelatedProducts?.Any() == true)
             {
                 <div class="blocking-section">
                     <h4 class="blocking-subtitle">関連商品 (@Model.ProductCount 個)</h4>
                     <div class="blocking-items">
-                        @foreach (var product in Model.Products.Take(5))
+                        @foreach (var product in Model.RelatedProducts.Take(5))
                         {
                             <div class="blocking-item">
                                 <span class="item-name">@product.Name</span>
@@ -226,10 +226,10 @@ else
                                    class="btn btn-sm btn-warning">編集</a>
                             </div>
                         }
-                        @if (Model.Products.Count > 5)
+                        @if (Model.RelatedProducts.Count() > 5)
                         {
                             <div class="more-items">
-                                他 @(Model.Products.Count - 5) 個の商品...
+                                他 @(Model.RelatedProducts.Count() - 5) 個の商品...
                                 <a href="@Url.Action("Index", "Products", new { categoryId = Model.Id })" 
                                    class="view-all-link">すべて表示</a>
                             </div>
@@ -246,7 +246,7 @@ else
             @if (Model.ChildCategories?.Any() == true)
             {
                 <div class="blocking-section">
-                    <h4 class="blocking-subtitle">子カテゴリ (@Model.ChildCategories.Count 個)</h4>
+                    <h4 class="blocking-subtitle">子カテゴリ (@Model.ChildCategories.Count() 個)</h4>
                     <div class="blocking-items">
                         @foreach (var child in Model.ChildCategories)
                         {

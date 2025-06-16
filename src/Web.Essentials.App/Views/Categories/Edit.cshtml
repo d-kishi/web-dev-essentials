@@ -83,7 +83,7 @@
                 {
                     <div class="info-item">
                         <label class="info-label">子カテゴリ数</label>
-                        <span class="info-value">@Model.ChildCategories.Count 個</span>
+                        <span class="info-value">@Model.ChildCategories.Count() 個</span>
                     </div>
                 }
             </div>
@@ -110,7 +110,7 @@
                         class="form-select" 
                         id="parentCategorySelect"
                         onchange="updateCategoryLevel()"
-                        @(Model.ChildCategories?.Any() == true ? "disabled" : "")>
+                        disabled="@(Model.ChildCategories?.Any() == true)">
                     <option value="">ルートカテゴリとして設定</option>
                     @if (Model.ParentCategories?.Any() == true)
                     {
@@ -118,7 +118,7 @@
                         {
                             <option value="@parentCategory.Id" 
                                     data-level="@parentCategory.Level"
-                                    @(Model.ParentCategoryId == parentCategory.Id ? "selected" : "")>
+                                    selected="@(Model.ParentCategoryId == parentCategory.Id)">
                                 @parentCategory.FullPath
                             </option>
                         }

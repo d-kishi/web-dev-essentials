@@ -20,7 +20,15 @@
                 {
                     <div class="product-images-gallery">
                         @{
-                            var mainImage = product.Images.FirstOrDefault(img => img.IsMain) ?? product.Images.First();
+                            var mainImage = product.Images.FirstOrDefault();
+                            foreach (var img in product.Images)
+                            {
+                                if (img.IsMain)
+                                {
+                                    mainImage = img;
+                                    break;
+                                }
+                            }
                         }
                         <!-- メイン画像 -->
                         <div class="main-image-container">
@@ -37,7 +45,7 @@
                         @if (product.Images.Count > 1)
                         {
                             <div class="thumbnail-images">
-                                @foreach (var image in product.Images.OrderBy(img => img.DisplayOrder))
+                                @foreach (var image in product.Images)
                                 {
                                     <div class="thumbnail-item @(image.IsMain ? "main" : "")"
                                          onclick="switchMainImage('@image.ImagePath', '@image.AltText', this)">
@@ -418,7 +426,7 @@
         align-items: start;
     }
     
-    @media (max-width: 768px) {
+    @@media (max-width: 768px) {
         .product-overview-content {
             grid-template-columns: 1fr;
         }
@@ -681,7 +689,7 @@
         gap: 2rem;
     }
     
-    @media (max-width: 768px) {
+    @@media (max-width: 768px) {
         .product-detailed-info {
             grid-template-columns: 1fr;
         }

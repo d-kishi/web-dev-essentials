@@ -81,13 +81,13 @@
                         <div class="product-status">
                             @switch (Model.Status)
                             {
-                                case 0:
+                                case Web.Essentials.Domain.Entities.ProductStatus.PreSale:
                                     <span class="status-badge status-pending">販売開始前</span>
                                     break;
-                                case 1:
+                                case Web.Essentials.Domain.Entities.ProductStatus.OnSale:
                                     <span class="status-badge status-active">販売中</span>
                                     break;
-                                case 2:
+                                case Web.Essentials.Domain.Entities.ProductStatus.Discontinued:
                                     <span class="status-badge status-discontinued">取扱終了</span>
                                     break;
                             }
@@ -140,11 +140,11 @@
                             </div>
                         }
                         
-                        @if (Model.Images?.Any() == true && Model.Images.Count > 1)
+                        @if (Model.Images?.Any() == true && Model.Images.Count() > 1)
                         {
                             <div class="metadata-item">
                                 <label class="metadata-label">関連画像</label>
-                                <span class="metadata-value">@Model.Images.Count 枚</span>
+                                <span class="metadata-value">@Model.Images.Count() 枚</span>
                             </div>
                         }
                     </div>
@@ -171,7 +171,7 @@
                     <span class="impact-icon">🖼️</span>
                     <div class="impact-content">
                         <strong>商品画像</strong>
-                        <p>@Model.Images.Count 枚の商品画像ファイル</p>
+                        <p>@Model.Images.Count() 枚の商品画像ファイル</p>
                     </div>
                 </div>
             }
@@ -182,7 +182,7 @@
                     <span class="impact-icon">🏷️</span>
                     <div class="impact-content">
                         <strong>カテゴリ関連付け</strong>
-                        <p>@Model.Categories.Count 個のカテゴリとの関連付け</p>
+                        <p>@Model.Categories.Count() 個のカテゴリとの関連付け</p>
                     </div>
                 </div>
             }

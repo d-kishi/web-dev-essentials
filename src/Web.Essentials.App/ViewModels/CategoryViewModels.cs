@@ -67,6 +67,11 @@ public class CategoryIndexViewModel
     /// 1ページあたりの表示件数
     /// </summary>
     public int PageSize { get; set; } = 10;
+
+    /// <summary>
+    /// ページング情報
+    /// </summary>
+    public PagingInfo? Paging { get; set; }
 }
 
 /// <summary>
@@ -137,6 +142,16 @@ public class CategoryListItemViewModel
     /// 作成日時
     /// </summary>
     public DateTime CreatedAt { get; set; }
+
+    /// <summary>
+    /// 更新日時
+    /// </summary>
+    public DateTime UpdatedAt { get; set; }
+
+    /// <summary>
+    /// 子カテゴリが存在するかどうか
+    /// </summary>
+    public bool HasChildren { get; set; }
 
     /// <summary>
     /// 作成日時表示（フォーマット済み）
@@ -264,6 +279,21 @@ public class CategoryDetailsViewModel
         2 => "詳細カテゴリ",
         _ => $"Level {Level} カテゴリ"
     };
+
+    /// <summary>
+    /// 親カテゴリ情報
+    /// </summary>
+    public CategoryListItemViewModel? ParentCategory { get; set; }
+
+    /// <summary>
+    /// 兄弟カテゴリ一覧
+    /// </summary>
+    public IEnumerable<CategoryListItemViewModel> SiblingCategories { get; set; } = new List<CategoryListItemViewModel>();
+
+    /// <summary>
+    /// 関連商品一覧（RelatedProductsのエイリアス）
+    /// </summary>
+    public IEnumerable<ProductListItemViewModel> Products => RelatedProducts;
 }
 
 /// <summary>
@@ -365,6 +395,11 @@ public class CategoryEditViewModel
     public int CurrentLevel { get; set; }
 
     /// <summary>
+    /// 階層レベル（Level プロパティのエイリアス）
+    /// </summary>
+    public int Level => CurrentLevel;
+
+    /// <summary>
     /// 親カテゴリ選択用リスト（自分自身と子孫は除外）
     /// </summary>
     public IEnumerable<CategorySelectItem> ParentCategories { get; set; } = new List<CategorySelectItem>();
@@ -380,9 +415,24 @@ public class CategoryEditViewModel
     public int ProductCount { get; set; }
 
     /// <summary>
+    /// 作成日時
+    /// </summary>
+    public DateTime CreatedAt { get; set; }
+
+    /// <summary>
     /// 更新日時
     /// </summary>
     public DateTime UpdatedAt { get; set; }
+
+    /// <summary>
+    /// 子カテゴリ一覧
+    /// </summary>
+    public IEnumerable<CategoryListItemViewModel> ChildCategories { get; set; } = new List<CategoryListItemViewModel>();
+
+    /// <summary>
+    /// 完全パス
+    /// </summary>
+    public string FullPath { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -561,4 +611,42 @@ public class CategoryDeleteViewModel
         2 => "詳細カテゴリ",
         _ => $"Level {Level} カテゴリ"
     };
+}
+/// <summary>
+/// ページング情報
+/// </summary>
+/// <remarks>
+/// Ajax通信とMVC画面の両方で使用
+/// </remarks>
+public class PagingInfo
+{
+    /// <summary>
+    /// 現在のページ番号
+    /// </summary>
+    public int CurrentPage { get; set; }
+
+    /// <summary>
+    /// 1ページあたりの表示件数
+    /// </summary>
+    public int PageSize { get; set; }
+
+    /// <summary>
+    /// 総件数
+    /// </summary>
+    public int TotalCount { get; set; }
+
+    /// <summary>
+    /// 総ページ数
+    /// </summary>
+    public int TotalPages { get; set; }
+
+    /// <summary>
+    /// 次のページが存在するかどうか
+    /// </summary>
+    public bool HasNextPage { get; set; }
+
+    /// <summary>
+    /// 前のページが存在するかどうか
+    /// </summary>
+    public bool HasPreviousPage { get; set; }
 }

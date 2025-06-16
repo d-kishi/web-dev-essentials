@@ -58,7 +58,7 @@
                         {
                             <option value="@parentCategory.Id" 
                                     data-level="@parentCategory.Level"
-                                    @(Model.ParentCategoryId == parentCategory.Id ? "selected" : "")>
+                                    selected="@(Model.ParentCategoryId == parentCategory.Id)">
                                 @parentCategory.FullPath
                             </option>
                         }

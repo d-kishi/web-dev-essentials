@@ -39,14 +39,12 @@
         </li>
         @if (!string.IsNullOrEmpty(Model.FullPath))
         {
-            @{
-                var pathParts = Model.FullPath.Split(" > ");
-                for (int i = 0; i < pathParts.Length - 1; i++)
-                {
-                    <li class="breadcrumb-item">
-                        <span>@pathParts[i]</span>
-                    </li>
-                }
+            var pathParts = Model.FullPath.Split(" > ");
+            for (int i = 0; i < pathParts.Length - 1; i++)
+            {
+                <li class="breadcrumb-item">
+                    <span>@pathParts[i]</span>
+                </li>
             }
         }
         <li class="breadcrumb-item active" aria-current="page">
@@ -131,7 +129,7 @@
                         <div class="stat-item">
                             <span class="stat-icon">🏷️</span>
                             <div class="stat-content">
-                                <div class="stat-value">@Model.ChildCategories.Count</div>
+                                <div class="stat-value">@Model.ChildCategories.Count()</div>
                                 <div class="stat-label">子カテゴリ数</div>
                             </div>
                         </div>
@@ -186,7 +184,7 @@
                 @if (Model.ChildCategories?.Any() == true)
                 {
                     <button class="tab-button" onclick="showTab('children')" data-tab="children">
-                        子カテゴリ (@Model.ChildCategories.Count)
+                        子カテゴリ (@Model.ChildCategories.Count())
                     </button>
                 }
                 <button class="tab-button" onclick="showTab('hierarchy')" data-tab="hierarchy">
@@ -232,13 +230,13 @@
                                         <div class="product-status">
                                             @switch (product.Status)
                                             {
-                                                case 0:
+                                                case Web.Essentials.Domain.Entities.ProductStatus.PreSale:
                                                     <span class="status-badge status-pending">販売開始前</span>
                                                     break;
-                                                case 1:
+                                                case Web.Essentials.Domain.Entities.ProductStatus.OnSale:
                                                     <span class="status-badge status-active">販売中</span>
                                                     break;
-                                                case 2:
+                                                case Web.Essentials.Domain.Entities.ProductStatus.Discontinued:
                                                     <span class="status-badge status-discontinued">取扱終了</span>
                                                     break;
                                             }

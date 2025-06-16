@@ -74,7 +74,7 @@
                 <option value="@category.Id" 
                         data-level="@category.Level"
                         data-full-path="@category.FullPath"
-                        @(selectedCategoryId == category.Id ? "selected" : "")>
+                        selected="@(selectedCategoryId == category.Id)">
                     @(new string('　', category.Level * 2))@category.Name
                 </option>
             }

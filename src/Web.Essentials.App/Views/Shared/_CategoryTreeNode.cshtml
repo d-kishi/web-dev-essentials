@@ -1,0 +1,146 @@
+@model dynamic
+@{
+    var showActions = ViewBag.ShowActions as bool? ?? true;
+    var isSelectable = ViewBag.IsSelectable as bool? ?? false;
+    var selectedId = ViewBag.SelectedId as int?;
+    var showProductCount = ViewBag.ShowProductCount as bool? ?? true;
+    var expandAll = ViewBag.ExpandAll as bool? ?? false;
+    
+    var hasChildren = Model.ChildCategories?.Any() == true;
+    var isSelected = isSelectable && selectedId == Model.Id;
+    var nodeId = $"tree-node-{Model.Id}";
+}
+
+<div class="tree-item @(hasChildren ? "expandable" : "") @(expandAll ? "" : "collapsed") @(isSelected ? "selected" : "")" 
+     data-category-id="@Model.Id" 
+     data-level="@Model.Level"
+     id="@nodeId">
+    
+    <div class="tree-node">
+        <!-- 展開/縮小ボタン -->
+        @if (hasChildren)
+        {
+            <button type="button" 
+                    class="tree-toggle" 
+                    onclick="toggleTreeNode('@nodeId')"
+                    title="@(expandAll ? "縮小" : "展開")">
+                @(expandAll ? "▼" : "▶")
+            </button>
+        }
+        else
+        {
+            <span class="tree-spacer">　</span>
+        }
+        
+        <!-- カテゴリアイコン -->
+        <span class="tree-icon">
+            @if (Model.Level == 0)
+            {
+                <span class="icon-root">📁</span>
+            }
+            else if (hasChildren)
+            {
+                <span class="icon-branch">📂</span>
+            }
+            else
+            {
+                <span class="icon-leaf">🏷️</span>
+            }
+        </span>
+        
+        <!-- カテゴリ名 -->
+        <div class="tree-content">
+            @if (isSelectable)
+            {
+                <button type="button" 
+                        class="tree-label selectable @(isSelected ? "selected" : "")"
+                        onclick="selectCategory(@Model.Id, '@Model.Name', '@Model.FullPath')"
+                        title="このカテゴリを選択">
+                    <span class="category-name">@Model.Name</span>
+                </button>
+            }
+            else
+            {
+                <div class="tree-label">
+                    <span class="category-name">@Model.Name</span>
+                </div>
+            }
+            
+            <!-- カテゴリ情報 -->
+            <div class="tree-meta">
+                <!-- 階層レベル -->
+                <span class="level-indicator level-@Model.Level">L@Model.Level</span>
+                
+                <!-- 商品数 -->
+                @if (showProductCount)
+                {
+                    <span class="product-count" title="関連商品数">
+                        📦 @(Model.ProductCount ?? 0)
+                    </span>
+                }
+                
+                <!-- 子カテゴリ数 -->
+                @if (hasChildren)
+                {
+                    <span class="children-count" title="子カテゴリ数">
+                        🏷️ @Model.ChildCategories.Count
+                    </span>
+                }
+            </div>
+            
+            <!-- カテゴリ説明（折りたたみ可能） -->
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                <div class="tree-description" id="desc-@Model.Id" style="display: none;">
+                    <small>@Model.Description</small>
+                </div>
+                <button type="button" 
+                        class="description-toggle" 
+                        onclick="toggleDescription('@Model.Id')"
+                        title="説明を表示/非表示">
+                    💬
+                </button>
+            }
+            
+            <!-- アクションボタン -->
+            @if (showActions)
+            {
+                <div class="tree-actions">
+                    <a href="@Url.Action("Details", "Categories", new { id = Model.Id })" 
+                       class="tree-action-btn detail-btn" 
+                       title="詳細表示">
+                        👁️
+                    </a>
+                    <a href="@Url.Action("Edit", "Categories", new { id = Model.Id })" 
+                       class="tree-action-btn edit-btn" 
+                       title="編集">
+                        ✏️
+                    </a>
+                    <a href="@Url.Action("Create", "Categories", new { parentId = Model.Id })" 
+                       class="tree-action-btn add-btn" 
+                       title="子カテゴリを追加">
+                        ➕
+                    </a>
+                    <button type="button" 
+                            class="tree-action-btn delete-btn" 
+                            onclick="confirmDeleteCategory(@Model.Id, '@Model.Name', @(Model.ProductCount ?? 0), '@(hasChildren ? "true" : "false")')"
+                            title="削除"
+                            disabled="@((Model.ProductCount ?? 0) > 0 || hasChildren)">
+                        🗑️
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+    
+    <!-- 子カテゴリ -->
+    @if (hasChildren)
+    {
+        <div class="tree-children" style="display: @(expandAll ? "block" : "none");">
+            @foreach (var child in Model.ChildCategories)
+            {
+                <partial name="_CategoryTreeNode" model="child" />
+            }
+        </div>
+    }
+</div>
