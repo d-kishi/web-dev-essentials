@@ -13,6 +13,7 @@
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
+      "browserKind": "chrome",
       "applicationUrl": "http://localhost:5017",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
@@ -22,14 +23,16 @@
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
+      "browserKind": "chrome",
       "applicationUrl": "https://localhost:7136;http://localhost:5017",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+      },
     },
     "IIS Express": {
       "commandName": "IISExpress",
       "launchBrowser": true,
+      "browserKind": "chrome",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
