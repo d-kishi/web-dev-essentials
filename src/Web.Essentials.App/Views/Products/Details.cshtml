@@ -10,7 +10,7 @@
         <p class="page-description">商品「@Model.Name」の詳細情報を表示します。</p>
     </div>
     <div class="page-actions">
-        <a href="@Url.Action("Edit", "Product", new { id = Model.Id })" class="btn btn-warning">
+        <a href="@Url.Action("Edit", "Products", new { id = Model.Id })" class="btn btn-warning">
             <span class="btn-icon">✏</span>
             編集
         </a>
@@ -20,7 +20,7 @@
             <span class="btn-icon">🗑</span>
             削除
         </button>
-        <a href="@Url.Action("Index", "Product")" class="btn btn-secondary">
+        <a href="@Url.Action("Index", "Products")" class="btn btn-secondary">
             <span class="btn-icon">←</span>
             商品一覧に戻る
         </a>
@@ -34,7 +34,7 @@
             <a href="@Url.Action("Index", "Home")">ホーム</a>
         </li>
         <li class="breadcrumb-item">
-            <a href="@Url.Action("Index", "Product")">商品一覧</a>
+            <a href="@Url.Action("Index", "Products")">商品一覧</a>
         </li>
         <li class="breadcrumb-item active" aria-current="page">
             @Model.Name
@@ -148,7 +148,7 @@
             <!-- アクションボタン -->
             <div class="product-actions">
                 <div class="action-buttons">
-                    <a href="@Url.Action("Edit", "Product", new { id = Model.Id })" 
+                    <a href="@Url.Action("Edit", "Products", new { id = Model.Id })" 
                        class="btn btn-primary btn-large">
                         <span class="btn-icon">✏</span>
                         この商品を編集

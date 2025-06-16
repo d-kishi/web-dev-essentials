@@ -136,7 +136,7 @@
         {
             <div class="product-actions-section">
                 <div class="action-buttons">
-                    <a href="@Url.Action("Edit", "Product", new { id = product.Id })" 
+                    <a href="@Url.Action("Edit", "Products", new { id = product.Id })" 
                        class="btn btn-primary">
                         <span class="btn-icon">✏️</span>
                         編集
@@ -337,7 +337,7 @@
     
     // 商品共有
     function shareProduct(productId, productName) {
-        const url = window.location.origin + '/Product/Details/' + productId;
+        const url = window.location.origin + '/Products/Details/' + productId;
         const shareText = `商品「${productName}」をご覧ください`;
         
         if (navigator.share) {
@@ -360,7 +360,7 @@
     function duplicateProduct(productId) {
         if (confirm('この商品を複製して新しい商品を作成しますか？')) {
             // 複製処理の実装
-            window.location.href = `/Product/Create?duplicateFrom=${productId}`;
+            window.location.href = `/Products/Create?duplicateFrom=${productId}`;
         }
     }
     

@@ -15,7 +15,7 @@
         <p class="page-description">登録されている商品の一覧を表示します。検索やフィルタリングが可能です。</p>
     </div>
     <div class="page-actions">
-        <a href="@Url.Action("Create", "Product")" class="btn btn-primary">
+        <a href="@Url.Action("Create", "Products")" class="btn btn-primary">
             <span class="btn-icon">➕</span>
             新規商品登録
         </a>
@@ -108,7 +108,7 @@
                                 </td>
                                 <td class="col-name">
                                     <div class="product-name">
-                                        <a href="@Url.Action("Details", "Product", new { id = product.Id })" class="product-link">
+                                        <a href="@Url.Action("Details", "Products", new { id = product.Id })" class="product-link">
                                             @product.Name
                                         </a>
                                     </div>
@@ -142,12 +142,12 @@
                                 </td>
                                 <td class="col-actions">
                                     <div class="action-buttons">
-                                        <a href="@Url.Action("Details", "Product", new { id = product.Id })" 
+                                        <a href="@Url.Action("Details", "Products", new { id = product.Id })" 
                                            class="btn btn-info btn-sm" 
                                            title="詳細表示">
                                             詳細
                                         </a>
-                                        <a href="@Url.Action("Edit", "Product", new { id = product.Id })" 
+                                        <a href="@Url.Action("Edit", "Products", new { id = product.Id })" 
                                            class="btn btn-warning btn-sm" 
                                            title="編集">
                                             編集
@@ -171,7 +171,7 @@
                                     <div class="no-data-icon">📦</div>
                                     <h3>商品が見つかりません</h3>
                                     <p>検索条件を変更するか、新しい商品を登録してください。</p>
-                                    <a href="@Url.Action("Create", "Product")" class="btn btn-primary">
+                                    <a href="@Url.Action("Create", "Products")" class="btn btn-primary">
                                         商品を登録する
                                     </a>
                                 </div>

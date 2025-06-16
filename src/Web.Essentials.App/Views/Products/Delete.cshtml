@@ -18,10 +18,10 @@
             <a href="@Url.Action("Index", "Home")">ホーム</a>
         </li>
         <li class="breadcrumb-item">
-            <a href="@Url.Action("Index", "Product")">商品一覧</a>
+            <a href="@Url.Action("Index", "Products")">商品一覧</a>
         </li>
         <li class="breadcrumb-item">
-            <a href="@Url.Action("Details", "Product", new { id = Model.Id })">@Model.Name</a>
+            <a href="@Url.Action("Details", "Products", new { id = Model.Id })">@Model.Name</a>
         </li>
         <li class="breadcrumb-item active" aria-current="page">
             削除確認
@@ -244,12 +244,12 @@
                         <span class="btn-icon">🗑️</span>
                         商品を削除する
                     </button>
-                    <a href="@Url.Action("Details", "Product", new { id = Model.Id })" 
+                    <a href="@Url.Action("Details", "Products", new { id = Model.Id })" 
                        class="btn btn-secondary btn-large">
                         <span class="btn-icon">↩️</span>
                         キャンセル（詳細に戻る）
                     </a>
-                    <a href="@Url.Action("Index", "Product")" 
+                    <a href="@Url.Action("Index", "Products")" 
                        class="btn btn-light btn-large">
                         <span class="btn-icon">📋</span>
                         商品一覧に戻る

@@ -9,12 +9,12 @@ namespace Web.Essentials.App.Controllers.Mvc;
 /// 商品管理MVCコントローラー
 /// 商品の一覧表示、登録、編集、削除のMVC画面を提供
 /// </summary>
-public class ProductController : Controller
+public class ProductsController : Controller
 {
     private readonly IProductRepository _productRepository;
     private readonly ICategoryRepository _categoryRepository;
     private readonly IProductImageRepository _productImageRepository;
-    private readonly ILogger<ProductController> _logger;
+    private readonly ILogger<ProductsController> _logger;
 
     /// <summary>
     /// コンストラクタ
@@ -24,11 +24,11 @@ public class ProductController : Controller
     /// <param name="categoryRepository">カテゴリリポジトリ</param>
     /// <param name="productImageRepository">商品画像リポジトリ</param>
     /// <param name="logger">ロガー</param>
-    public ProductController(
+    public ProductsController(
         IProductRepository productRepository,
         ICategoryRepository categoryRepository,
         IProductImageRepository productImageRepository,
-        ILogger<ProductController> logger)
+        ILogger<ProductsController> logger)
     {
         _productRepository = productRepository;
         _categoryRepository = categoryRepository;

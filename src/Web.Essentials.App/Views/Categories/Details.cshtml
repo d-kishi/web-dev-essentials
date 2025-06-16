@@ -218,7 +218,7 @@
                                     </div>
                                     <div class="product-info">
                                         <h4 class="product-name">
-                                            <a href="@Url.Action("Details", "Product", new { id = product.Id })">
+                                            <a href="@Url.Action("Details", "Products", new { id = product.Id })">
                                                 @product.Name
                                             </a>
                                         </h4>
@@ -245,9 +245,9 @@
                                         </div>
                                     </div>
                                     <div class="product-actions">
-                                        <a href="@Url.Action("Details", "Product", new { id = product.Id })" 
+                                        <a href="@Url.Action("Details", "Products", new { id = product.Id })" 
                                            class="btn btn-info btn-sm">詳細</a>
-                                        <a href="@Url.Action("Edit", "Product", new { id = product.Id })" 
+                                        <a href="@Url.Action("Edit", "Products", new { id = product.Id })" 
                                            class="btn btn-warning btn-sm">編集</a>
                                     </div>
                                 </div>
@@ -256,7 +256,7 @@
                         
                         <!-- 商品一覧へのリンク -->
                         <div class="view-all-products">
-                            <a href="@Url.Action("Index", "Product", new { categoryId = Model.Id })" 
+                            <a href="@Url.Action("Index", "Products", new { categoryId = Model.Id })" 
                                class="btn btn-outline">
                                 このカテゴリの商品をすべて表示
                             </a>
@@ -269,11 +269,11 @@
                             <h3>このカテゴリには商品がありません</h3>
                             <p>新しい商品を登録するか、既存の商品をこのカテゴリに関連付けてください。</p>
                             <div class="action-buttons">
-                                <a href="@Url.Action("Create", "Product", new { categoryId = Model.Id })" 
+                                <a href="@Url.Action("Create", "Products", new { categoryId = Model.Id })" 
                                    class="btn btn-primary">
                                     新しい商品を登録
                                 </a>
-                                <a href="@Url.Action("Index", "Product")" 
+                                <a href="@Url.Action("Index", "Products")" 
                                    class="btn btn-outline">
                                     既存商品を関連付け
                                 </a>

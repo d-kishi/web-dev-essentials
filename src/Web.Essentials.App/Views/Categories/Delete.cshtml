@@ -220,9 +220,9 @@ else
                             <div class="blocking-item">
                                 <span class="item-name">@product.Name</span>
                                 <span class="item-price">¥@product.Price.ToString("N0")</span>
-                                <a href="@Url.Action("Details", "Product", new { id = product.Id })" 
+                                <a href="@Url.Action("Details", "Products", new { id = product.Id })" 
                                    class="btn btn-sm btn-info">詳細</a>
-                                <a href="@Url.Action("Edit", "Product", new { id = product.Id })" 
+                                <a href="@Url.Action("Edit", "Products", new { id = product.Id })" 
                                    class="btn btn-sm btn-warning">編集</a>
                             </div>
                         }
@@ -230,14 +230,14 @@ else
                         {
                             <div class="more-items">
                                 他 @(Model.Products.Count - 5) 個の商品...
-                                <a href="@Url.Action("Index", "Product", new { categoryId = Model.Id })" 
+                                <a href="@Url.Action("Index", "Products", new { categoryId = Model.Id })" 
                                    class="view-all-link">すべて表示</a>
                             </div>
                         }
                     </div>
                     <div class="resolution-action">
                         <p class="resolution-text">これらの商品のカテゴリ関連付けを削除または変更してください。</p>
-                        <a href="@Url.Action("Index", "Product", new { categoryId = Model.Id })" 
+                        <a href="@Url.Action("Index", "Products", new { categoryId = Model.Id })" 
                            class="btn btn-warning">関連商品を管理</a>
                     </div>
                 </div>
