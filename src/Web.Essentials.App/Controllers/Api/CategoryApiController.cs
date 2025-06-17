@@ -9,7 +9,7 @@ namespace Web.Essentials.App.Controllers.Api;
 /// Ajax通信によるカテゴリデータの取得・検索・ページングを提供
 /// </summary>
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/categories")]
 public class CategoryApiController : ControllerBase
 {
     private readonly ICategoryRepository _categoryRepository;

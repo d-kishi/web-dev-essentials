@@ -9,7 +9,7 @@ namespace Web.Essentials.App.Controllers.Api;
 /// Ajax通信による商品データの取得・検索・ページングを提供
 /// </summary>
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/products")]
 public class ProductApiController : ControllerBase
 {
     private readonly IProductRepository _productRepository;
@@ -58,34 +58,21 @@ public class ProductApiController : ControllerBase
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 100) pageSize = 10;
 
-            // 全商品を取得（実際のプロジェクトではDBでフィルタリング・ページングを行う）
-            var (allProducts, totalCount) = await _productRepository.GetAllAsync();
+            // 商品一覧を取得（検索・フィルタリング・ページング対応）
+            var (allProducts, totalCount) = await _productRepository.GetAllAsync(
+                nameTerm: searchKeyword,
+                janCodeTerm: null,
+                categoryId: categoryId,
+                status: null,
+                minPrice: null,
+                maxPrice: null,
+                sortBy: "createdAt",
+                sortOrder: "desc",
+                page: page,
+                pageSize: pageSize);
 
-            // 検索条件でフィルタリング
-            var filteredProducts = allProducts.AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(searchKeyword))
-            {
-                filteredProducts = filteredProducts.Where(p => 
-                    p.Name.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase) ||
-                    (!string.IsNullOrEmpty(p.Description) && p.Description.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase)));
-            }
-
-            if (categoryId.HasValue)
-            {
-                filteredProducts = filteredProducts.Where(p => 
-                    p.ProductCategories.Any(pc => pc.CategoryId == categoryId.Value));
-            }
-
-            // 総件数を取得
-            var filteredTotalCount = filteredProducts.Count();
-
-            // ページング処理
-            var pagedProducts = filteredProducts
-                .OrderByDescending(p => p.UpdatedAt)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
+            // リポジトリで既にフィルタリング・ページング済みの商品を使用
+            var pagedProducts = allProducts.ToList();
 
             // DTOに変換
             var productDTOs = pagedProducts.Select(p => new ProductDto
@@ -113,10 +100,10 @@ public class ProductApiController : ControllerBase
             {
                 CurrentPage = page,
                 PageSize = pageSize,
-                TotalCount = filteredTotalCount,
-                TotalPages = (int)Math.Ceiling((double)filteredTotalCount / pageSize),
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize),
                 HasPreviousPage = page > 1,
-                HasNextPage = page < (int)Math.Ceiling((double)filteredTotalCount / pageSize)
+                HasNextPage = page < (int)Math.Ceiling((double)totalCount / pageSize)
             };
 
             // レスポンスDTO作成
@@ -256,7 +243,9 @@ public class ProductApiController : ControllerBase
             // 入力値バリデーション
             if (limit < 1 || limit > 50) limit = 10;
 
-            var (allProducts, _) = await _productRepository.GetAllAsync();
+            var (allProducts, _) = await _productRepository.GetAllAsync(
+                nameTerm: term,
+                pageSize: limit);
             
             // 商品名での部分一致検索（重複排除）
             var suggestions = allProducts
