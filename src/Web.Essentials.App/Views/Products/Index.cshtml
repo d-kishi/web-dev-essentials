@@ -291,7 +291,7 @@
                 params.append('pageSize', currentSearchParams.pageSize);
                 params.append('sortBy', currentSearchParams.sortBy);
                 
-                const response = await fetch(`/api/product?${params.toString()}`);
+                const response = await fetch(`/api/products?${params.toString()}`);
                 const result = await response.json();
                 
                 if (result.success) {
@@ -305,6 +305,129 @@
             } finally {
                 hideLoading();
             }
+        }
+        
+        // 商品一覧更新
+        function updateProductList(data) {
+            const container = document.getElementById('productListContent');
+            if (!container || !data) return;
+            
+            // テーブルの更新
+            const tbody = container.querySelector('table tbody');
+            if (tbody && data.products) {
+                tbody.innerHTML = '';
+                data.products.forEach(product => {
+                    const row = createProductRow(product);
+                    tbody.appendChild(row);
+                });
+            }
+            
+            // ページング情報の更新
+            if (data.paging) {
+                updatePagination(data.paging);
+            }
+        }
+        
+        // 商品行作成
+        function createProductRow(product) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>
+                    <div class="product-info">
+                        <h4>${product.name}</h4>
+                        <p class="product-description">${product.description || ''}</p>
+                    </div>
+                </td>
+                <td class="price-cell">¥${product.price.toLocaleString()}</td>
+                <td class="category-cell">
+                    ${product.categories ? product.categories.map(c => c.name).join(', ') : ''}
+                </td>
+                <td class="status-cell">
+                    <span class="status-badge status-${product.status}">${product.statusName}</span>
+                </td>
+                <td class="actions-cell">
+                    <a href="/Products/Details/${product.id}" class="btn btn-sm btn-outline">詳細</a>
+                    <a href="/Products/Edit/${product.id}" class="btn btn-sm btn-primary">編集</a>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete(${product.id}, '${product.name}')">削除</button>
+                </td>
+            `;
+            return row;
+        }
+        
+        // ページング更新
+        function updatePagination(paging) {
+            // 簡易実装
+            console.log('Pagination:', paging);
+        }
+        
+        // 削除確認
+        function confirmDelete(id, name) {
+            if (confirm(`商品「${name}」を削除しますか？`)) {
+                deleteProduct(id);
+            }
+        }
+        
+        // 商品削除
+        async function deleteProduct(id) {
+            try {
+                const response = await fetch(`/Products/Delete/${id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                if (response.ok) {
+                    showSuccess('商品を削除しました');
+                    loadProductList();
+                } else {
+                    showError('商品の削除に失敗しました');
+                }
+            } catch (error) {
+                console.error('削除エラー:', error);
+                showError('削除中にエラーが発生しました');
+            }
+        }
+        
+        // 検索フォーム初期化
+        function setupSearchForm() {
+            const searchForm = document.getElementById('searchForm');
+            if (searchForm) {
+                searchForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    performSearch();
+                });
+            }
+        }
+        
+        // ソート機能初期化
+        function setupSortFeatures() {
+            const sortButtons = document.querySelectorAll('[data-sort]');
+            sortButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const sortBy = this.getAttribute('data-sort');
+                    currentSearchParams.sortBy = sortBy;
+                    loadProductList();
+                });
+            });
+        }
+        
+        // ビュー切り替え初期化
+        function setupViewToggle() {
+            const viewButtons = document.querySelectorAll('.view-toggle');
+            viewButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    viewButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        }
+        
+        // 商品削除初期化
+        function setupProductDeletion() {
+            // 削除ボタンのイベントハンドラーは動的コンテンツのため、
+            // updateProductList内で設定
         }
         
         // 商品削除確認

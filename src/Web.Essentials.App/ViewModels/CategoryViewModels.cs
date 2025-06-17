@@ -155,6 +155,11 @@ public class CategoryListItemViewModel
     public bool HasChildren { get; set; }
 
     /// <summary>
+    /// 子カテゴリ一覧（ツリー表示用）
+    /// </summary>
+    public IEnumerable<CategoryListItemViewModel> ChildCategories { get; set; } = new List<CategoryListItemViewModel>();
+
+    /// <summary>
     /// 作成日時表示（フォーマット済み）
     /// </summary>
     public string FormattedCreatedAt => CreatedAt.ToString("yyyy/MM/dd HH:mm");

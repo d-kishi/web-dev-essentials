@@ -6,7 +6,9 @@
     var showProductCount = ViewBag.ShowProductCount as bool? ?? true;
     var expandAll = ViewBag.ExpandAll as bool? ?? false;
     
-    var hasChildren = Model.ChildCategories?.Any() == true;
+    // dynamic型ではAny()メソッドを直接呼び出せないため、カウントでチェック
+    var childCategories = Model.ChildCategories as IEnumerable<object>;
+    var hasChildren = childCategories != null && childCategories.Count() > 0;
     var isSelected = isSelectable && selectedId == Model.Id;
     var nodeId = $"tree-node-{Model.Id}";
 }
@@ -83,7 +85,7 @@
                 @if (hasChildren)
                 {
                     <span class="children-count" title="子カテゴリ数">
-                        🏷️ @Model.ChildCategories.Count
+                        🏷️ @(childCategories?.Count() ?? 0)
                     </span>
                 }
             </div>
@@ -137,9 +139,12 @@
     @if (hasChildren)
     {
         <div class="tree-children" style="display: @(expandAll ? "block" : "none");">
-            @foreach (var child in Model.ChildCategories)
+            @if (childCategories != null)
             {
-                <partial name="_CategoryTreeNode" model="child" />
+                @foreach (var child in childCategories)
+                {
+                    <partial name="_CategoryTreeNode" model="child" />
+                }
             }
         </div>
     }

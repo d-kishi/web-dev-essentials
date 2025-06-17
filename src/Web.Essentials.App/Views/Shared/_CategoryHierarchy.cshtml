@@ -10,10 +10,13 @@
     var selectedId = ViewBag.SelectedId as int?;
     var showProductCount = ViewBag.ShowProductCount as bool? ?? true;
     var expandAll = ViewBag.ExpandAll as bool? ?? false;
+    
+    // dynamic型でAny()メソッドを直接呼び出せないため、Countで判定
+    var hasCategories = categories != null && categories.Count() > 0;
 }
 
 <div class="category-hierarchy-container">
-    @if (categories.Any())
+    @if (hasCategories)
     {
         <div class="category-tree">
             @foreach (var category in categories)
