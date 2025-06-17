@@ -2,7 +2,7 @@
     var searchKeyword = ViewBag.SearchKeyword as string ?? "";
     var categoryId = ViewBag.CategoryId as int?;
     var showCategoryFilter = ViewBag.ShowCategoryFilter as bool? ?? false;
-    var categories = ViewBag.Categories as IEnumerable<Web.Essentials.App.ViewModels.CategoryViewModel> ?? new List<Web.Essentials.App.ViewModels.CategoryViewModel>();
+    var categories = ViewBag.Categories as IEnumerable<Web.Essentials.App.ViewModels.CategorySelectItem> ?? new List<Web.Essentials.App.ViewModels.CategorySelectItem>();
 }
 
 <!-- 検索フォーム部分ビュー -->
@@ -39,13 +39,13 @@
                             @if (categoryId == category.Id)
                             {
                                 <option value="@category.Id" selected>
-                                    @category.Name
+                                    @category.FullPath
                                 </option>
                             }
                             else
                             {
                                 <option value="@category.Id">
-                                    @category.Name
+                                    @category.FullPath
                                 </option>
                             }
                         }

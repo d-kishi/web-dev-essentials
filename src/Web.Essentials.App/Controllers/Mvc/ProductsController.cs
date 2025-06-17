@@ -49,6 +49,9 @@ public class ProductsController : Controller
             var (products, totalCount) = await _productRepository.GetAllAsync();
             var categories = await _categoryRepository.GetAllAsync();
             
+            // カテゴリの階層構造を構築するための辞書を作成
+            var categoryDict = categories.ToDictionary(c => c.Id, c => c);
+            
             // 商品一覧ViewModelに変換
             var viewModel = new ProductIndexViewModel
             {
@@ -78,13 +81,16 @@ public class ProductsController : Controller
                     HasPreviousPage = false,
                     HasNextPage = totalCount > 10
                 },
-                Categories = categories.Select(c => new CategorySelectItem
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    FullPath = c.Name,
-                    Level = c.Level
-                }).ToList()
+                Categories = categories
+                    .Select(c => new CategorySelectItem
+                    {
+                        Id = c.Id,
+                        Name = c.Name,
+                        FullPath = BuildCategoryFullPath(c, categoryDict),
+                        Level = c.Level
+                    })
+                    .OrderBy(c => c.FullPath) // FullPath（階層構造パス）の昇順でソート
+                    .ToList()
             };
 
             return View(viewModel);
@@ -94,6 +100,35 @@ public class ProductsController : Controller
             _logger.LogError(ex, "商品一覧表示中にエラーが発生しました");
             return View("Error");
         }
+    }
+
+    /// <summary>
+    /// カテゴリの階層構造FullPathを構築
+    /// </summary>
+    /// <param name="category">対象カテゴリ</param>
+    /// <param name="categoryDict">カテゴリ辞書</param>
+    /// <returns>階層構造を表すパス（例：「野球 > バット > 硬式バット」）</returns>
+    private static string BuildCategoryFullPath(Category category, Dictionary<int, Category> categoryDict)
+    {
+        var pathParts = new List<string>();
+        var current = category;
+
+        // 自分から親に向かって辿る
+        while (current != null)
+        {
+            pathParts.Insert(0, current.Name); // 先頭に挿入
+            
+            if (current.ParentCategoryId.HasValue && categoryDict.ContainsKey(current.ParentCategoryId.Value))
+            {
+                current = categoryDict[current.ParentCategoryId.Value];
+            }
+            else
+            {
+                current = null; // ルートカテゴリに到達
+            }
+        }
+
+        return string.Join(" > ", pathParts);
     }
 
     /// <summary>
