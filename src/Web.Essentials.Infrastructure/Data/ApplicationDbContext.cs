@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Web.Essentials.Domain.Entities;
+using Web.Essentials.Infrastructure.Data.Seeds;
 
 namespace Web.Essentials.Infrastructure.Data;
 
@@ -232,113 +233,14 @@ public class ApplicationDbContext : DbContext
     /// </summary>
     /// <param name="modelBuilder">モデルビルダー</param>
     /// <remarks>
-    /// アプリケーション起動時に自動的に投入される初期データ
-    /// 開発・テスト用のサンプルデータを提供
+    /// スポーツ用品特化の初期データを外部ファイルから読み込み
+    /// MasterDataSeeder クラスを使用して一元管理された初期データを設定
+    /// 保守性と可読性を向上させるため、データ定義をシーダークラスに分離
     /// </remarks>
     private static void SeedData(ModelBuilder modelBuilder)
     {
-        // カテゴリ初期データ
-        modelBuilder.Entity<Category>().HasData(
-            new Category
-            {
-                Id = 1,
-                Name = "電子機器",
-                Description = "コンピューター、スマートフォン、タブレットなどの電子機器",
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
-            },
-            new Category
-            {
-                Id = 2,
-                Name = "書籍",
-                Description = "小説、技術書、雑誌などの書籍類",
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
-            },
-            new Category
-            {
-                Id = 3,
-                Name = "衣類",
-                Description = "シャツ、パンツ、靴などの衣類・アクセサリー",
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
-            },
-            new Category
-            {
-                Id = 4,
-                Name = "食品",
-                Description = "食品、飲料、お菓子などの食べ物",
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
-            },
-            new Category
-            {
-                Id = 5,
-                Name = "生活用品",
-                Description = "日用品、清掃用品、文房具などの生活必需品",
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
-            }
-        );
-
-        // 商品初期データ
-        modelBuilder.Entity<Product>().HasData(
-            new Product
-            {
-                Id = 1,
-                Name = "ノートパソコン ThinkPad X1",
-                Description = "高性能なビジネス向けノートパソコン。軽量で持ち運びに便利。",
-                Price = 150000m,
-                CategoryId = 1,
-                JanCode = "4901234567890",
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
-            },
-            new Product
-            {
-                Id = 2,
-                Name = "プログラミング入門書",
-                Description = "初心者向けのプログラミング学習書。C#の基礎から応用まで。",
-                Price = 3500m,
-                CategoryId = 2,
-                JanCode = "4901234567891",
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
-            },
-            new Product
-            {
-                Id = 3,
-                Name = "コットンTシャツ",
-                Description = "100%コットンの快適なTシャツ。カジュアルからビジネスカジュアルまで。",
-                Price = 2800m,
-                CategoryId = 3,
-                JanCode = "4901234567892",
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
-            },
-            new Product
-            {
-                Id = 4,
-                Name = "有機コーヒー豆",
-                Description = "南米産の有機栽培コーヒー豆。深いコクと豊かな香り。",
-                Price = 1200m,
-                CategoryId = 4,
-                JanCode = "4901234567893",
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
-            },
-            new Product
-            {
-                Id = 5,
-                Name = "多機能ボールペン",
-                Description = "黒・赤・青のインクとシャープペンシル機能を備えた便利なペン。",
-                Price = 800m,
-                CategoryId = 5,
-                JanCode = "4901234567894",
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
-            }
-        );
+        // 外部シーダークラスを使用してすべての初期データを設定
+        MasterDataSeeder.SeedAll(modelBuilder);
     }
 
     /// <summary>
