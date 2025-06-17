@@ -45,8 +45,9 @@ public class ProductsController : Controller
     {
         try
         {
-            // 全商品を取得
+            // 全商品とカテゴリを取得
             var (products, totalCount) = await _productRepository.GetAllAsync();
+            var categories = await _categoryRepository.GetAllAsync();
             
             // 商品一覧ViewModelに変換
             var viewModel = new ProductIndexViewModel
@@ -67,7 +68,23 @@ public class ProductsController : Controller
                 }).ToList(),
                 SearchKeyword = string.Empty,
                 CurrentPage = 1,
-                PageSize = 10
+                PageSize = 10,
+                PagingInfo = new PagingInfo
+                {
+                    CurrentPage = 1,
+                    PageSize = 10,
+                    TotalCount = totalCount,
+                    TotalPages = (int)Math.Ceiling((double)totalCount / 10),
+                    HasPreviousPage = false,
+                    HasNextPage = totalCount > 10
+                },
+                Categories = categories.Select(c => new CategorySelectItem
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    FullPath = c.Name,
+                    Level = c.Level
+                }).ToList()
             };
 
             return View(viewModel);
