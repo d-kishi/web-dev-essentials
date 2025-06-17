@@ -60,7 +60,8 @@ public class ProductsController : Controller
                     Price = (uint)p.Price,
                     JanCode = p.JanCode,
                     Status = p.Status,
-                    CategoryName =  "未分類", // TODO: Get from category lookup
+                    CategoryNames = p.ProductCategories.Select(pc => pc.Category.Name).ToList(),
+                    CategoryName = p.ProductCategories.FirstOrDefault()?.Category.Name ?? "未分類",
                     CreatedAt = p.CreatedAt,
                     UpdatedAt = p.UpdatedAt
                 }).ToList(),
@@ -104,8 +105,14 @@ public class ProductsController : Controller
                 Name = product.Name,
                 Description = product.Description,
                 Price = (uint)product.Price,
-                // CategoryId = product.CategoryId, // TODO: ProductエンティティにCategoryIdが存在しないため一時的にコメントアウト
-              JanCode = product.JanCode,
+                Status = product.Status,
+                JanCode = product.JanCode,
+                Categories = product.ProductCategories.Select(pc => new CategoryDisplayItem
+                {
+                    Id = pc.Category.Id,
+                    Name = pc.Category.Name,
+                    FullPath = pc.Category.Name
+                }).ToList(),
                 CreatedAt = product.CreatedAt,
                 UpdatedAt = product.UpdatedAt,
                 Images = productImages.Select(img => new ProductImageDisplayItem
@@ -192,7 +199,7 @@ public class ProductsController : Controller
                 Name = viewModel.Name,
                 Description = viewModel.Description,
                 Price = viewModel.Price,
-                // CategoryId = viewModel.CategoryId, // TODO: ProductエンティティにCategoryIdが存在しないため一時的にコメントアウト
+                Status = viewModel.Status,
                 JanCode = viewModel.JanCode,
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now
@@ -200,6 +207,22 @@ public class ProductsController : Controller
 
             // 商品を登録
             await _productRepository.AddAsync(product);
+
+            // カテゴリ関係の設定
+            if (viewModel.SelectedCategoryIds?.Any() == true)
+            {
+                foreach (var categoryId in viewModel.SelectedCategoryIds)
+                {
+                    var productCategory = new ProductCategory
+                    {
+                        ProductId = product.Id,
+                        CategoryId = categoryId,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    product.ProductCategories.Add(productCategory);
+                }
+                await _productRepository.UpdateAsync(product);
+            }
 
             // 画像ファイルがアップロードされている場合の処理
             if (viewModel.ImageFiles != null && viewModel.ImageFiles.Any())
@@ -255,8 +278,9 @@ public class ProductsController : Controller
                 Name = product.Name,
                 Description = product.Description,
                 Price = (uint)product.Price,
-                // CategoryId = product.CategoryId, // TODO: ProductエンティティにCategoryIdが存在しないため一時的にコメントアウト
+                Status = product.Status,
                 JanCode = product.JanCode,
+                SelectedCategoryIds = product.ProductCategories.Select(pc => pc.CategoryId).ToList(),
                 Categories = categories.Select(c => new CategorySelectItem
                 {
                     Id = c.Id,
@@ -318,9 +342,25 @@ public class ProductsController : Controller
             product.Name = viewModel.Name;
             product.Description = viewModel.Description;
             product.Price = viewModel.Price;
-            // product.CategoryId = viewModel.CategoryId; // TODO: ProductエンティティにCategoryIdが存在しないため一時的にコメントアウト
+            product.Status = viewModel.Status;
             product.JanCode = viewModel.JanCode;
             product.UpdatedAt = DateTime.Now;
+
+            // カテゴリ関係の更新
+            product.ProductCategories.Clear();
+            if (viewModel.SelectedCategoryIds?.Any() == true)
+            {
+                foreach (var categoryId in viewModel.SelectedCategoryIds)
+                {
+                    var productCategory = new ProductCategory
+                    {
+                        ProductId = product.Id,
+                        CategoryId = categoryId,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    product.ProductCategories.Add(productCategory);
+                }
+            }
 
             await _productRepository.UpdateAsync(product);
 
@@ -368,8 +408,14 @@ public class ProductsController : Controller
                 Name = product.Name,
                 Description = product.Description,
                 Price = (uint)product.Price,
-                // CategoryId = product.CategoryId, // TODO: ProductエンティティにCategoryIdが存在しないため一時的にコメントアウト
+                Status = product.Status,
                 JanCode = product.JanCode,
+                Categories = product.ProductCategories.Select(pc => new CategoryDisplayItem
+                {
+                    Id = pc.Category.Id,
+                    Name = pc.Category.Name,
+                    FullPath = pc.Category.Name
+                }).ToList(),
                 CreatedAt = product.CreatedAt,
                 UpdatedAt = product.UpdatedAt,
                 Images = productImages.Select(img => new ProductImageDisplayItem
@@ -517,6 +563,16 @@ public class ProductsController : Controller
             DisplayOrder = img.DisplayOrder,
             CreatedAt = img.CreatedAt
         }).ToList();
+
+        // 既存のカテゴリ選択状態を保持
+        if (viewModel.SelectedCategoryIds?.Count == 0)
+        {
+            var product = await _productRepository.GetByIdAsync(viewModel.Id);
+            if (product != null)
+            {
+                viewModel.SelectedCategoryIds = product.ProductCategories.Select(pc => pc.CategoryId).ToList();
+            }
+        }
     }
 
     #endregion

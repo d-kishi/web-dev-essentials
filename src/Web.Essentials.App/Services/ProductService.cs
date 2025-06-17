@@ -88,8 +88,8 @@ public class ProductService : IProductService
             {
                 Products = productDTOs,
                 Paging = paging,
-                SearchKeyword = searchKeyword,
-                // CategoryId = categoryId // TODO: Productエンティティにはカテゴリとの直接的な関係がないため一時的にコメントアウト
+                SearchKeyword = searchKeyword
+                // CategoryIdは多対多関係のため、Productエンティティには直接的なCategoryIdは存在しない
             };
         }
         catch (Exception ex)
@@ -118,10 +118,12 @@ public class ProductService : IProductService
                 return null;
             }
 
-            // 商品画像とカテゴリ情報を取得
+            // 商品画像を取得
             var productImages = await _productImageRepository.GetByProductIdAsync(id);
-            // var category = await _categoryRepository.GetByIdAsync(product.CategoryId); // TODO: ProductエンティティにCategoryIdが存在しないため一時的にコメントアウト
-            Category? category = null;
+            
+            // カテゴリ名を取得（多対多関係のため最初のカテゴリ名を使用）
+            var firstCategory = product.ProductCategories.FirstOrDefault()?.Category;
+            var categoryName = firstCategory?.Name ?? "未分類";
 
             // ViewModelに変換
             var viewModel = new ProductDetailsViewModel
@@ -130,8 +132,14 @@ public class ProductService : IProductService
                 Name = product.Name,
                 Description = product.Description,
                 Price = (uint)product.Price,
-                // CategoryId = product.CategoryId, // TODO: ProductエンティティにCategoryIdが存在しないため一時的にコメントアウト
-                CategoryName = category?.Name ?? "未分類",
+                Status = product.Status,
+                CategoryName = categoryName,
+                Categories = product.ProductCategories.Select(pc => new CategoryDisplayItem
+                {
+                    Id = pc.Category.Id,
+                    Name = pc.Category.Name,
+                    FullPath = pc.Category.Name
+                }).ToList(),
                 JanCode = product.JanCode,
                 CreatedAt = product.CreatedAt,
                 UpdatedAt = product.UpdatedAt,
@@ -214,8 +222,9 @@ public class ProductService : IProductService
                 Name = product.Name,
                 Description = product.Description,
                 Price = (uint)product.Price,
-                // CategoryId = product.CategoryId, // TODO: ProductエンティティにCategoryIdが存在しないため一時的にコメントアウト
+                Status = product.Status,
                 JanCode = product.JanCode,
+                SelectedCategoryIds = product.ProductCategories.Select(pc => pc.CategoryId).ToList(),
                 Categories = categories.Select(c => new CategorySelectItem
                 {
                     Id = c.Id,
