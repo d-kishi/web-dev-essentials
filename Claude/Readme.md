@@ -103,6 +103,56 @@ code --install-extension eamodio.gitlens
 
 **注意**: Bracket Pair Colorizerは廃止されており、現在はVSCode組み込み機能で代替されています。
 
+## エラー報告のベストプラクティス
+
+### エラーメッセージを必ず含める
+
+**JavaScriptエラーでもC#エラーでも、エラーメッセージを教えていただく方が格段に原因特定しやすい**
+
+#### 理由
+
+**1. 迅速な原因特定**
+```javascript
+// エラーメッセージ例
+"TypeError: Cannot read property 'Any' of undefined"
+"ReferenceError: setupSearchForm is not defined" 
+"SyntaxError: Unexpected token '}'"
+```
+- エラータイプから問題の性質がすぐ分かる
+- 具体的な関数名・プロパティ名で検索範囲を絞れる
+
+**2. 効率的な調査**
+- **エラーメッセージあり**: `setupSearchForm is not defined` → 未実装関数をピンポイントで特定（数分で解決）
+- **エラーメッセージなし**: 「検索ボタンが動かない」→ 全体的な調査が必要（複数ファイルを読み込んで推測）
+
+**3. JavaScriptならではの複雑さ**
+```javascript
+// 似たような問題でも原因が全く違う
+"Cannot read property 'length' of null"     // データが null
+"Cannot read property 'length' of undefined" // データが undefined  
+"length is not a function"                   // データ型の間違い
+```
+
+#### 理想的な報告方法
+
+**ベストプラクティス**
+```
+検索ボタンをクリックすると以下のエラーが発生します：
+- コンソールエラー: "ReferenceError: updateProductList is not defined"
+- 発生場所: Products/Index.cshtml:298行目
+- 症状: 検索結果が表示されない
+```
+
+**最低限の情報**
+```
+検索ボタンエラー: "updateProductList is not defined"
+```
+
+#### まとめ
+- **C#エラー**: コンパイルエラーやランタイム例外メッセージ
+- **JavaScriptエラー**: コンソールエラーメッセージ
+- **どちらも**: エラーメッセージがあると**10倍速く**解決できる
+
 ## 所感
 
 - Claude Codeはゲームチェンジャ、シンギュラリティ。
