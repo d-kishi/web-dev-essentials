@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
 using Web.Essentials.Domain.Entities;
+using Web.Essentials.App.Validation;
 
 namespace Web.Essentials.App.ViewModels;
 
@@ -125,10 +126,6 @@ public class ProductDeleteViewModel
     /// </summary>
     public ProductStatus Status { get; set; }
 
-    /// <summary>
-    /// カテゴリID
-    /// </summary>
-    public int CategoryId { get; set; }
 
     /// <summary>
     /// ステータス表示名
@@ -412,10 +409,6 @@ public class ProductDetailsViewModel
     /// </summary>
     public ProductStatus Status { get; set; }
 
-    /// <summary>
-    /// カテゴリID
-    /// </summary>
-    public int CategoryId { get; set; }
 
     /// <summary>
     /// カテゴリ名
@@ -502,6 +495,7 @@ public class ProductCreateViewModel
     [Display(Name = "JANコード")]
     [StringLength(13, MinimumLength = 13, ErrorMessage = "JANコードは13桁で入力してください")]
     [RegularExpression(@"^\d{13}$", ErrorMessage = "JANコードは13桁の数字で入力してください")]
+    [UniqueJanCode]
     public string? JanCode { get; set; }
 
     /// <summary>
@@ -512,11 +506,9 @@ public class ProductCreateViewModel
     public ProductStatus Status { get; set; } = ProductStatus.PreSale;
 
     /// <summary>
-    /// カテゴリID
+    /// カテゴリID（一時的に追加）
     /// </summary>
-    [Required(ErrorMessage = "カテゴリは必須です")]
-    [Display(Name = "カテゴリ")]
-    public int CategoryId { get; set; }
+    public int? CategoryId { get; set; }
 
     /// <summary>
     /// 選択されたカテゴリIDリスト
@@ -529,6 +521,9 @@ public class ProductCreateViewModel
     /// アップロード画像ファイル（最大5枚）
     /// </summary>
     [Display(Name = "商品画像")]
+    [MaxImages(5)]
+    [AllowedImageExtensions(".jpg", ".jpeg", ".png", ".gif")]
+    [MaxFileSize(5.0)]
     public List<IFormFile>? ImageFiles { get; set; }
 
     /// <summary>
@@ -593,6 +588,7 @@ public class ProductEditViewModel
     [Display(Name = "JANコード")]
     [StringLength(13, MinimumLength = 13, ErrorMessage = "JANコードは13桁で入力してください")]
     [RegularExpression(@"^\d{13}$", ErrorMessage = "JANコードは13桁の数字で入力してください")]
+    [UniqueJanCode]
     public string? JanCode { get; set; }
 
     /// <summary>
@@ -603,11 +599,9 @@ public class ProductEditViewModel
     public ProductStatus Status { get; set; }
 
     /// <summary>
-    /// カテゴリID
+    /// カテゴリID（一時的に追加）
     /// </summary>
-    [Required(ErrorMessage = "カテゴリは必須です")]
-    [Display(Name = "カテゴリ")]
-    public int CategoryId { get; set; }
+    public int? CategoryId { get; set; }
 
     /// <summary>
     /// 選択されたカテゴリIDリスト
@@ -620,6 +614,9 @@ public class ProductEditViewModel
     /// 新規アップロード画像ファイル
     /// </summary>
     [Display(Name = "追加画像")]
+    [MaxImages(5)]
+    [AllowedImageExtensions(".jpg", ".jpeg", ".png", ".gif")]
+    [MaxFileSize(5.0)]
     public List<IFormFile>? NewImageFiles { get; set; }
 
     /// <summary>

@@ -277,7 +277,7 @@ public class ProductRepository : IProductRepository
             PreSaleCount = products.Count(p => p.Status == ProductStatus.PreSale),
             OnSaleCount = products.Count(p => p.Status == ProductStatus.OnSale),
             DiscontinuedCount = products.Count(p => p.Status == ProductStatus.Discontinued),
-            AveragePrice = products.Average(p => p.Price),
+            AveragePrice = (uint)products.Average(p => (double)p.Price),
             MaxPrice = products.Max(p => p.Price),
             MinPrice = products.Min(p => p.Price)
         };

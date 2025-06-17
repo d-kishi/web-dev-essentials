@@ -114,8 +114,7 @@ public class ApplicationDbContext : DbContext
                 .HasMaxLength(1000);
 
             entity.Property(e => e.Price)
-                .IsRequired()
-                .HasPrecision(18, 2);
+                .IsRequired();
 
             entity.Property(e => e.JanCode)
                 .HasMaxLength(13);
@@ -126,11 +125,11 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .IsRequired();
 
-            // 関係性設定
-            entity.HasOne<Category>()
-                .WithMany()
-                .HasForeignKey(e => e.CategoryId)
-                .OnDelete(DeleteBehavior.Restrict);
+            // インデックスとユニーク制約
+            entity.HasIndex(e => e.JanCode)
+                .IsUnique(); // JANコード重複不可
+
+            // 関係性設定（多対多関係はProductCategoryで管理）
         });
     }
 
@@ -158,6 +157,16 @@ public class ApplicationDbContext : DbContext
 
             entity.Property(e => e.UpdatedAt)
                 .IsRequired();
+
+            // 自己参照関係設定（階層構造）
+            entity.HasOne(e => e.ParentCategory)
+                .WithMany(c => c.ChildCategories)
+                .HasForeignKey(e => e.ParentCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ユニーク制約（カテゴリ名重複不可）
+            entity.HasIndex(e => e.Name)
+                .IsUnique();
         });
     }
 
@@ -177,15 +186,15 @@ public class ApplicationDbContext : DbContext
                 .IsRequired();
 
             // 関係性設定
-            entity.HasOne<Product>()
-                .WithMany()
+            entity.HasOne(e => e.Product)
+                .WithMany(p => p.ProductCategories)
                 .HasForeignKey(e => e.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasOne<Category>()
-                .WithMany()
+            entity.HasOne(e => e.Category)
+                .WithMany(c => c.ProductCategories)
                 .HasForeignKey(e => e.CategoryId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 
@@ -221,10 +230,16 @@ public class ApplicationDbContext : DbContext
                 .IsRequired();
 
             // 関係性設定
-            entity.HasOne<Product>()
-                .WithMany()
+            entity.HasOne(e => e.Product)
+                .WithMany(p => p.ProductImages)
                 .HasForeignKey(e => e.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // ユニーク制約とインデックス
+            entity.HasIndex(e => new { e.ProductId, e.DisplayOrder })
+                .IsUnique(); // 同一商品でDisplayOrderの重複不可
+
+            entity.HasIndex(e => new { e.ProductId, e.IsMain }); // メイン画像のインデックス
         });
     }
 

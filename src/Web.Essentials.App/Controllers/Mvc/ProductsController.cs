@@ -60,7 +60,7 @@ public class ProductsController : Controller
                     Price = (uint)p.Price,
                     JanCode = p.JanCode,
                     Status = p.Status,
-                    CategoryName = "未分類", // TODO: Get from category lookup
+                    CategoryName =  "未分類", // TODO: Get from category lookup
                     CreatedAt = p.CreatedAt,
                     UpdatedAt = p.UpdatedAt
                 }).ToList(),
@@ -104,8 +104,8 @@ public class ProductsController : Controller
                 Name = product.Name,
                 Description = product.Description,
                 Price = (uint)product.Price,
-                CategoryId = product.CategoryId,
-                JanCode = product.JanCode,
+                // CategoryId = product.CategoryId, // TODO: ProductエンティティにCategoryIdが存在しないため一時的にコメントアウト
+              JanCode = product.JanCode,
                 CreatedAt = product.CreatedAt,
                 UpdatedAt = product.UpdatedAt,
                 Images = productImages.Select(img => new ProductImageDisplayItem
@@ -192,7 +192,7 @@ public class ProductsController : Controller
                 Name = viewModel.Name,
                 Description = viewModel.Description,
                 Price = viewModel.Price,
-                CategoryId = viewModel.CategoryId,
+                // CategoryId = viewModel.CategoryId, // TODO: ProductエンティティにCategoryIdが存在しないため一時的にコメントアウト
                 JanCode = viewModel.JanCode,
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now
@@ -255,7 +255,7 @@ public class ProductsController : Controller
                 Name = product.Name,
                 Description = product.Description,
                 Price = (uint)product.Price,
-                CategoryId = product.CategoryId,
+                // CategoryId = product.CategoryId, // TODO: ProductエンティティにCategoryIdが存在しないため一時的にコメントアウト
                 JanCode = product.JanCode,
                 Categories = categories.Select(c => new CategorySelectItem
                 {
@@ -318,7 +318,7 @@ public class ProductsController : Controller
             product.Name = viewModel.Name;
             product.Description = viewModel.Description;
             product.Price = viewModel.Price;
-            product.CategoryId = viewModel.CategoryId;
+            // product.CategoryId = viewModel.CategoryId; // TODO: ProductエンティティにCategoryIdが存在しないため一時的にコメントアウト
             product.JanCode = viewModel.JanCode;
             product.UpdatedAt = DateTime.Now;
 
@@ -368,7 +368,7 @@ public class ProductsController : Controller
                 Name = product.Name,
                 Description = product.Description,
                 Price = (uint)product.Price,
-                CategoryId = product.CategoryId,
+                // CategoryId = product.CategoryId, // TODO: ProductエンティティにCategoryIdが存在しないため一時的にコメントアウト
                 JanCode = product.JanCode,
                 CreatedAt = product.CreatedAt,
                 UpdatedAt = product.UpdatedAt,

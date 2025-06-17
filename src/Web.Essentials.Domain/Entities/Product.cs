@@ -43,19 +43,11 @@ public class Product
     /// 価格（日本円）
     /// </summary>
     /// <remarks>
-    /// 必須項目、0以上の値
-    /// 税込み価格を想定
+    /// 必須項目、0以上の整数値
+    /// 税込み価格を想定、円単位での管理
     /// </remarks>
-    public decimal Price { get; set; }
+    public uint Price { get; set; }
 
-    /// <summary>
-    /// カテゴリID（外部キー）
-    /// </summary>
-    /// <remarks>
-    /// 必須項目、商品が属するカテゴリのID
-    /// 単純な1対多関係を使用
-    /// </remarks>
-    public int CategoryId { get; set; }
 
     /// <summary>
     /// JANコード（13桁）

@@ -41,22 +41,31 @@
                 </div>
             </div>
             
-            <!-- カテゴリ -->
+            <!-- カテゴリ（多対多対応） -->
             <div class="form-group">
-                <label asp-for="CategoryId" class="form-label required">カテゴリ</label>
-                <select asp-for="CategoryId" class="form-select">
-                    <option value="">カテゴリを選択してください</option>
+                <label asp-for="SelectedCategoryIds" class="form-label required">カテゴリ</label>
+                <div class="category-checkbox-group">
                     @if (Model?.Categories != null)
                     {
                         @foreach (var category in Model.Categories)
                         {
-                            <option value="@category.Id">@category.Name</option>
+                            <div class="category-checkbox-item">
+                                <input type="checkbox" 
+                                       id="category_@category.Id" 
+                                       name="SelectedCategoryIds" 
+                                       value="@category.Id" 
+                                       @(Model.SelectedCategoryIds?.Contains(category.Id) == true ? "checked" : "")
+                                       class="category-checkbox" />
+                                <label for="category_@category.Id" class="category-checkbox-label">
+                                    @category.DisplayName
+                                </label>
+                            </div>
                         }
                     }
-                </select>
-                <span asp-validation-for="CategoryId" class="validation-error"></span>
+                </div>
+                <span asp-validation-for="SelectedCategoryIds" class="validation-error"></span>
                 <div class="field-help">
-                    <small>商品が属するカテゴリを選択してください</small>
+                    <small>商品が属するカテゴリを選択してください（複数選択可）</small>
                 </div>
             </div>
             

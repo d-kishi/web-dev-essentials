@@ -30,7 +30,7 @@ public class ProductDto
     /// <summary>
     /// 価格
     /// </summary>
-    public decimal Price { get; set; }
+    public uint Price { get; set; }
 
     /// <summary>
     /// JANコード
@@ -47,15 +47,6 @@ public class ProductDto
     /// </summary>
     public string StatusName { get; set; } = string.Empty;
 
-    /// <summary>
-    /// カテゴリID
-    /// </summary>
-    public int CategoryId { get; set; }
-
-    /// <summary>
-    /// カテゴリ名
-    /// </summary>
-    public string CategoryName { get; set; } = string.Empty;
 
     /// <summary>
     /// カテゴリ情報一覧
@@ -105,7 +96,7 @@ public class ProductListItemDto
     /// <summary>
     /// 価格
     /// </summary>
-    public decimal Price { get; set; }
+    public uint Price { get; set; }
 
     /// <summary>
     /// JANコード
@@ -242,12 +233,12 @@ public class ProductSearchRequestDto
     /// <summary>
     /// 最低価格
     /// </summary>
-    public decimal? MinPrice { get; set; }
+    public uint? MinPrice { get; set; }
 
     /// <summary>
     /// 最高価格
     /// </summary>
-    public decimal? MaxPrice { get; set; }
+    public uint? MaxPrice { get; set; }
 
     /// <summary>
     /// ソート項目
@@ -299,17 +290,17 @@ public class ProductStatisticsDto
     /// <summary>
     /// 平均価格
     /// </summary>
-    public decimal AveragePrice { get; set; }
+    public uint AveragePrice { get; set; }
 
     /// <summary>
     /// 最高価格
     /// </summary>
-    public decimal MaxPrice { get; set; }
+    public uint MaxPrice { get; set; }
 
     /// <summary>
     /// 最低価格
     /// </summary>
-    public decimal MinPrice { get; set; }
+    public uint MinPrice { get; set; }
 }
 
 /// <summary>
@@ -386,7 +377,8 @@ public class ProductListDto
     public string? SearchKeyword { get; set; }
 
     /// <summary>
-    /// カテゴリID（フィルタ条件）
+    /// フィルタ用カテゴリID
     /// </summary>
     public int? CategoryId { get; set; }
+
 }

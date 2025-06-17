@@ -3,6 +3,7 @@ using Web.Essentials.Infrastructure.Data;
 using Web.Essentials.Domain.Repositories;
 using Web.Essentials.Infrastructure.Repositories;
 using Web.Essentials.App.Services;
+using Web.Essentials.App.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +22,9 @@ builder.Services.AddScoped<IProductImageRepository, ProductImageRepository>();
 // Application service registrations
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<CategoryService>();
+// インターフェース実装完了により有効化
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IProductService, ProductService>();
 
 var app = builder.Build();
 

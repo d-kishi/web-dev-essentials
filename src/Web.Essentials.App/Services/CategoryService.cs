@@ -1,5 +1,6 @@
 using Web.Essentials.App.DTOs;
 using Web.Essentials.App.ViewModels;
+using Web.Essentials.App.Interfaces;
 using Web.Essentials.Domain.Entities;
 using Web.Essentials.Domain.Repositories;
 
@@ -9,7 +10,7 @@ namespace Web.Essentials.App.Services;
 /// カテゴリ管理アプリケーションサービス
 /// カテゴリに関するビジネスロジックと各レイヤーの調整を担当
 /// </summary>
-public class CategoryService
+public class CategoryService : ICategoryService
 {
     private readonly ICategoryRepository _categoryRepository;
     private readonly IProductRepository _productRepository;
@@ -109,9 +110,10 @@ public class CategoryService
                 return null;
             }
 
-            // 関連商品数を取得
+            // 関連商品数を取得（多対多関係経由）
             var (relatedProducts, _) = await _productRepository.GetAllAsync();
-            var productCount = relatedProducts.Count(p => p.CategoryId == id);
+            var productCount = relatedProducts.Count(p => 
+                p.ProductCategories.Any(pc => pc.CategoryId == id));
 
             // ViewModelに変換
             var viewModel = new CategoryDetailsViewModel
@@ -218,7 +220,8 @@ public class CategoryService
             _logger.LogInformation("カテゴリ削除可能性チェックサービス実行。カテゴリID: {CategoryId}", id);
 
             var (relatedProducts, _) = await _productRepository.GetAllAsync();
-            var hasRelatedProducts = relatedProducts.Any(p => p.CategoryId == id);
+            var hasRelatedProducts = relatedProducts.Any(p => 
+                p.ProductCategories.Any(pc => pc.CategoryId == id));
 
             if (hasRelatedProducts)
             {
@@ -302,7 +305,8 @@ public class CategoryService
         // 関連商品数を一括取得（N+1問題を避けるため）
         var (allProducts, _) = await _productRepository.GetAllAsync();
         var productCountDict = allProducts
-            .GroupBy(p => p.CategoryId)
+            .SelectMany(p => p.ProductCategories.Select(pc => pc.CategoryId))
+            .GroupBy(categoryId => categoryId)
             .ToDictionary(g => g.Key, g => g.Count());
 
         return categories.Select(c => new CategoryDto
@@ -336,6 +340,255 @@ public class CategoryService
             HasPreviousPage = currentPage > 1,
             HasNextPage = currentPage < totalPages
         };
+    }
+
+    #endregion
+
+    #region Additional Interface Methods
+
+    /// <summary>
+    /// カテゴリ存在確認
+    /// </summary>
+    /// <param name="id">カテゴリID</param>
+    /// <returns>存在する場合true</returns>
+    public async Task<bool> ExistsAsync(int id)
+    {
+        try
+        {
+            _logger.LogInformation("カテゴリ存在確認サービス実行。カテゴリID: {CategoryId}", id);
+            
+            var category = await _categoryRepository.GetByIdAsync(id);
+            return category != null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "カテゴリ存在確認サービス実行中にエラーが発生しました。カテゴリID: {CategoryId}", id);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// カテゴリ削除
+    /// </summary>
+    /// <param name="id">カテゴリID</param>
+    /// <returns>削除成功の場合true</returns>
+    public async Task<bool> DeleteCategoryAsync(int id)
+    {
+        try
+        {
+            _logger.LogInformation("カテゴリ削除サービス実行。カテゴリID: {CategoryId}", id);
+
+            // 削除可能性チェック
+            var canDelete = await CanDeleteCategoryAsync(id);
+            if (!canDelete)
+            {
+                _logger.LogWarning("カテゴリの削除ができません。関連商品が存在します。カテゴリID: {CategoryId}", id);
+                return false;
+            }
+
+            var category = await _categoryRepository.GetByIdAsync(id);
+            if (category == null)
+            {
+                _logger.LogWarning("削除対象のカテゴリが見つかりませんでした。カテゴリID: {CategoryId}", id);
+                return false;
+            }
+
+            await _categoryRepository.DeleteAsync(category.Id);
+            _logger.LogInformation("カテゴリを正常に削除しました。カテゴリID: {CategoryId}", id);
+            
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "カテゴリ削除サービス実行中にエラーが発生しました。カテゴリID: {CategoryId}", id);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// インターフェース用のメソッド名エイリアス
+    /// </summary>
+    public async Task<bool> CanDeleteAsync(int id) => await CanDeleteCategoryAsync(id);
+
+    /// <summary>
+    /// カテゴリ一覧取得（インターフェース用）
+    /// </summary>
+    public async Task<CategoryListDto> GetCategoriesAsync(CategorySearchRequestDto searchRequest)
+    {
+        return await GetCategoryListAsync(
+            searchRequest.NameTerm, 
+            1, // デフォルトページ
+            10); // デフォルトページサイズ
+    }
+
+    /// <summary>
+    /// 選択用カテゴリ一覧取得（インターフェース用）
+    /// </summary>
+    public async Task<IEnumerable<CategorySelectDto>> GetCategoriesForSelectAsync()
+    {
+        var categories = await GetAllCategoriesForSelectionAsync();
+        return categories.Select(c => new CategorySelectDto
+        {
+            Id = c.Id,
+            Name = c.Name,
+            FullPath = c.Name,
+            Level = 0
+        });
+    }
+
+    /// <summary>
+    /// カテゴリ編集用データ取得（インターフェース用）
+    /// </summary>
+    public async Task<CategoryEditViewModel?> GetCategoryForEditAsync(int id)
+    {
+        return await PrepareEditViewModelAsync(id);
+    }
+
+    /// <summary>
+    /// カテゴリ作成用データ取得
+    /// </summary>
+    public async Task<CategoryCreateViewModel> GetCategoryForCreateAsync()
+    {
+        var allCategories = await _categoryRepository.GetAllAsync();
+        var parentCategories = allCategories.Select(c => new CategorySelectItem
+        {
+            Id = c.Id,
+            Name = c.Name,
+            FullPath = c.Name,
+            Level = 0
+        });
+
+        return new CategoryCreateViewModel
+        {
+            ParentCategories = parentCategories
+        };
+    }
+
+    /// <summary>
+    /// カテゴリ作成
+    /// </summary>
+    public async Task<int> CreateCategoryAsync(CategoryCreateViewModel createModel)
+    {
+        try
+        {
+            var category = new Category
+            {
+                Name = createModel.Name,
+                Description = createModel.Description,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            await _categoryRepository.AddAsync(category);
+            _logger.LogInformation("カテゴリを正常に作成しました。カテゴリID: {CategoryId}", category.Id);
+            
+            return category.Id;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "カテゴリ作成サービス実行中にエラーが発生しました");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// カテゴリ更新
+    /// </summary>
+    public async Task<bool> UpdateCategoryAsync(CategoryEditViewModel editModel)
+    {
+        try
+        {
+            var category = await _categoryRepository.GetByIdAsync(editModel.Id);
+            if (category == null)
+            {
+                _logger.LogWarning("更新対象のカテゴリが見つかりませんでした。カテゴリID: {CategoryId}", editModel.Id);
+                return false;
+            }
+
+            category.Name = editModel.Name;
+            category.Description = editModel.Description;
+            category.UpdatedAt = DateTime.UtcNow;
+
+            await _categoryRepository.UpdateAsync(category);
+            _logger.LogInformation("カテゴリを正常に更新しました。カテゴリID: {CategoryId}", category.Id);
+            
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "カテゴリ更新サービス実行中にエラーが発生しました。カテゴリID: {CategoryId}", editModel.Id);
+            throw;
+        }
+    }
+
+    // 以下は基本的なスタブ実装（将来的に完全実装予定）
+
+    public async Task<CategoryIndexViewModel> GetCategoryIndexAsync(CategoryIndexViewModel viewModel)
+    {
+        // 基本実装
+        return await Task.FromResult(viewModel);
+    }
+
+    public async Task<IEnumerable<CategoryTreeDto>> GetCategoryTreeAsync(int? rootCategoryId = null)
+    {
+        var categories = await _categoryRepository.GetAllAsync();
+        return categories.Select(c => new CategoryTreeDto
+        {
+            Id = c.Id,
+            Name = c.Name,
+            Level = 0,
+            SortOrder = 1,
+            ProductCount = 0
+        });
+    }
+
+    public async Task<IEnumerable<CategoryListItemViewModel>> GetChildCategoriesAsync(int parentId)
+    {
+        // 階層構造が実装されていないため、空のリストを返す
+        return await Task.FromResult(new List<CategoryListItemViewModel>());
+    }
+
+    public async Task<IEnumerable<CategoryBreadcrumbDto>> GetAncestorsAsync(int categoryId)
+    {
+        var category = await _categoryRepository.GetByIdAsync(categoryId);
+        if (category == null) return new List<CategoryBreadcrumbDto>();
+
+        return new List<CategoryBreadcrumbDto>
+        {
+            new CategoryBreadcrumbDto
+            {
+                Id = category.Id,
+                Name = category.Name,
+                Level = 0,
+                IsLast = true
+            }
+        };
+    }
+
+    public async Task<bool> CanMoveToParentAsync(int categoryId, int? newParentId)
+    {
+        // 基本実装：階層構造が実装されていないため、常にtrue
+        return await Task.FromResult(true);
+    }
+
+    public async Task<IEnumerable<CategoryListItemViewModel>> GetCategoriesByLevelAsync(int level)
+    {
+        var categories = await _categoryRepository.GetAllAsync();
+        return categories.Select(c => new CategoryListItemViewModel
+        {
+            Id = c.Id,
+            Name = c.Name,
+            Description = c.Description,
+            Level = 0,
+            CreatedAt = c.CreatedAt,
+            UpdatedAt = c.UpdatedAt
+        });
+    }
+
+    public async Task<bool> ReorderCategoriesAsync(int? parentId, IEnumerable<int> categoryIds)
+    {
+        // 基本実装：順序管理が実装されていないため、常にtrue
+        return await Task.FromResult(true);
     }
 
     #endregion

@@ -1,12 +1,17 @@
 /* ======================================
-   Ajax通信用JavaScript - Pure JavaScript + Fetch API
+   Ajax通信用JavaScript - Fetch API + RxJS
    ====================================== */
 
+// RxJSオペレーターの取得
+const { fromFetch } = rxjs.fetch;
+const { from, of, throwError } = rxjs;
+const { switchMap, map, catchError, retry, debounceTime, distinctUntilChanged, shareReplay } = rxjs.operators;
+
 /**
- * Ajax通信クラス
- * Fetch APIを使用したHTTP通信を簡素化
+ * RxJS対応 Ajax通信クラス
+ * Fetch API + RxJSを使用したリアクティブなHTTP通信
  */
-class AjaxClient {
+class RxAjaxClient {
     constructor() {
         this.baseUrl = '';
         this.defaultHeaders = {
@@ -16,56 +21,37 @@ class AjaxClient {
     }
     
     /**
-     * GET リクエスト
+     * GET リクエスト（Observable）
      */
-    async get(url, options = {}) {
-        return this.request('GET', url, null, options);
+    get$(url, options = {}) {
+        return this.request$('GET', url, null, options);
     }
     
     /**
-     * POST リクエスト
+     * POST リクエスト（Observable）
      */
-    async post(url, data = null, options = {}) {
-        return this.request('POST', url, data, options);
+    post$(url, data = null, options = {}) {
+        return this.request$('POST', url, data, options);
     }
     
     /**
-     * PUT リクエスト
+     * PUT リクエスト（Observable）
      */
-    async put(url, data = null, options = {}) {
-        return this.request('PUT', url, data, options);
+    put$(url, data = null, options = {}) {
+        return this.request$('PUT', url, data, options);
     }
     
     /**
-     * DELETE リクエスト
+     * DELETE リクエスト（Observable）
      */
-    async delete(url, options = {}) {
-        return this.request('DELETE', url, null, options);
+    delete$(url, options = {}) {
+        return this.request$('DELETE', url, null, options);
     }
     
     /**
-     * ファイルアップロード用POST
+     * 基本的なリクエスト処理（Observable）
      */
-    async uploadFile(url, formData, options = {}) {
-        const uploadOptions = {
-            ...options,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'RequestVerificationToken': getAntiForgeryToken(),
-                ...options.headers
-            }
-        };
-        
-        // Content-Typeは設定しない（FormDataの場合、ブラウザが自動設定）
-        delete uploadOptions.headers['Content-Type'];
-        
-        return this.request('POST', url, formData, uploadOptions);
-    }
-    
-    /**
-     * 基本的なリクエスト処理
-     */
-    async request(method, url, data = null, options = {}) {
+    request$(method, url, data = null, options = {}) {
         const fullUrl = this.baseUrl + url;
         
         const config = {
@@ -95,42 +81,191 @@ class AjaxClient {
             }
         }
         
-        try {
-            const response = await fetch(fullUrl, config);
-            return await this.handleResponse(response);
-        } catch (error) {
-            console.error('Ajax request failed:', error);
-            throw new AjaxError('ネットワークエラーが発生しました', 0, error);
-        }
+        return fromFetch(fullUrl, config).pipe(
+            switchMap(response => {
+                if (!response.ok) {
+                    return throwError(new AjaxError(`HTTP Error: ${response.status}`, response.status, null));
+                }
+                return from(response.json());
+            }),
+            catchError(error => {
+                console.error('Ajax request failed:', error);
+                return throwError(new AjaxError('ネットワークエラーが発生しました', 0, error));
+            })
+        );
     }
     
     /**
-     * レスポンス処理
+     * 従来のPromise版（後方互換性）
      */
-    async handleResponse(response) {
-        const contentType = response.headers.get('Content-Type') || '';
-        let data;
+    async get(url, options = {}) {
+        return this.get$(url, options).toPromise();
+    }
+    
+    async post(url, data = null, options = {}) {
+        return this.post$(url, data, options).toPromise();
+    }
+    
+    async put(url, data = null, options = {}) {
+        return this.put$(url, data, options).toPromise();
+    }
+    
+    async delete(url, options = {}) {
+        return this.delete$(url, options).toPromise();
+    }
+}
+
+/**
+ * RxJS対応 API通信専用クラス
+ */
+class RxApiClient extends RxAjaxClient {
+    constructor() {
+        super();
+        this.baseUrl = '/api';
+    }
+    
+    /**
+     * 商品一覧取得（Observable）
+     */
+    getProducts$(params = {}) {
+        const queryString = new URLSearchParams(params).toString();
+        const url = queryString ? `/products?${queryString}` : '/products';
         
-        if (contentType.includes('application/json')) {
-            data = await response.json();
-        } else {
-            data = await response.text();
-        }
+        return this.get$(url).pipe(
+            map(result => {
+                if (!result.success) {
+                    throw new Error(result.message || '商品一覧の取得に失敗しました');
+                }
+                return result.data;
+            }),
+            catchError(error => {
+                console.error('商品一覧取得エラー:', error);
+                return throwError(error);
+            })
+        );
+    }
+    
+    /**
+     * 商品検索（デバウンス付き）
+     */
+    searchProducts$(searchTerm$, categoryId$ = of(null)) {
+        return searchTerm$.pipe(
+            debounceTime(300), // 300ms待機
+            distinctUntilChanged(), // 重複排除
+            switchMap(term => {
+                if (!term || term.length < 2) {
+                    return of({ items: [], totalCount: 0 });
+                }
+                
+                return categoryId$.pipe(
+                    switchMap(categoryId => {
+                        const params = { nameTerm: term };
+                        if (categoryId) params.categoryId = categoryId;
+                        return this.getProducts$(params);
+                    })
+                );
+            }),
+            shareReplay(1) // 結果をキャッシュ
+        );
+    }
+    
+    /**
+     * カテゴリ一覧取得（Observable）
+     */
+    getCategories$(params = {}) {
+        const queryString = new URLSearchParams(params).toString();
+        const url = queryString ? `/categories?${queryString}` : '/categories';
         
-        if (!response.ok) {
-            throw new AjaxError(
-                data.message || `HTTP Error: ${response.status}`,
-                response.status,
-                data
-            );
-        }
+        return this.get$(url).pipe(
+            map(result => {
+                if (!result.success) {
+                    throw new Error(result.message || 'カテゴリ一覧の取得に失敗しました');
+                }
+                return result.data;
+            }),
+            catchError(error => {
+                console.error('カテゴリ一覧取得エラー:', error);
+                return throwError(error);
+            })
+        );
+    }
+    
+    /**
+     * カテゴリ検索（デバウンス付き）
+     */
+    searchCategories$(searchTerm$, level$ = of(null)) {
+        return searchTerm$.pipe(
+            debounceTime(300),
+            distinctUntilChanged(),
+            switchMap(term => {
+                return level$.pipe(
+                    switchMap(level => {
+                        const params = {};
+                        if (term && term.length >= 1) params.nameTerm = term;
+                        if (level !== null) params.level = level;
+                        return this.getCategories$(params);
+                    })
+                );
+            }),
+            shareReplay(1)
+        );
+    }
+    
+    /**
+     * JANコード重複チェック（Observable）
+     */
+    checkJanCodeDuplicate$(janCode, excludeId = null) {
+        const params = { janCode };
+        if (excludeId) params.excludeId = excludeId;
         
-        return {
-            data: data,
-            status: response.status,
-            headers: response.headers,
-            ok: response.ok
+        const queryString = new URLSearchParams(params).toString();
+        return this.get$(`/products/check-jan?${queryString}`).pipe(
+            map(result => result.isDuplicate),
+            catchError(error => {
+                console.error('JANコード重複チェックエラー:', error);
+                return of(false); // エラー時は重複なしとして処理
+            })
+        );
+    }
+    
+    /**
+     * カテゴリ名重複チェック（Observable）
+     */
+    checkCategoryNameDuplicate$(name, excludeId = null) {
+        const params = { name };
+        if (excludeId) params.excludeId = excludeId;
+        
+        const queryString = new URLSearchParams(params).toString();
+        return this.get$(`/categories/check-duplicate?${queryString}`).pipe(
+            map(result => result.isDuplicate),
+            catchError(error => {
+                console.error('カテゴリ名重複チェックエラー:', error);
+                return of(false);
+            })
+        );
+    }
+    
+    /**
+     * リアルタイム検索用のオペレーター
+     */
+    createRealtimeSearch$(inputElement, options = {}) {
+        const defaultOptions = {
+            debounceTime: 300,
+            minLength: 2,
+            ...options
         };
+        
+        return from(inputElement, 'input').pipe(
+            map(event => event.target.value.trim()),
+            debounceTime(defaultOptions.debounceTime),
+            distinctUntilChanged(),
+            switchMap(term => {
+                if (term.length < defaultOptions.minLength) {
+                    return of([]);
+                }
+                return this.getProducts$({ nameTerm: term, pageSize: 10 });
+            })
+        );
     }
 }
 
@@ -147,158 +282,152 @@ class AjaxError extends Error {
 }
 
 /**
- * Ajax インスタンス作成
+ * レガシー Ajax クラス（後方互換性用）
  */
-const Ajax = new AjaxClient();
-
-/**
- * API 通信専用クラス
- */
-class ApiClient extends AjaxClient {
+class AjaxClient {
     constructor() {
-        super();
-        this.baseUrl = '/api';
+        this.baseUrl = '';
+        this.defaultHeaders = {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        };
     }
     
-    /**
-     * 商品一覧取得
-     */
-    async getProducts(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        const url = queryString ? `/product?${queryString}` : '/product';
+    async get(url, options = {}) {
+        return this.request('GET', url, null, options);
+    }
+    
+    async post(url, data = null, options = {}) {
+        return this.request('POST', url, data, options);
+    }
+    
+    async put(url, data = null, options = {}) {
+        return this.request('PUT', url, data, options);
+    }
+    
+    async delete(url, options = {}) {
+        return this.request('DELETE', url, null, options);
+    }
+    
+    async request(method, url, data = null, options = {}) {
+        const fullUrl = this.baseUrl + url;
+        
+        const config = {
+            method: method,
+            headers: {
+                ...this.defaultHeaders,
+                ...options.headers
+            },
+            ...options
+        };
+        
+        if (['POST', 'PUT', 'DELETE'].includes(method)) {
+            config.headers['RequestVerificationToken'] = getAntiForgeryToken();
+        }
+        
+        if (data !== null) {
+            if (data instanceof FormData) {
+                config.body = data;
+                delete config.headers['Content-Type'];
+            } else if (typeof data === 'object') {
+                config.body = JSON.stringify(data);
+            } else {
+                config.body = data;
+            }
+        }
         
         try {
-            const response = await this.get(url);
-            return response.data;
-        } catch (error) {
-            console.error('商品一覧取得エラー:', error);
-            throw error;
-        }
-    }
-    
-    /**
-     * 商品詳細取得
-     */
-    async getProduct(id) {
-        try {
-            const response = await this.get(`/product/${id}`);
-            return response.data;
-        } catch (error) {
-            console.error('商品詳細取得エラー:', error);
-            throw error;
-        }
-    }
-    
-    /**
-     * 商品検索候補取得
-     */
-    async getProductSuggestions(term, limit = 10) {
-        try {
-            const response = await this.get(`/product/suggestions?term=${encodeURIComponent(term)}&limit=${limit}`);
-            return response.data;
-        } catch (error) {
-            console.error('商品検索候補取得エラー:', error);
-            throw error;
-        }
-    }
-    
-    /**
-     * カテゴリ一覧取得
-     */
-    async getCategories(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        const url = queryString ? `/category?${queryString}` : '/category';
-        
-        try {
-            const response = await this.get(url);
-            return response.data;
-        } catch (error) {
-            console.error('カテゴリ一覧取得エラー:', error);
-            throw error;
-        }
-    }
-    
-    /**
-     * カテゴリ詳細取得
-     */
-    async getCategory(id) {
-        try {
-            const response = await this.get(`/category/${id}`);
-            return response.data;
-        } catch (error) {
-            console.error('カテゴリ詳細取得エラー:', error);
-            throw error;
-        }
-    }
-    
-    /**
-     * 全カテゴリ取得（選択肢用）
-     */
-    async getAllCategories() {
-        try {
-            const response = await this.get('/category/all');
-            return response.data;
-        } catch (error) {
-            console.error('全カテゴリ取得エラー:', error);
-            throw error;
-        }
-    }
-    
-    /**
-     * カテゴリ検索候補取得
-     */
-    async getCategorySuggestions(term, limit = 10) {
-        try {
-            const response = await this.get(`/category/suggestions?term=${encodeURIComponent(term)}&limit=${limit}`);
-            return response.data;
-        } catch (error) {
-            console.error('カテゴリ検索候補取得エラー:', error);
-            throw error;
-        }
-    }
-    
-    /**
-     * JANコード重複チェック
-     */
-    async checkJanCodeDuplicate(janCode, excludeId = null) {
-        try {
-            const params = { janCode };
-            if (excludeId) params.excludeId = excludeId;
+            const response = await fetch(fullUrl, config);
+            const contentType = response.headers.get('Content-Type') || '';
+            let responseData;
             
-            const queryString = new URLSearchParams(params).toString();
-            const response = await this.get(`/product/check-jan?${queryString}`);
-            return response.data;
-        } catch (error) {
-            console.error('JANコード重複チェックエラー:', error);
-            throw error;
-        }
-    }
-    
-    /**
-     * カテゴリ名重複チェック
-     */
-    async checkCategoryNameDuplicate(name, excludeId = null) {
-        try {
-            const params = { name };
-            if (excludeId) params.excludeId = excludeId;
+            if (contentType.includes('application/json')) {
+                responseData = await response.json();
+            } else {
+                responseData = await response.text();
+            }
             
-            const queryString = new URLSearchParams(params).toString();
-            const response = await this.get(`/category/check-duplicate?${queryString}`);
-            return response.data;
+            if (!response.ok) {
+                throw new AjaxError(
+                    responseData.message || `HTTP Error: ${response.status}`,
+                    response.status,
+                    responseData
+                );
+            }
+            
+            return {
+                data: responseData,
+                status: response.status,
+                headers: response.headers,
+                ok: response.ok
+            };
         } catch (error) {
-            console.error('カテゴリ名重複チェックエラー:', error);
-            throw error;
+            console.error('Ajax request failed:', error);
+            throw new AjaxError('ネットワークエラーが発生しました', 0, error);
         }
     }
 }
 
 /**
- * API インスタンス作成
+ * ファイルアップロード用（進捗表示付き）
  */
-const API = new ApiClient();
+function uploadWithProgress$(url, formData, progressCallback) {
+    return new rxjs.Observable(observer => {
+        const xhr = new XMLHttpRequest();
+        
+        if (progressCallback && typeof progressCallback === 'function') {
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100;
+                    progressCallback(percentComplete, e.loaded, e.total);
+                }
+            });
+        }
+        
+        xhr.addEventListener('load', () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    observer.next(response);
+                    observer.complete();
+                } catch (error) {
+                    observer.next(xhr.responseText);
+                    observer.complete();
+                }
+            } else {
+                observer.error(new AjaxError(`HTTP Error: ${xhr.status}`, xhr.status, xhr.responseText));
+            }
+        });
+        
+        xhr.addEventListener('error', () => {
+            observer.error(new AjaxError('Network Error', 0, null));
+        });
+        
+        xhr.addEventListener('abort', () => {
+            observer.error(new AjaxError('Upload Aborted', 0, null));
+        });
+        
+        xhr.open('POST', url);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.setRequestHeader('RequestVerificationToken', getAntiForgeryToken());
+        xhr.send(formData);
+        
+        // キャンセル処理
+        return () => {
+            xhr.abort();
+        };
+    });
+}
 
 /**
- * 汎用Ajax関数（後方互換性のため）
+ * インスタンス作成
+ */
+const RxAjax = new RxAjaxClient();
+const RxAPI = new RxApiClient();
+const Ajax = new AjaxClient(); // 後方互換性
+
+/**
+ * 汎用関数（後方互換性のため）
  */
 window.ajaxGet = async function(url, options = {}) {
     try {
@@ -320,224 +449,13 @@ window.ajaxPost = async function(url, data = null, options = {}) {
     }
 };
 
-window.ajaxPut = async function(url, data = null, options = {}) {
-    try {
-        const response = await Ajax.put(url, data, options);
-        return response.data;
-    } catch (error) {
-        console.error('Ajax PUT error:', error);
-        throw error;
-    }
-};
-
-window.ajaxDelete = async function(url, options = {}) {
-    try {
-        const response = await Ajax.delete(url, options);
-        return response.data;
-    } catch (error) {
-        console.error('Ajax DELETE error:', error);
-        throw error;
-    }
-};
-
-/**
- * インターセプター機能
- */
-class AjaxInterceptor {
-    constructor() {
-        this.requestInterceptors = [];
-        this.responseInterceptors = [];
-    }
-    
-    /**
-     * リクエストインターセプター追加
-     */
-    addRequestInterceptor(interceptor) {
-        this.requestInterceptors.push(interceptor);
-    }
-    
-    /**
-     * レスポンスインターセプター追加
-     */
-    addResponseInterceptor(interceptor) {
-        this.responseInterceptors.push(interceptor);
-    }
-    
-    /**
-     * リクエスト実行前処理
-     */
-    async executeRequestInterceptors(config) {
-        let modifiedConfig = config;
-        
-        for (const interceptor of this.requestInterceptors) {
-            try {
-                modifiedConfig = await interceptor(modifiedConfig);
-            } catch (error) {
-                console.error('Request interceptor error:', error);
-            }
-        }
-        
-        return modifiedConfig;
-    }
-    
-    /**
-     * レスポンス受信後処理
-     */
-    async executeResponseInterceptors(response) {
-        let modifiedResponse = response;
-        
-        for (const interceptor of this.responseInterceptors) {
-            try {
-                modifiedResponse = await interceptor(modifiedResponse);
-            } catch (error) {
-                console.error('Response interceptor error:', error);
-            }
-        }
-        
-        return modifiedResponse;
-    }
-}
-
-/**
- * 進捗表示機能付きアップロード
- */
-async function uploadWithProgress(url, formData, progressCallback) {
-    return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        
-        // 進捗表示
-        if (progressCallback && typeof progressCallback === 'function') {
-            xhr.upload.addEventListener('progress', (e) => {
-                if (e.lengthComputable) {
-                    const percentComplete = (e.loaded / e.total) * 100;
-                    progressCallback(percentComplete, e.loaded, e.total);
-                }
-            });
-        }
-        
-        // 完了処理
-        xhr.addEventListener('load', () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-                try {
-                    const response = JSON.parse(xhr.responseText);
-                    resolve(response);
-                } catch (error) {
-                    resolve(xhr.responseText);
-                }
-            } else {
-                reject(new AjaxError(`HTTP Error: ${xhr.status}`, xhr.status, xhr.responseText));
-            }
-        });
-        
-        // エラー処理
-        xhr.addEventListener('error', () => {
-            reject(new AjaxError('Network Error', 0, null));
-        });
-        
-        // 中断処理
-        xhr.addEventListener('abort', () => {
-            reject(new AjaxError('Upload Aborted', 0, null));
-        });
-        
-        // リクエスト送信
-        xhr.open('POST', url);
-        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-        xhr.setRequestHeader('RequestVerificationToken', getAntiForgeryToken());
-        xhr.send(formData);
-    });
-}
-
-/**
- * バッチ処理（複数のAPIリクエストを並行実行）
- */
-async function batchRequest(requests) {
-    try {
-        const promises = requests.map(async (request) => {
-            try {
-                return await request();
-            } catch (error) {
-                return { error: error };
-            }
-        });
-        
-        return await Promise.all(promises);
-    } catch (error) {
-        console.error('Batch request error:', error);
-        throw error;
-    }
-}
-
-/**
- * キャッシュ機能付きGet
- */
-class CachedAjax {
-    constructor(ttl = 5 * 60 * 1000) { // デフォルト5分
-        this.cache = new Map();
-        this.ttl = ttl;
-    }
-    
-    async get(url, options = {}) {
-        const cacheKey = this.generateCacheKey(url, options);
-        const cachedData = this.cache.get(cacheKey);
-        
-        if (cachedData && (Date.now() - cachedData.timestamp) < this.ttl) {
-            return cachedData.data;
-        }
-        
-        try {
-            const response = await Ajax.get(url, options);
-            this.cache.set(cacheKey, {
-                data: response,
-                timestamp: Date.now()
-            });
-            return response;
-        } catch (error) {
-            console.error('Cached Ajax GET error:', error);
-            throw error;
-        }
-    }
-    
-    generateCacheKey(url, options) {
-        return `${url}_${JSON.stringify(options)}`;
-    }
-    
-    clear() {
-        this.cache.clear();
-    }
-    
-    remove(url, options = {}) {
-        const cacheKey = this.generateCacheKey(url, options);
-        this.cache.delete(cacheKey);
-    }
-}
-
-/**
- * リトライ機能付きAjax
- */
-async function ajaxWithRetry(requestFn, maxRetries = 3, delay = 1000) {
-    let lastError;
-    
-    for (let i = 0; i <= maxRetries; i++) {
-        try {
-            return await requestFn();
-        } catch (error) {
-            lastError = error;
-            
-            if (i < maxRetries) {
-                // 指数バックオフでリトライ
-                await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
-            }
-        }
-    }
-    
-    throw lastError;
-}
-
 // グローバル公開
+window.RxAjax = RxAjax;
+window.RxAPI = RxAPI;
 window.Ajax = Ajax;
-window.API = API;
 window.AjaxError = AjaxError;
-window.uploadWithProgress = uploadWithProgress;
-window.batchRequest = batchRequest;
-window.CachedAjax = CachedAjax;
-window.ajaxWithRetry = ajaxWithRetry;
+window.uploadWithProgress$ = uploadWithProgress$;
+
+// RxJSオペレーターのエクスポート
+window.rxjs = rxjs;
+window.rxjsOperators = rxjs.operators;

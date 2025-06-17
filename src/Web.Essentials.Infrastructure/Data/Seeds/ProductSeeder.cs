@@ -31,7 +31,7 @@ public static class ProductSeeder
                 Name = "プロモデル硬式バット", 
                 Description = "プロ仕様の硬式野球バット　84cm　33inch", 
                 Price = 15800, 
-                CategoryId = 23, // 硬式バット（Level 2）
+                // CategoryId = 23, // 硬式バット（Level 2）
                 JanCode = "4901001001001", 
                 Status = ProductStatus.OnSale, 
                 CreatedAt = DateTime.UtcNow, 
@@ -43,7 +43,7 @@ public static class ProductSeeder
                 Name = "内野手用グローブ", 
                 Description = "高品質牛革製内野手用グローブ、サイズM", 
                 Price = 8900, 
-                CategoryId = 25, // 内野手用（Level 2）
+                // CategoryId = 25, // 内野手用（Level 2）
                 JanCode = "4901001001002", 
                 Status = ProductStatus.OnSale, 
                 CreatedAt = DateTime.UtcNow, 
@@ -55,7 +55,7 @@ public static class ProductSeeder
                 Name = "硬式野球ボール", 
                 Description = "公認硬式野球ボール、1ダース", 
                 Price = 580, 
-                CategoryId = 9, // ボール（野球）（Level 1）
+                // CategoryId = 9, // ボール（野球）（Level 1）
                 JanCode = "4901001001003", 
                 Status = ProductStatus.OnSale, 
                 CreatedAt = DateTime.UtcNow, 
@@ -67,7 +67,7 @@ public static class ProductSeeder
                 Name = "野球ユニフォーム上下セット", 
                 Description = "チーム用野球ユニフォーム上下セット、サイズL", 
                 Price = 12000, 
-                CategoryId = 8, // ウェア（野球）（Level 1）
+                // CategoryId = 8, // ウェア（野球）（Level 1）
                 JanCode = "4901001001004", 
                 Status = ProductStatus.OnSale, 
                 CreatedAt = DateTime.UtcNow, 
@@ -83,7 +83,7 @@ public static class ProductSeeder
                 Name = "HGサッカースパイク", 
                 Description = "ハードグラウンド用サッカースパイク　25.5cm", 
                 Price = 8900, 
-                CategoryId = 28, // HGシューズ（Level 2）
+                // CategoryId = 28, // HGシューズ（Level 2）
                 JanCode = "4901002002001", 
                 Status = ProductStatus.OnSale, 
                 CreatedAt = DateTime.UtcNow, 
@@ -95,7 +95,7 @@ public static class ProductSeeder
                 Name = "サッカーボール　5号球", 
                 Description = "公認サッカーボール　5号球、FIFA公認", 
                 Price = 3200, 
-                CategoryId = 12, // ボール（サッカー）（Level 1）
+                // CategoryId = 12, // ボール（サッカー）（Level 1）
                 JanCode = "4901002002002", 
                 Status = ProductStatus.OnSale, 
                 CreatedAt = DateTime.UtcNow, 
@@ -107,7 +107,7 @@ public static class ProductSeeder
                 Name = "サッカーユニフォームセット", 
                 Description = "チーム用サッカーユニフォーム上下セット、サイズM", 
                 Price = 9800, 
-                CategoryId = 11, // ウェア（サッカー）（Level 1）
+                // CategoryId = 11, // ウェア（サッカー）（Level 1）
                 JanCode = "4901002002003", 
                 Status = ProductStatus.OnSale, 
                 CreatedAt = DateTime.UtcNow, 
@@ -119,7 +119,7 @@ public static class ProductSeeder
                 Name = "ゴールキーパーグローブ", 
                 Description = "プロ仕様ゴールキーパーグローブ、サイズ9", 
                 Price = 4500, 
-                CategoryId = 13, // ゴールキーパー用品（Level 1）
+                // CategoryId = 13, // ゴールキーパー用品（Level 1）
                 JanCode = "4901002002004", 
                 Status = ProductStatus.OnSale, 
                 CreatedAt = DateTime.UtcNow, 
@@ -131,7 +131,7 @@ public static class ProductSeeder
                 Name = "HG/AG兼用サッカースパイク", 
                 Description = "ハードグラウンド・人工芝対応シューズ　25.5cm", 
                 Price = 11800, 
-                CategoryId = 28, // HGシューズ（Level 2）※複数カテゴリはProductCategoryで管理
+                // CategoryId = 28, // HGシューズ（Level 2）※複数カテゴリはProductCategoryで管理
                 JanCode = "4901002002005", 
                 Status = ProductStatus.OnSale, 
                 CreatedAt = DateTime.UtcNow, 
@@ -147,7 +147,7 @@ public static class ProductSeeder
                 Name = "バスケットボールシューズハイカット", 
                 Description = "プロモデルバスケットボールシューズ　27.0cm", 
                 Price = 12800, 
-                CategoryId = 31, // ハイカット（Level 2）
+                // CategoryId = 31, // ハイカット（Level 2）
                 JanCode = "4901003003001", 
                 Status = ProductStatus.OnSale, 
                 CreatedAt = DateTime.UtcNow, 
@@ -159,7 +159,7 @@ public static class ProductSeeder
                 Name = "バスケットボール　7号球", 
                 Description = "公認バスケットボール　7号球、室内用", 
                 Price = 4800, 
-                CategoryId = 16, // ボール（バスケットボール）（Level 1）
+                // CategoryId = 16, // ボール（バスケットボール）（Level 1）
                 JanCode = "4901003003002", 
                 Status = ProductStatus.OnSale, 
                 CreatedAt = DateTime.UtcNow, 
@@ -171,7 +171,7 @@ public static class ProductSeeder
                 Name = "バスケットボールユニフォーム", 
                 Description = "チーム用バスケットボールユニフォーム上下セット", 
                 Price = 11000, 
-                CategoryId = 15, // ウェア（バスケットボール）（Level 1）
+                // CategoryId = 15, // ウェア（バスケットボール）（Level 1）
                 JanCode = "4901003003003", 
                 Status = ProductStatus.OnSale, 
                 CreatedAt = DateTime.UtcNow, 
@@ -183,7 +183,7 @@ public static class ProductSeeder
                 Name = "レガシーバスケットボールシューズ", 
                 Description = "旧モデルバスケットボールシューズ、在庫限り", 
                 Price = 6800, 
-                CategoryId = 32, // ローカット（Level 2）
+                // CategoryId = 32, // ローカット（Level 2）
                 JanCode = "4901003003099", 
                 Status = ProductStatus.Discontinued, 
                 CreatedAt = DateTime.UtcNow, 
@@ -199,7 +199,7 @@ public static class ProductSeeder
                 Name = "バレーボールシューズ", 
                 Description = "屋内用バレーボールシューズ　25.0cm", 
                 Price = 7800, 
-                CategoryId = 17, // シューズ（バレーボール）（Level 1）
+                // CategoryId = 17, // シューズ（バレーボール）（Level 1）
                 JanCode = "4901004004001", 
                 Status = ProductStatus.OnSale, 
                 CreatedAt = DateTime.UtcNow, 
@@ -211,7 +211,7 @@ public static class ProductSeeder
                 Name = "バレーボール　5号球", 
                 Description = "公認バレーボール　5号球、室内用", 
                 Price = 3800, 
-                CategoryId = 19, // ボール（バレーボール）（Level 1）
+                // CategoryId = 19, // ボール（バレーボール）（Level 1）
                 JanCode = "4901004004002", 
                 Status = ProductStatus.OnSale, 
                 CreatedAt = DateTime.UtcNow, 
@@ -223,7 +223,7 @@ public static class ProductSeeder
                 Name = "バレーボールユニフォーム", 
                 Description = "チーム用バレーボールユニフォーム上下セット", 
                 Price = 9500, 
-                CategoryId = 18, // ウェア（バレーボール）（Level 1）
+                // CategoryId = 18, // ウェア（バレーボール）（Level 1）
                 JanCode = "4901004004003", 
                 Status = ProductStatus.OnSale, 
                 CreatedAt = DateTime.UtcNow, 
@@ -239,7 +239,7 @@ public static class ProductSeeder
                 Name = "中長距離用ランニングシューズ", 
                 Description = "中距離・長距離対応ランニングシューズ　26.5cm", 
                 Price = 12800, 
-                CategoryId = 34, // 中距離用（Level 2）※複数カテゴリはProductCategoryで管理
+                // CategoryId = 34, // 中距離用（Level 2）※複数カテゴリはProductCategoryで管理
                 JanCode = "4901005005001", 
                 Status = ProductStatus.OnSale, 
                 CreatedAt = DateTime.UtcNow, 
@@ -251,7 +251,7 @@ public static class ProductSeeder
                 Name = "短距離スプリントシューズ", 
                 Description = "短距離スプリント用シューズ　27.0cm", 
                 Price = 15600, 
-                CategoryId = 33, // 短距離用（Level 2）
+                // CategoryId = 33, // 短距離用（Level 2）
                 JanCode = "4901005005002", 
                 Status = ProductStatus.OnSale, 
                 CreatedAt = DateTime.UtcNow, 
@@ -263,7 +263,7 @@ public static class ProductSeeder
                 Name = "トレイルランニングシューズ", 
                 Description = "トレイルランニング専用シューズ　26.0cm", 
                 Price = 11200, 
-                CategoryId = 39, // トレイルラン用（Level 2）
+                // CategoryId = 39, // トレイルラン用（Level 2）
                 JanCode = "4901005005003", 
                 Status = ProductStatus.OnSale, 
                 CreatedAt = DateTime.UtcNow, 
@@ -275,7 +275,7 @@ public static class ProductSeeder
                 Name = "ランニングシャツ半袖", 
                 Description = "速乾機能付きランニングシャツ、サイズM", 
                 Price = 3200, 
-                CategoryId = 35, // 半袖（Level 2）
+                // CategoryId = 35, // 半袖（Level 2）
                 JanCode = "4901005005004", 
                 Status = ProductStatus.OnSale, 
                 CreatedAt = DateTime.UtcNow, 
@@ -287,7 +287,7 @@ public static class ProductSeeder
                 Name = "ランニングタイツ", 
                 Description = "コンプレッション機能付きランニングタイツ", 
                 Price = 4800, 
-                CategoryId = 37, // タイツ（Level 2）
+                // CategoryId = 37, // タイツ（Level 2）
                 JanCode = "4901005005005", 
                 Status = ProductStatus.OnSale, 
                 CreatedAt = DateTime.UtcNow, 
@@ -299,7 +299,7 @@ public static class ProductSeeder
                 Name = "GPSランニングウォッチ", 
                 Description = "高機能GPS付きランニングウォッチ", 
                 Price = 28000, 
-                CategoryId = 40, // GPSウォッチ（Level 2）
+                // CategoryId = 40, // GPSウォッチ（Level 2）
                 JanCode = "4901005005006", 
                 Status = ProductStatus.PreSale, 
                 CreatedAt = DateTime.UtcNow, 
@@ -315,7 +315,7 @@ public static class ProductSeeder
                 Name = "ヴィンテージサッカーボール", 
                 Description = "コレクターアイテム、限定版サッカーボール", 
                 Price = 15000, 
-                CategoryId = 12, // ボール（サッカー）（Level 1）
+                // CategoryId = 12, // ボール（サッカー）（Level 1）
                 JanCode = "4901002002099", 
                 Status = ProductStatus.Discontinued, 
                 CreatedAt = DateTime.UtcNow, 

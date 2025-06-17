@@ -73,7 +73,8 @@ public class ProductApiController : ControllerBase
 
             if (categoryId.HasValue)
             {
-                filteredProducts = filteredProducts.Where(p => p.CategoryId == categoryId.Value);
+                filteredProducts = filteredProducts.Where(p => 
+                    p.ProductCategories.Any(pc => pc.CategoryId == categoryId.Value));
             }
 
             // 総件数を取得
@@ -93,8 +94,16 @@ public class ProductApiController : ControllerBase
                 Name = p.Name,
                 Description = p.Description,
                 Price = p.Price,
-                CategoryId = p.CategoryId,
                 JanCode = p.JanCode,
+                Status = (int)p.Status,
+                StatusName = p.Status.ToString(),
+                Categories = p.ProductCategories.Select(pc => new ProductCategoryDto
+                {
+                    Id = pc.Category.Id,
+                    Name = pc.Category.Name,
+                    FullPath = pc.Category.Name,
+                    Level = 1
+                }).ToList(),
                 CreatedAt = p.CreatedAt,
                 UpdatedAt = p.UpdatedAt
             }).ToList();
@@ -177,8 +186,16 @@ public class ProductApiController : ControllerBase
                 Name = product.Name,
                 Description = product.Description,
                 Price = product.Price,
-                CategoryId = product.CategoryId,
                 JanCode = product.JanCode,
+                Status = (int)product.Status,
+                StatusName = product.Status.ToString(),
+                Categories = product.ProductCategories.Select(pc => new ProductCategoryDto
+                {
+                    Id = pc.Category.Id,
+                    Name = pc.Category.Name,
+                    FullPath = pc.Category.Name,
+                    Level = 1
+                }).ToList(),
                 CreatedAt = product.CreatedAt,
                 UpdatedAt = product.UpdatedAt
             };

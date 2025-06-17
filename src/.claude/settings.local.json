@@ -14,7 +14,9 @@
       "Bash(mkdir:*)",
       "Bash(mv:*)",
       "Bash(sed:*)",
-      "Bash(dotnet build:*)"
+      "Bash(dotnet build:*)",
+      "Bash(code --version)",
+      "Bash(dotnet clean:*)"
     ],
     "deny": []
   }

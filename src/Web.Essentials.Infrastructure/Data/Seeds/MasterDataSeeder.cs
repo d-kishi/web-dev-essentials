@@ -111,14 +111,8 @@ public static class MasterDataSeeder
         var categoryIds = categories.Select(c => c.Id).ToHashSet();
         var productIds = products.Select(p => p.Id).ToHashSet();
 
-        // 商品のCategoryIdチェック
-        foreach (var product in products)
-        {
-            if (!categoryIds.Contains(product.CategoryId))
-            {
-                errors.Add($"Product ID {product.Id} references non-existent Category ID {product.CategoryId}");
-            }
-        }
+        // 商品のCategoryIdチェック（多対多関係なので不要）
+        // Note: 商品とカテゴリの関係はProductCategoriesテーブルで管理
 
         // ProductCategoriesの外部キーチェック
         foreach (var pc in productCategories)

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Web.Essentials.Domain.Entities;
+using Web.Essentials.App.Validation;
 
 namespace Web.Essentials.App.ViewModels;
 
@@ -311,6 +312,7 @@ public class CategoryCreateViewModel
     [Required(ErrorMessage = "カテゴリ名は必須です")]
     [Display(Name = "カテゴリ名")]
     [StringLength(50, ErrorMessage = "カテゴリ名は50文字以内で入力してください")]
+    [UniqueCategoryName]
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
@@ -366,6 +368,7 @@ public class CategoryEditViewModel
     [Required(ErrorMessage = "カテゴリ名は必須です")]
     [Display(Name = "カテゴリ名")]
     [StringLength(50, ErrorMessage = "カテゴリ名は50文字以内で入力してください")]
+    [UniqueCategoryName]
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
