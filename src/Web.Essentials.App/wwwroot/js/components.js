@@ -806,6 +806,13 @@ function hideValidationMessage(elementId) {
     }
 }
 
+/**
+ * フォームバリデーション設定（グローバル関数）
+ */
+function setupFormValidation() {
+    FormComponent.setupFormValidation();
+}
+
 // 初期化
 document.addEventListener('DOMContentLoaded', function() {
     SearchComponent.initializeSearchForm();
