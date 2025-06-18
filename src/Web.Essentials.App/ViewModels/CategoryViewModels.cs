@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Web.Essentials.Domain.Entities;
 using Web.Essentials.App.Validation;
+using Web.Essentials.App.ViewModels.Interfaces;
 
 namespace Web.Essentials.App.ViewModels;
 
@@ -309,7 +310,7 @@ public class CategoryDetailsViewModel
 /// 新規カテゴリ登録フォームで使用
 /// 親カテゴリ選択と階層レベル制御
 /// </remarks>
-public class CategoryCreateViewModel
+public class CategoryCreateViewModel : ICategoryFormViewModel
 {
     /// <summary>
     /// カテゴリ名
@@ -359,7 +360,7 @@ public class CategoryCreateViewModel
 /// 既存カテゴリの編集フォームで使用
 /// 循環参照チェック機能を含む
 /// </remarks>
-public class CategoryEditViewModel
+public class CategoryEditViewModel : ICategoryFormViewModel
 {
     /// <summary>
     /// カテゴリID

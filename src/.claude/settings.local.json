@@ -17,7 +17,8 @@
       "Bash(dotnet build:*)",
       "Bash(code --version)",
       "Bash(dotnet clean:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(dotnet restore --verbosity quiet)"
     ],
     "deny": []
   }

@@ -19,7 +19,7 @@
     @if (hasCategories)
     {
         <div class="category-tree">
-            @foreach (var category in categories)
+            @foreach (var category in categories!)
             {
                 <partial name="_CategoryTreeNode" model="category" />
             }

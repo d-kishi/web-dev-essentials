@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
 using Web.Essentials.Domain.Entities;
 using Web.Essentials.App.Validation;
+using Web.Essentials.App.ViewModels.Interfaces;
 
 namespace Web.Essentials.App.ViewModels;
 
@@ -464,7 +465,7 @@ public class ProductDetailsViewModel
 /// 新規商品登録フォームで使用
 /// バリデーション属性とファイルアップロード対応
 /// </remarks>
-public class ProductCreateViewModel
+public class ProductCreateViewModel : IProductFormViewModel
 {
     /// <summary>
     /// 商品名
@@ -551,7 +552,7 @@ public class ProductCreateViewModel
 /// 既存商品の編集フォームで使用
 /// 現在の値をプリセット
 /// </remarks>
-public class ProductEditViewModel
+public class ProductEditViewModel : IProductFormViewModel
 {
     /// <summary>
     /// 商品ID
