@@ -16,7 +16,7 @@
                     <p class="upload-description">
                         ファイルをドラッグ&ドロップするか、クリックして選択してください
                     </p>
-                    <button type="button" class="btn btn-outline" onclick="triggerFileInput()">
+                    <button type="button" class="btn btn-outline" data-action="select-file">
                         ファイルを選択
                     </button>
                     <input type="file" 
@@ -25,7 +25,7 @@
                            accept="image/jpeg,image/png,image/gif" 
                            multiple 
                            style="display: none;"
-                           onchange="handleFileSelect(this.files)" />
+                           />
                 </div>
                 <div class="upload-constraints">
                     <small>
@@ -43,10 +43,10 @@
                     <!-- 画像プレビューがここに表示される -->
                 </div>
                 <div class="preview-actions">
-                    <button type="button" class="btn btn-outline btn-sm" onclick="clearAllImages()">
+                    <button type="button" class="btn btn-outline btn-sm" data-action="clear-all">
                         すべてクリア
                     </button>
-                    <button type="button" class="btn btn-light btn-sm" onclick="reorderImages()">
+                    <button type="button" class="btn btn-light btn-sm" data-action="reorder">
                         並び順変更
                     </button>
                 </div>
@@ -69,7 +69,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">画像編集</h3>
-                <button type="button" class="modal-close" onclick="closeImageEditModal()">
+                <button type="button" class="modal-close">
                     <span>×</span>
                 </button>
             </div>
@@ -118,10 +118,10 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeImageEditModal()">
+                <button type="button" class="btn btn-secondary">
                     キャンセル
                 </button>
-                <button type="button" class="btn btn-primary" onclick="saveImageSettings()">
+                <button type="button" class="btn btn-primary">
                     設定を保存
                 </button>
             </div>
@@ -130,12 +130,12 @@
 </div>
 
 <!-- 画像拡大表示モーダル -->
-<div id="imageViewModal" class="modal-overlay image-view-modal" style="display: none;" onclick="closeImageViewModal()">
+<div id="imageViewModal" class="modal-overlay image-view-modal" style="display: none;">
     <div class="modal-dialog modal-large">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title" id="imageViewTitle">画像プレビュー</h3>
-                <button type="button" class="modal-close" onclick="closeImageViewModal()">
+                <button type="button" class="modal-close">
                     <span>×</span>
                 </button>
             </div>
@@ -148,541 +148,10 @@
     </div>
 </div>
 
-<script>
-    // 画像管理変数
-    let uploadedImages = [];
-    let existingImages = [];
-    let currentEditingIndex = -1;
-    let maxImages = 5;
-    let maxFileSize = 5 * 1024 * 1024; // 5MB
-    
-    // 画像アップロード初期化
-    function initializeImageUpload() {
-        setupDropZone();
-        setupFileValidation();
-        loadExistingImages();
-    }
-    
-    // ドロップゾーンの設定
-    function setupDropZone() {
-        const uploadZone = document.getElementById('imageUploadZone');
-        
-        // ドラッグ&ドロップイベント
-        uploadZone.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            uploadZone.classList.add('drag-over');
-        });
-        
-        uploadZone.addEventListener('dragleave', function(e) {
-            e.preventDefault();
-            uploadZone.classList.remove('drag-over');
-        });
-        
-        uploadZone.addEventListener('drop', function(e) {
-            e.preventDefault();
-            uploadZone.classList.remove('drag-over');
-            handleFileSelect(e.dataTransfer.files);
-        });
-        
-        // クリックでファイル選択
-        uploadZone.addEventListener('click', function() {
-            triggerFileInput();
-        });
-    }
-    
-    // ファイル入力トリガー
-    function triggerFileInput() {
-        document.getElementById('imageFileInput').click();
-    }
-    
-    // ファイル選択処理
-    function handleFileSelect(files) {
-        const fileArray = Array.from(files);
-        
-        // 最大枚数チェック
-        if (uploadedImages.length + fileArray.length > maxImages) {
-            showError(`画像は最大${maxImages}枚まで登録可能です`);
-            return;
-        }
-        
-        fileArray.forEach(file => {
-            if (validateFile(file)) {
-                processImageFile(file);
-            }
-        });
-    }
-    
-    // ファイルバリデーション
-    function validateFile(file) {
-        // ファイルタイプチェック
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        if (!allowedTypes.includes(file.type)) {
-            showError(`対応していないファイル形式です: ${file.name}`);
-            return false;
-        }
-        
-        // ファイルサイズチェック
-        if (file.size > maxFileSize) {
-            showError(`ファイルサイズが大きすぎます: ${file.name} (最大5MB)`);
-            return false;
-        }
-        
-        return true;
-    }
-    
-    // 画像ファイル処理
-    function processImageFile(file) {
-        const reader = new FileReader();
-        
-        reader.onload = function(e) {
-            const imageData = {
-                file: file,
-                dataUrl: e.target.result,
-                name: file.name,
-                size: file.size,
-                altText: '',
-                displayOrder: uploadedImages.length + 1,
-                isMain: uploadedImages.length === 0 // 最初の画像をメインに設定
-            };
-            
-            uploadedImages.push(imageData);
-            updateImagePreview();
-        };
-        
-        reader.readAsDataURL(file);
-    }
-    
-    // 画像プレビュー更新
-    function updateImagePreview() {
-        const previewArea = document.getElementById('imagePreviewArea');
-        const previewContainer = document.getElementById('imagePreviewContainer');
-        
-        if (uploadedImages.length === 0) {
-            previewArea.style.display = 'none';
-            return;
-        }
-        
-        previewArea.style.display = 'block';
-        
-        const previewHtml = uploadedImages.map((image, index) => `
-            <div class="image-preview-item ${image.isMain ? 'main-image' : ''}" data-index="${index}">
-                <div class="preview-image-container">
-                    <img src="${image.dataUrl}" alt="${image.altText || image.name}" class="preview-image" />
-                    <div class="preview-overlay">
-                        <button type="button" class="overlay-btn edit-btn" onclick="openImageEditModal(${index})" title="編集">
-                            ✏️
-                        </button>
-                        <button type="button" class="overlay-btn view-btn" onclick="openImageViewModal('${image.dataUrl}', '${image.name}')" title="拡大表示">
-                            🔍
-                        </button>
-                        <button type="button" class="overlay-btn delete-btn" onclick="removeImage(${index})" title="削除">
-                            🗑️
-                        </button>
-                    </div>
-                    ${image.isMain ? '<div class="main-badge">メイン</div>' : ''}
-                </div>
-                <div class="preview-info">
-                    <div class="preview-name">${image.name}</div>
-                    <div class="preview-details">
-                        <span class="preview-size">${formatFileSize(image.size)}</span>
-                        <span class="preview-order">順序: ${image.displayOrder}</span>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-        
-        previewContainer.innerHTML = previewHtml;
-        
-        // ソート可能にする
-        setupImageSorting();
-    }
-    
-    // 画像削除
-    function removeImage(index) {
-        if (confirm('この画像を削除しますか？')) {
-            uploadedImages.splice(index, 1);
-            
-            // 表示順序を再調整
-            uploadedImages.forEach((image, idx) => {
-                image.displayOrder = idx + 1;
-            });
-            
-            // メイン画像が削除された場合、最初の画像をメインに設定
-            if (uploadedImages.length > 0 && !uploadedImages.some(img => img.isMain)) {
-                uploadedImages[0].isMain = true;
-            }
-            
-            updateImagePreview();
-        }
-    }
-    
-    // すべての画像をクリア
-    function clearAllImages() {
-        if (uploadedImages.length === 0) return;
-        
-        if (confirm('すべての画像を削除しますか？')) {
-            uploadedImages = [];
-            updateImagePreview();
-        }
-    }
-    
-    // 画像編集モーダルを開く
-    function openImageEditModal(index) {
-        if (index < 0 || index >= uploadedImages.length) return;
-        
-        currentEditingIndex = index;
-        const image = uploadedImages[index];
-        
-        // モーダルに現在の設定を表示
-        document.getElementById('editPreviewImage').src = image.dataUrl;
-        document.getElementById('imageAltText').value = image.altText || '';
-        document.getElementById('imageDisplayOrder').value = image.displayOrder;
-        document.getElementById('imageIsMain').checked = image.isMain;
-        
-        document.getElementById('imageEditModal').style.display = 'block';
-        document.body.style.overflow = 'hidden';
-    }
-    
-    // 画像編集モーダルを閉じる
-    function closeImageEditModal() {
-        document.getElementById('imageEditModal').style.display = 'none';
-        document.body.style.overflow = 'auto';
-        currentEditingIndex = -1;
-    }
-    
-    // 画像設定保存
-    function saveImageSettings() {
-        if (currentEditingIndex < 0) return;
-        
-        const image = uploadedImages[currentEditingIndex];
-        const altText = document.getElementById('imageAltText').value;
-        const displayOrder = parseInt(document.getElementById('imageDisplayOrder').value);
-        const isMain = document.getElementById('imageIsMain').checked;
-        
-        // 設定を更新
-        image.altText = altText;
-        image.displayOrder = displayOrder;
-        
-        // メイン画像設定
-        if (isMain) {
-            // 他の画像のメイン設定を解除
-            uploadedImages.forEach(img => img.isMain = false);
-            image.isMain = true;
-        }
-        
-        // 表示順序でソート
-        uploadedImages.sort((a, b) => a.displayOrder - b.displayOrder);
-        
-        updateImagePreview();
-        closeImageEditModal();
-        
-        showSuccess('画像設定を保存しました');
-    }
-    
-    // 画像拡大表示モーダルを開く
-    function openImageViewModal(imageSrc, imageName) {
-        document.getElementById('viewImage').src = imageSrc;
-        document.getElementById('imageViewTitle').textContent = imageName;
-        document.getElementById('imageViewModal').style.display = 'block';
-        document.body.style.overflow = 'hidden';
-    }
-    
-    // 画像拡大表示モーダルを閉じる
-    function closeImageViewModal() {
-        document.getElementById('imageViewModal').style.display = 'none';
-        document.body.style.overflow = 'auto';
-    }
-    
-    // 画像並び替え機能
-    function setupImageSorting() {
-        // ドラッグ&ドロップでの並び替え実装
-        const previewContainer = document.getElementById('imagePreviewContainer');
-        let draggedElement = null;
-        
-        previewContainer.addEventListener('dragstart', function(e) {
-            draggedElement = e.target.closest('.image-preview-item');
-            if (draggedElement) {
-                draggedElement.classList.add('dragging');
-            }
-        });
-        
-        previewContainer.addEventListener('dragover', function(e) {
-            e.preventDefault();
-        });
-        
-        previewContainer.addEventListener('drop', function(e) {
-            e.preventDefault();
-            const targetElement = e.target.closest('.image-preview-item');
-            
-            if (draggedElement && targetElement && draggedElement !== targetElement) {
-                const draggedIndex = parseInt(draggedElement.dataset.index);
-                const targetIndex = parseInt(targetElement.dataset.index);
-                
-                // 配列内で要素を入れ替え
-                const temp = uploadedImages[draggedIndex];
-                uploadedImages[draggedIndex] = uploadedImages[targetIndex];
-                uploadedImages[targetIndex] = temp;
-                
-                // 表示順序を更新
-                uploadedImages.forEach((image, idx) => {
-                    image.displayOrder = idx + 1;
-                });
-                
-                updateImagePreview();
-            }
-            
-            if (draggedElement) {
-                draggedElement.classList.remove('dragging');
-                draggedElement = null;
-            }
-        });
-        
-        // ドラッグ可能に設定
-        const previewItems = previewContainer.querySelectorAll('.image-preview-item');
-        previewItems.forEach(item => {
-            item.draggable = true;
-        });
-    }
-    
-    // 並び順変更ボタン
-    function reorderImages() {
-        if (uploadedImages.length <= 1) {
-            showInfo('並び替える画像がありません');
-            return;
-        }
-        
-        showInfo('画像をドラッグ&ドロップして並び順を変更できます');
-    }
-    
-    // 既存画像読み込み（Edit画面用）
-    function loadExistingImages() {
-        // Edit画面の場合、既存画像情報を読み込む
-        // この関数は、編集画面で呼び出される想定
-    }
-    
-    // ファイルサイズフォーマット
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-    
-    // フォーム送信時の画像データ処理
-    function getImageFormData() {
-        const formData = new FormData();
-        
-        uploadedImages.forEach((image, index) => {
-            formData.append(`ImageFiles`, image.file);
-            formData.append(`ImageAltTexts[${index}]`, image.altText || '');
-            formData.append(`ImageDisplayOrders[${index}]`, image.displayOrder);
-            formData.append(`ImageIsMain[${index}]`, image.isMain);
-        });
-        
-        return formData;
-    }
-    
-    // 初期化（ページ読み込み時に呼び出し）
-    document.addEventListener('DOMContentLoaded', function() {
-        initializeImageUpload();
-    });
-</script>
+@section Styles {
+    <link rel="stylesheet" href="~/css/product-image-upload.css" asp-append-version="true" />
+}
 
-<style>
-    /* 画像アップロード関連のスタイル */
-    .product-image-upload-container {
-        margin-bottom: 2rem;
-    }
-    
-    .upload-zone {
-        border: 2px dashed #ccc;
-        border-radius: 8px;
-        padding: 2rem;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        background-color: #fafafa;
-    }
-    
-    .upload-zone:hover {
-        border-color: #007bff;
-        background-color: #f0f8ff;
-    }
-    
-    .upload-zone.drag-over {
-        border-color: #007bff;
-        background-color: #e3f2fd;
-        transform: scale(1.02);
-    }
-    
-    .upload-icon {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-    }
-    
-    .upload-title {
-        margin-bottom: 0.5rem;
-        color: #333;
-    }
-    
-    .upload-description {
-        margin-bottom: 1rem;
-        color: #666;
-    }
-    
-    .upload-constraints {
-        margin-top: 1rem;
-        color: #888;
-        font-size: 0.9rem;
-    }
-    
-    .image-preview-area,
-    .existing-images-area {
-        margin-top: 2rem;
-    }
-    
-    .image-preview-container,
-    .existing-image-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-top: 1rem;
-    }
-    
-    .image-preview-item {
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        overflow: hidden;
-        background-color: white;
-        transition: transform 0.2s ease;
-        position: relative;
-    }
-    
-    .image-preview-item:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    
-    .image-preview-item.main-image {
-        border-color: #007bff;
-        box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
-    }
-    
-    .image-preview-item.dragging {
-        opacity: 0.5;
-        transform: rotate(5deg);
-    }
-    
-    .preview-image-container {
-        position: relative;
-        height: 150px;
-        overflow: hidden;
-    }
-    
-    .preview-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    
-    .preview-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(0,0,0,0.7);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 0.5rem;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-    
-    .image-preview-item:hover .preview-overlay {
-        opacity: 1;
-    }
-    
-    .overlay-btn {
-        background: white;
-        border: none;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        cursor: pointer;
-        font-size: 1.2rem;
-        transition: transform 0.2s ease;
-    }
-    
-    .overlay-btn:hover {
-        transform: scale(1.1);
-    }
-    
-    .main-badge {
-        position: absolute;
-        top: 0.5rem;
-        left: 0.5rem;
-        background-color: #007bff;
-        color: white;
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        font-weight: bold;
-    }
-    
-    .preview-info {
-        padding: 0.75rem;
-    }
-    
-    .preview-name {
-        font-weight: 500;
-        margin-bottom: 0.25rem;
-        word-break: break-all;
-    }
-    
-    .preview-details {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.875rem;
-        color: #666;
-    }
-    
-    .preview-actions {
-        margin-top: 1rem;
-        display: flex;
-        gap: 0.5rem;
-    }
-    
-    /* モーダル関連のスタイル */
-    .image-edit-container {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
-        align-items: start;
-    }
-    
-    .image-edit-preview {
-        text-align: center;
-    }
-    
-    .edit-preview-img {
-        max-width: 100%;
-        max-height: 300px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    
-    .image-view-container {
-        text-align: center;
-    }
-    
-    .view-image {
-        max-width: 100%;
-        max-height: 80vh;
-        border-radius: 8px;
-    }
-</style>
+@section Scripts {
+    <script src="~/js/product-image-upload.js" asp-append-version="true" defer></script>
+}

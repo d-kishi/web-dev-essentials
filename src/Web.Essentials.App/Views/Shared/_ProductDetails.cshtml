@@ -35,7 +35,9 @@
                             <img src="@mainImage.ImagePath" 
                                  alt="@mainImage.AltText" 
                                  class="main-product-image" 
-                                 onclick="openImageViewer('@mainImage.ImagePath', '@mainImage.AltText')" />
+                                 data-action="open-image-viewer" 
+                                 data-image-path="@mainImage.ImagePath" 
+                                 data-alt-text="@mainImage.AltText" />
                             <div class="image-overlay">
                                 <span class="zoom-hint">クリックで拡大</span>
                             </div>
@@ -48,7 +50,9 @@
                                 @foreach (var image in product.Images)
                                 {
                                     <div class="thumbnail-item @(image.IsMain ? "main" : "")"
-                                         onclick="switchMainImage('@image.ImagePath', '@image.AltText', this)">
+                                         data-action="switch-main-image" 
+                                         data-image-path="@image.ImagePath" 
+                                         data-alt-text="@image.AltText">
                                         <img src="@image.ImagePath" 
                                              alt="@image.AltText" 
                                              class="thumbnail-image" />
@@ -151,13 +155,16 @@
                     </a>
                     <button type="button" 
                             class="btn btn-outline" 
-                            onclick="shareProduct(@product.Id, '@product.Name')">
+                            data-action="share-product" 
+                            data-product-id="@product.Id" 
+                            data-product-name="@product.Name">
                         <span class="btn-icon">📤</span>
                         共有
                     </button>
                     <button type="button" 
                             class="btn btn-light" 
-                            onclick="duplicateProduct(@product.Id)">
+                            data-action="duplicate-product" 
+                            data-product-id="@product.Id">
                         <span class="btn-icon">📋</span>
                         複製
                     </button>
@@ -189,7 +196,8 @@
                                 {
                                     <button type="button" 
                                             class="copy-button" 
-                                            onclick="copyToClipboard('@product.JanCode')"
+                                            data-action="copy-to-clipboard" 
+                                            data-copy-text="@product.JanCode"
                                             title="クリップボードにコピー">
                                         📋
                                     </button>
@@ -278,12 +286,12 @@
 </div>
 
 <!-- 画像ビューアーモーダル -->
-<div id="imageViewerModal" class="modal-overlay image-viewer-modal" style="display: none;" onclick="closeImageViewer()">
+<div id="imageViewerModal" class="modal-overlay image-viewer-modal" style="display: none;">
     <div class="modal-dialog modal-large">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title" id="imageViewerTitle">商品画像</h3>
-                <button type="button" class="modal-close" onclick="closeImageViewer()">
+                <button type="button" class="modal-close" data-action="close-image-viewer">
                     <span>×</span>
                 </button>
             </div>
@@ -296,489 +304,10 @@
     </div>
 </div>
 
-<script>
-    // 商品詳細表示の初期化
-    function initializeProductDetails() {
-        setupImageInteractions();
-    }
-    
-    // 画像インタラクションの設定
-    function setupImageInteractions() {
-        // 画像ホバーエフェクトなどの設定
-    }
-    
-    // メイン画像切り替え
-    function switchMainImage(imagePath, altText, thumbnailElement) {
-        const mainImage = document.querySelector('.main-product-image');
-        if (mainImage) {
-            mainImage.src = imagePath;
-            mainImage.alt = altText;
-        }
-        
-        // サムネイルのアクティブ状態を更新
-        document.querySelectorAll('.thumbnail-item').forEach(item => {
-            item.classList.remove('active');
-        });
-        thumbnailElement.classList.add('active');
-    }
-    
-    // 画像ビューアーを開く
-    function openImageViewer(imagePath, altText) {
-        const modal = document.getElementById('imageViewerModal');
-        const viewerImage = document.getElementById('viewerImage');
-        const viewerTitle = document.getElementById('imageViewerTitle');
-        
-        viewerImage.src = imagePath;
-        viewerImage.alt = altText;
-        viewerTitle.textContent = altText || '商品画像';
-        
-        modal.style.display = 'block';
-        document.body.style.overflow = 'hidden';
-    }
-    
-    // 画像ビューアーを閉じる
-    function closeImageViewer() {
-        const modal = document.getElementById('imageViewerModal');
-        modal.style.display = 'none';
-        document.body.style.overflow = 'auto';
-    }
-    
-    // 商品共有
-    function shareProduct(productId, productName) {
-        const url = window.location.origin + '/Products/Details/' + productId;
-        const shareText = `商品「${productName}」をご覧ください`;
-        
-        if (navigator.share) {
-            // ネイティブ共有API使用
-            navigator.share({
-                title: productName,
-                text: shareText,
-                url: url
-            }).catch(error => {
-                console.log('共有がキャンセルされました:', error);
-            });
-        } else {
-            // フォールバック: クリップボードにコピー
-            copyToClipboard(url);
-            showSuccess('商品URLをクリップボードにコピーしました');
-        }
-    }
-    
-    // 商品複製
-    function duplicateProduct(productId) {
-        if (confirm('この商品を複製して新しい商品を作成しますか？')) {
-            // 複製処理の実装
-            window.location.href = `/Products/Create?duplicateFrom=${productId}`;
-        }
-    }
-    
-    // クリップボードにコピー
-    async function copyToClipboard(text) {
-        try {
-            await navigator.clipboard.writeText(text);
-            showSuccess('クリップボードにコピーしました');
-        } catch (error) {
-            console.error('クリップボードコピーエラー:', error);
-            
-            // フォールバック
-            const textArea = document.createElement('textarea');
-            textArea.value = text;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-            
-            showSuccess('クリップボードにコピーしました');
-        }
-    }
-    
-    // 初期化（ページ読み込み時に呼び出し）
-    document.addEventListener('DOMContentLoaded', function() {
-        initializeProductDetails();
-    });
-    
-    // ESCキーで画像ビューアーを閉じる
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape') {
-            closeImageViewer();
-        }
-    });
-</script>
+@section Scripts {
+    <script src="~/js/product-details.js" asp-append-version="true" defer></script>
+}
 
-<style>
-    /* 商品詳細表示のスタイル */
-    .product-details-display {
-        max-width: 100%;
-    }
-    
-    .product-overview-card {
-        background: white;
-        border-radius: 8px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    .product-overview-content {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
-        align-items: start;
-    }
-    
-    @@media (max-width: 768px) {
-        .product-overview-content {
-            grid-template-columns: 1fr;
-        }
-    }
-    
-    /* 画像セクション */
-    .product-images-section {
-        position: relative;
-    }
-    
-    .main-image-container {
-        position: relative;
-        margin-bottom: 1rem;
-        border-radius: 8px;
-        overflow: hidden;
-        cursor: pointer;
-    }
-    
-    .main-product-image {
-        width: 100%;
-        height: 300px;
-        object-fit: cover;
-        transition: transform 0.3s ease;
-    }
-    
-    .main-image-container:hover .main-product-image {
-        transform: scale(1.05);
-    }
-    
-    .image-overlay {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: linear-gradient(transparent, rgba(0,0,0,0.7));
-        color: white;
-        padding: 1rem;
-        text-align: center;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-    
-    .main-image-container:hover .image-overlay {
-        opacity: 1;
-    }
-    
-    .zoom-hint {
-        font-size: 0.9rem;
-        font-weight: 500;
-    }
-    
-    .thumbnail-images {
-        display: flex;
-        gap: 0.5rem;
-        overflow-x: auto;
-        padding: 0.5rem 0;
-    }
-    
-    .thumbnail-item {
-        position: relative;
-        flex-shrink: 0;
-        width: 80px;
-        height: 80px;
-        border-radius: 4px;
-        overflow: hidden;
-        cursor: pointer;
-        border: 2px solid transparent;
-        transition: all 0.3s ease;
-    }
-    
-    .thumbnail-item:hover,
-    .thumbnail-item.active {
-        border-color: #007bff;
-        transform: scale(1.05);
-    }
-    
-    .thumbnail-item.main {
-        border-color: #28a745;
-    }
-    
-    .thumbnail-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    
-    .main-indicator {
-        position: absolute;
-        top: 2px;
-        left: 2px;
-        background: #28a745;
-        color: white;
-        font-size: 0.6rem;
-        padding: 2px 4px;
-        border-radius: 2px;
-    }
-    
-    .no-image-display {
-        text-align: center;
-        padding: 2rem;
-        background: #f8f9fa;
-        border-radius: 8px;
-    }
-    
-    .no-image-placeholder {
-        width: 120px;
-        height: 120px;
-        opacity: 0.6;
-        margin-bottom: 1rem;
-    }
-    
-    .no-image-text {
-        color: #666;
-        font-style: italic;
-    }
-    
-    /* 基本情報セクション */
-    .product-basic-section {
-        padding-left: 1rem;
-    }
-    
-    .product-header-info {
-        margin-bottom: 1.5rem;
-    }
-    
-    .product-display-name {
-        font-size: 1.75rem;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 0.5rem;
-        line-height: 1.3;
-    }
-    
-    .product-status-info {
-        margin-bottom: 1rem;
-    }
-    
-    .status-badge {
-        display: inline-block;
-        padding: 0.375rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.875rem;
-        font-weight: 500;
-    }
-    
-    .status-pending {
-        background-color: #ffc107;
-        color: #000;
-    }
-    
-    .status-active {
-        background-color: #28a745;
-        color: white;
-    }
-    
-    .status-discontinued {
-        background-color: #6c757d;
-        color: white;
-    }
-    
-    .product-price-info {
-        margin-bottom: 2rem;
-    }
-    
-    .price-display {
-        display: flex;
-        align-items: baseline;
-        gap: 0.25rem;
-    }
-    
-    .price-currency {
-        font-size: 1.2rem;
-        font-weight: 500;
-        color: #666;
-    }
-    
-    .price-amount {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #333;
-    }
-    
-    .price-note {
-        font-size: 0.9rem;
-        color: #666;
-        margin-left: 0.5rem;
-    }
-    
-    .product-description-section {
-        margin-bottom: 2rem;
-    }
-    
-    .description-title {
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 0.75rem;
-        color: #333;
-    }
-    
-    .description-content {
-        line-height: 1.6;
-        color: #555;
-    }
-    
-    .product-categories-section {
-        margin-bottom: 2rem;
-    }
-    
-    .categories-title {
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 0.75rem;
-        color: #333;
-    }
-    
-    .categories-display {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-    
-    .category-tag {
-        display: flex;
-        align-items: center;
-        background: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 20px;
-        padding: 0.375rem 0.75rem;
-        font-size: 0.875rem;
-        gap: 0.25rem;
-    }
-    
-    .category-icon {
-        font-size: 0.9rem;
-    }
-    
-    .category-link {
-        margin-left: 0.25rem;
-        color: #007bff;
-        text-decoration: none;
-        font-weight: 500;
-    }
-    
-    .product-actions-section {
-        margin-top: 2rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid #dee2e6;
-    }
-    
-    .action-buttons {
-        display: flex;
-        gap: 0.75rem;
-        flex-wrap: wrap;
-    }
-    
-    /* 詳細情報セクション */
-    .product-detailed-info {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
-    }
-    
-    @@media (max-width: 768px) {
-        .product-detailed-info {
-            grid-template-columns: 1fr;
-        }
-    }
-    
-    .specifications-section,
-    .management-info-section {
-        background: white;
-        border-radius: 8px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    .section-title {
-        font-size: 1.2rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
-        color: #333;
-        border-bottom: 2px solid #007bff;
-        padding-bottom: 0.5rem;
-    }
-    
-    .specifications-grid,
-    .management-grid {
-        display: grid;
-        gap: 0.75rem;
-    }
-    
-    .spec-row,
-    .management-row {
-        display: grid;
-        grid-template-columns: 1fr 2fr;
-        gap: 1rem;
-        padding: 0.75rem;
-        background: #f8f9fa;
-        border-radius: 4px;
-    }
-    
-    .spec-label,
-    .management-label {
-        font-weight: 500;
-        color: #555;
-    }
-    
-    .spec-value,
-    .management-value {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .jan-code-display {
-        background: #e9ecef;
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        font-family: monospace;
-        font-size: 0.9rem;
-    }
-    
-    .copy-button {
-        background: none;
-        border: none;
-        cursor: pointer;
-        font-size: 1rem;
-        opacity: 0.7;
-        transition: opacity 0.3s ease;
-    }
-    
-    .copy-button:hover {
-        opacity: 1;
-    }
-    
-    .time-diff {
-        color: #6c757d;
-        font-style: italic;
-    }
-    
-    /* 画像ビューアーモーダル */
-    .image-viewer-modal .modal-body {
-        padding: 0;
-    }
-    
-    .image-viewer-container {
-        text-align: center;
-        background: #000;
-    }
-    
-    .viewer-image {
-        max-width: 100%;
-        max-height: 80vh;
-    }
-</style>
+@section Styles {
+    <link rel="stylesheet" href="~/css/product-details.css" asp-append-version="true" />
+}

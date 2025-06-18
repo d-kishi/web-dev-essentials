@@ -15,7 +15,7 @@
                        placeholder="カテゴリ名を入力してください"
                        maxlength="50"
                        autocomplete="off"
-                       oninput="validateCategoryName(this)" />
+                       />
                 <span asp-validation-for="Name" class="validation-error"></span>
                 <div id="categoryNameValidation" class="field-validation" style="display: none;"></div>
                 <div class="field-help">
@@ -35,7 +35,7 @@
                       rows="4"
                       placeholder="カテゴリの説明を入力してください（任意）"
                       maxlength="500"
-                      oninput="updateCharacterCount(this, 'categoryDescriptionCount')"></textarea>
+                      ></textarea>
             <span asp-validation-for="Description" class="validation-error"></span>
             <div class="character-count">
                 <span id="categoryDescriptionCount">0</span> / 500文字
@@ -73,88 +73,21 @@
     </div>
 </div>
 
-<!-- 重複チェック用のスクリプト -->
-<script>
-    // カテゴリ名のリアルタイムバリデーション
-    let categoryNameCheckTimeout;
-    
-    function validateCategoryName(input) {
-        // プレビュー更新
-        updateCategoryPreview();
-        
-        // 重複チェック（デバウンス）
-        clearTimeout(categoryNameCheckTimeout);
-        categoryNameCheckTimeout = setTimeout(() => {
-            checkCategoryNameDuplicate(input.value);
-        }, 500);
-    }
-    
-    // カテゴリ名重複チェック
-    async function checkCategoryNameDuplicate(categoryName) {
-        if (!categoryName || categoryName.trim() === '') {
-            hideValidationMessage('categoryNameValidation');
-            return;
-        }
-        
-        try {
-            @{
-                object modelId = 0;
-                try 
-                {
-                    var idProperty = Model.GetType().GetProperty("Id");
-                    modelId = idProperty?.GetValue(Model) ?? 0;
-                }
-                catch
-                {
-                    modelId = 0;
-                }
+@section Scripts {
+    <script>
+        // カテゴリモデルIDを設定
+        @{
+            object modelId = 0;
+            try 
+            {
+                var idProperty = Model.GetType().GetProperty("Id");
+                modelId = idProperty?.GetValue(Model) ?? 0;
             }
-            const excludeId = @modelId;
-            const response = await fetch(`/api/category/check-duplicate?name=${encodeURIComponent(categoryName)}&excludeId=${excludeId}`);
-            const result = await response.json();
-            
-            if (result.isDuplicate) {
-                showValidationMessage('categoryNameValidation', 'このカテゴリ名は既に使用されています', 'error');
-            } else {
-                showValidationMessage('categoryNameValidation', 'このカテゴリ名は使用可能です', 'success');
+            catch
+            {
+                modelId = 0;
             }
-        } catch (error) {
-            console.error('カテゴリ名重複チェックエラー:', error);
         }
-    }
-    
-    // プレビュー更新
-    function updateCategoryPreview() {
-        const nameInput = document.querySelector('input[name="Name"]');
-        const descriptionInput = document.querySelector('textarea[name="Description"]');
-        
-        const previewName = document.getElementById('previewCategoryName');
-        const previewDescription = document.getElementById('previewCategoryDescription');
-        
-        if (nameInput && previewName) {
-            previewName.textContent = nameInput.value || 'カテゴリ名がここに表示されます';
-        }
-        
-        if (descriptionInput && previewDescription) {
-            previewDescription.textContent = descriptionInput.value || 'カテゴリ説明がここに表示されます';
-        }
-    }
-    
-    // ページ読み込み時の初期化
-    document.addEventListener('DOMContentLoaded', function() {
-        updateCategoryPreview();
-        
-        // 説明文字数カウント初期化
-        const descriptionInput = document.querySelector('textarea[name="Description"]');
-        if (descriptionInput) {
-            updateCharacterCount(descriptionInput, 'categoryDescriptionCount');
-            descriptionInput.addEventListener('input', () => updateCategoryPreview());
-        }
-        
-        // カテゴリ名変更時のプレビュー更新
-        const nameInput = document.querySelector('input[name="Name"]');
-        if (nameInput) {
-            nameInput.addEventListener('input', () => updateCategoryPreview());
-        }
-    });
-</script>
+        window.categoryModelId = @modelId;
+    </script>
+}

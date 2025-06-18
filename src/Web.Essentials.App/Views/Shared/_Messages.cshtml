@@ -6,7 +6,7 @@
         <div class="message-content">
             <span class="message-icon">✓</span>
             <span class="message-text">@TempData["SuccessMessage"]</span>
-            <button type="button" class="message-close" onclick="closeMessage('successMessage')" aria-label="閉じる">
+            <button type="button" class="message-close" data-message-id="successMessage" aria-label="閉じる">
                 <span aria-hidden="true">×</span>
             </button>
         </div>
@@ -19,7 +19,7 @@
         <div class="message-content">
             <span class="message-icon">⚠</span>
             <span class="message-text">@TempData["ErrorMessage"]</span>
-            <button type="button" class="message-close" onclick="closeMessage('errorMessage')" aria-label="閉じる">
+            <button type="button" class="message-close" data-message-id="errorMessage" aria-label="閉じる">
                 <span aria-hidden="true">×</span>
             </button>
         </div>
@@ -32,7 +32,7 @@
         <div class="message-content">
             <span class="message-icon">ℹ</span>
             <span class="message-text">@TempData["InfoMessage"]</span>
-            <button type="button" class="message-close" onclick="closeMessage('infoMessage')" aria-label="閉じる">
+            <button type="button" class="message-close" data-message-id="infoMessage" aria-label="閉じる">
                 <span aria-hidden="true">×</span>
             </button>
         </div>
@@ -45,7 +45,7 @@
         <div class="message-content">
             <span class="message-icon">⚠</span>
             <span class="message-text">@TempData["WarningMessage"]</span>
-            <button type="button" class="message-close" onclick="closeMessage('warningMessage')" aria-label="閉じる">
+            <button type="button" class="message-close" data-message-id="warningMessage" aria-label="閉じる">
                 <span aria-hidden="true">×</span>
             </button>
         </div>
@@ -67,7 +67,7 @@
                     }
                 </ul>
             </div>
-            <button type="button" class="message-close" onclick="closeMessage('validationErrorMessage')" aria-label="閉じる">
+            <button type="button" class="message-close" data-message-id="validationErrorMessage" aria-label="閉じる">
                 <span aria-hidden="true">×</span>
             </button>
         </div>

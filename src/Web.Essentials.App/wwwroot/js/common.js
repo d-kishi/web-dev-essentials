@@ -667,7 +667,17 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
     // メッセージクローズボタン
     Utils.onAll('.message-close', 'click', function() {
-        this.closest('.message-container').remove();
+        const messageId = this.dataset.messageId;
+        if (messageId) {
+            // データ属性で指定されたメッセージIDの場合
+            const messageElement = document.getElementById(messageId);
+            if (messageElement) {
+                messageElement.remove();
+            }
+        } else {
+            // 通常のメッセージクローズ処理
+            this.closest('.message-container').remove();
+        }
     });
     
     // ドロップダウンメニューの制御
@@ -684,6 +694,63 @@ document.addEventListener('DOMContentLoaded', function() {
                 Utils.removeClass(dropdown, 'active');
             });
         }
+    });
+    
+    // ページネーション機能
+    Utils.onAll('[data-action="load-page"]', 'click', function(e) {
+        e.preventDefault();
+        const page = parseInt(this.dataset.page);
+        if (page && typeof loadPage === 'function') {
+            loadPage(page);
+        }
+    });
+    
+    Utils.onAll('[data-action="change-page-size"]', 'change', function() {
+        const pageSize = this.value;
+        if (pageSize && typeof changePageSize === 'function') {
+            changePageSize(pageSize);
+        }
+    });
+    
+    // 確認モーダル機能
+    Utils.onAll('[data-action="close-confirmation"]', 'click', function() {
+        if (typeof closeConfirmationModal === 'function') {
+            closeConfirmationModal();
+        }
+    });
+    
+    Utils.onAll('[data-action="execute-confirmation"]', 'click', function() {
+        if (typeof executeConfirmationAction === 'function') {
+            executeConfirmationAction();
+        }
+    });
+    
+    // 検索フォーム機能
+    Utils.onAll('[data-action="perform-search"]', 'click', function() {
+        if (typeof performSearch === 'function') {
+            performSearch();
+        }
+    });
+    
+    Utils.onAll('[data-action="reset-search"]', 'click', function() {
+        if (typeof resetSearch === 'function') {
+            resetSearch();
+        }
+    });
+    
+    Utils.onAll('[data-action="toggle-advanced-search"]', 'click', function() {
+        if (typeof toggleAdvancedSearch === 'function') {
+            toggleAdvancedSearch();
+        }
+    });
+    
+    // 検索フォーム送信防止
+    Utils.onAll('#searchForm', 'submit', function(e) {
+        e.preventDefault();
+        if (typeof performSearch === 'function') {
+            performSearch();
+        }
+        return false;
     });
 });
 

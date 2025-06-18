@@ -17,7 +17,7 @@
                 @if (Model.CurrentPage > 1)
                 {
                     <li class="pagination-item">
-                        <button type="button" class="pagination-link" onclick="loadPage(1)" title="最初のページ">
+                        <button type="button" class="pagination-link" data-page="1" data-action="load-page" title="最初のページ">
                             ≪
                         </button>
                     </li>
@@ -33,7 +33,7 @@
                 @if (Model.HasPreviousPage)
                 {
                     <li class="pagination-item">
-                        <button type="button" class="pagination-link" onclick="loadPage(@(Model.CurrentPage - 1))" title="前のページ">
+                        <button type="button" class="pagination-link" data-page="@(Model.CurrentPage - 1)" data-action="load-page" title="前のページ">
                             ‹
                         </button>
                     </li>
@@ -68,7 +68,7 @@
                 @if (startPage > 1)
                 {
                     <li class="pagination-item">
-                        <button type="button" class="pagination-link" onclick="loadPage(1)">1</button>
+                        <button type="button" class="pagination-link" data-page="1" data-action="load-page">1</button>
                     </li>
                     @if (startPage > 2)
                     {
@@ -90,7 +90,7 @@
                     else
                     {
                         <li class="pagination-item">
-                            <button type="button" class="pagination-link" onclick="loadPage(@i)">@i</button>
+                            <button type="button" class="pagination-link" data-page="@i" data-action="load-page">@i</button>
                         </li>
                     }
                 }
@@ -105,7 +105,7 @@
                         </li>
                     }
                     <li class="pagination-item">
-                        <button type="button" class="pagination-link" onclick="loadPage(@Model.TotalPages)">@Model.TotalPages</button>
+                        <button type="button" class="pagination-link" data-page="@Model.TotalPages" data-action="load-page">@Model.TotalPages</button>
                     </li>
                 }
                 
@@ -113,7 +113,7 @@
                 @if (Model.HasNextPage)
                 {
                     <li class="pagination-item">
-                        <button type="button" class="pagination-link" onclick="loadPage(@(Model.CurrentPage + 1))" title="次のページ">
+                        <button type="button" class="pagination-link" data-page="@(Model.CurrentPage + 1)" data-action="load-page" title="次のページ">
                             ›
                         </button>
                     </li>
@@ -129,7 +129,7 @@
                 @if (Model.CurrentPage < Model.TotalPages)
                 {
                     <li class="pagination-item">
-                        <button type="button" class="pagination-link" onclick="loadPage(@Model.TotalPages)" title="最後のページ">
+                        <button type="button" class="pagination-link" data-page="@Model.TotalPages" data-action="load-page" title="最後のページ">
                             ≫
                         </button>
                     </li>
@@ -146,7 +146,7 @@
         <!-- ページサイズ選択 -->
         <div class="page-size-selector">
             <label for="pageSizeSelect">表示件数:</label>
-            <select id="pageSizeSelect" class="page-size-select" onchange="changePageSize(this.value)">
+            <select id="pageSizeSelect" class="page-size-select" data-action="change-page-size">
                 @if (Model.PageSize == 10)
                 {
                     <option value="10" selected>10件</option>

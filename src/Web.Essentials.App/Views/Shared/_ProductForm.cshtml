@@ -33,7 +33,7 @@
                            max="9999999"
                            step="1"
                            placeholder="0"
-                           oninput="formatPrice(this)" />
+                           />
                 </div>
                 <span asp-validation-for="Price" class="validation-error"></span>
                 <div class="field-help">
@@ -78,7 +78,7 @@
                        maxlength="13"
                        pattern="[0-9]{8,13}"
                        autocomplete="off"
-                       oninput="validateJanCode(this)" />
+                       />
                 <span asp-validation-for="JanCode" class="validation-error"></span>
                 <div id="janCodeValidation" class="field-validation" style="display: none;"></div>
                 <div class="field-help">
@@ -98,7 +98,7 @@
                       rows="5"
                       placeholder="商品の詳細説明を入力してください（任意）"
                       maxlength="1000"
-                      oninput="updateCharacterCount(this, 'descriptionCount')"></textarea>
+                      ></textarea>
             <span asp-validation-for="Description" class="validation-error"></span>
             <div class="character-count">
                 <span id="descriptionCount">0</span> / 1000文字
@@ -121,7 +121,7 @@
                        class="image-input" 
                        accept="image/*" 
                        multiple
-                       onchange="handleImageUpload(this)" />
+                       />
                 <label for="imageFiles" class="image-upload-label">
                     <div class="upload-icon">📁</div>
                     <div class="upload-text">
@@ -181,7 +181,7 @@
                         <div class="image-overlay">
                             <button type="button" 
                                     class="btn btn-danger btn-sm delete-image-btn" 
-                                    onclick="deleteExistingImage(@image.Id)"
+                                    data-image-id="@image.Id"
                                     title="この画像を削除">
                                 削除
                             </button>

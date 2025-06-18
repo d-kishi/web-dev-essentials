@@ -6,7 +6,7 @@
             <!-- モーダルヘッダー -->
             <div class="modal-header">
                 <h3 class="modal-title" id="confirmationModalTitle">確認</h3>
-                <button type="button" class="modal-close" onclick="closeConfirmationModal()" aria-label="閉じる">
+                <button type="button" class="modal-close" data-action="close-confirmation" aria-label="閉じる">
                     <span aria-hidden="true">×</span>
                 </button>
             </div>
@@ -26,10 +26,10 @@
             
             <!-- モーダルフッター -->
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeConfirmationModal()">
+                <button type="button" class="btn btn-secondary" data-action="close-confirmation">
                     キャンセル
                 </button>
-                <button type="button" class="btn btn-danger" id="confirmationModalOkButton" onclick="executeConfirmationAction()">
+                <button type="button" class="btn btn-danger" id="confirmationModalOkButton" data-action="execute-confirmation">
                     実行
                 </button>
             </div>

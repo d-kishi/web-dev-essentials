@@ -8,7 +8,7 @@
 <!-- 検索フォーム部分ビュー -->
 <!-- Ajax検索用の共通検索フォーム -->
 <div class="search-form-container">
-    <form id="searchForm" class="search-form" onsubmit="return false;">
+    <form id="searchForm" class="search-form">
         <div class="search-form-row">
             <!-- 検索キーワード入力 -->
             <div class="search-field">
@@ -55,11 +55,11 @@
             
             <!-- 検索ボタン -->
             <div class="search-actions">
-                <button type="button" class="btn btn-primary search-btn" onclick="performSearch()">
+                <button type="button" class="btn btn-primary search-btn" data-action="perform-search">
                     <span class="btn-icon">🔍</span>
                     検索
                 </button>
-                <button type="button" class="btn btn-secondary reset-btn" onclick="resetSearch()">
+                <button type="button" class="btn btn-secondary reset-btn" data-action="reset-search">
                     <span class="btn-icon">↻</span>
                     リセット
                 </button>
@@ -68,7 +68,7 @@
         
         <!-- 高度な検索オプション（展開可能） -->
         <div class="advanced-search-toggle">
-            <button type="button" class="toggle-btn" onclick="toggleAdvancedSearch()">
+            <button type="button" class="toggle-btn" data-action="toggle-advanced-search">
                 <span id="advancedSearchToggleText">高度な検索オプションを表示</span>
                 <span id="advancedSearchToggleIcon" class="toggle-icon">▼</span>
             </button>

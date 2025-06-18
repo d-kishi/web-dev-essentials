@@ -1,0 +1,420 @@
+/**
+ * 商品詳細画面用JavaScript
+ * 商品詳細表示・削除・複製・共有機能を提供
+ */
+
+/**
+ * ページ読み込み時の初期化処理
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    initializeProductDetails();
+});
+
+/**
+ * 商品詳細の初期化
+ */
+function initializeProductDetails() {
+    // タブ機能の初期化
+    setupTabs();
+    
+    // 変更履歴の読み込み
+    loadChangeHistory();
+    
+    // 画像ギャラリーの初期化
+    setupImageGallery();
+    
+    // イベントリスナーの設定
+    setupEventListeners();
+}
+
+/**
+ * イベントリスナーの設定
+ */
+function setupEventListeners() {
+    // 画像ビューアー関連
+    document.addEventListener('click', function(e) {
+        const target = e.target.closest('[data-action]');
+        if (!target) return;
+        
+        const action = target.dataset.action;
+        
+        switch (action) {
+            case 'open-image-viewer':
+                e.preventDefault();
+                openImageViewer(target.dataset.imagePath, target.dataset.altText);
+                break;
+                
+            case 'switch-main-image':
+                e.preventDefault();
+                switchMainImage(target.dataset.imagePath, target.dataset.altText, target);
+                break;
+                
+            case 'close-image-viewer':
+                e.preventDefault();
+                closeImageViewer();
+                break;
+                
+            case 'share-product':
+                e.preventDefault();
+                shareProduct(target.dataset.productId, target.dataset.productName);
+                break;
+                
+            case 'duplicate-product':
+                e.preventDefault();
+                duplicateProduct(target.dataset.productId);
+                break;
+                
+            case 'copy-to-clipboard':
+                e.preventDefault();
+                copyToClipboard(target.dataset.copyText);
+                break;
+        }
+    });
+    
+    // 画像ビューアーモーダル外クリックで閉じる
+    const modal = document.getElementById('imageViewerModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeImageViewer();
+            }
+        });
+    }
+}
+
+/**
+ * 画像ギャラリーの初期化
+ */
+function setupImageGallery() {
+    // 画像インタラクションなどの設定
+}
+
+/**
+ * タブ機能の初期化
+ */
+function setupTabs() {
+    // タブ関連の初期化処理
+}
+
+/**
+ * タブ表示切り替え
+ * @param {string} tabName - 表示するタブ名
+ */
+function showTab(tabName) {
+    // すべてのタブボタンとコンテンツを非アクティブに
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    // 選択されたタブをアクティブに
+    const tabButton = document.querySelector(`[data-tab="${tabName}"]`);
+    const tabContent = document.getElementById(tabName + 'Tab');
+    
+    if (tabButton) tabButton.classList.add('active');
+    if (tabContent) tabContent.classList.add('active');
+    
+    // 変更履歴タブの場合は履歴を読み込み
+    if (tabName === 'history') {
+        loadChangeHistory();
+    }
+}
+
+/**
+ * メイン画像切り替え
+ * @param {string} imagePath - 画像パス
+ * @param {string} altText - 代替テキスト
+ * @param {HTMLElement} thumbnailElement - サムネイル要素
+ */
+function switchMainImage(imagePath, altText, thumbnailElement) {
+    const mainImage = document.querySelector('.main-product-image');
+    if (mainImage) {
+        mainImage.src = imagePath;
+        mainImage.alt = altText;
+    }
+    
+    // サムネイルのアクティブ状態を更新
+    document.querySelectorAll('.thumbnail-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    if (thumbnailElement) {
+        thumbnailElement.classList.add('active');
+    }
+}
+
+/**
+ * 画像ビューアーを開く
+ * @param {string} imagePath - 画像パス
+ * @param {string} altText - 代替テキスト
+ */
+function openImageViewer(imagePath, altText) {
+    const modal = document.getElementById('imageViewerModal');
+    const viewerImage = document.getElementById('viewerImage');
+    const viewerTitle = document.getElementById('imageViewerTitle');
+    
+    if (viewerImage) viewerImage.src = imagePath;
+    if (viewerImage) viewerImage.alt = altText;
+    if (viewerTitle) viewerTitle.textContent = altText || '商品画像';
+    
+    if (modal) {
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+/**
+ * 画像ビューアーを閉じる
+ */
+function closeImageViewer() {
+    const modal = document.getElementById('imageViewerModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+}
+
+/**
+ * 画像モーダル表示（互換性のため残す）
+ * @param {string} imageSrc - 画像パス
+ * @param {string} altText - 代替テキスト
+ */
+function showImageModal(imageSrc, altText) {
+    openImageViewer(imageSrc, altText);
+}
+
+/**
+ * 画像モーダルを閉じる（互換性のため残す）
+ */
+function closeImageModal() {
+    closeImageViewer();
+}
+
+/**
+ * 商品削除確認
+ * @param {number} productId - 商品ID
+ * @param {string} productName - 商品名
+ */
+function confirmDeleteProduct(productId, productName) {
+    showConfirmationModal(
+        '商品削除の確認',
+        `商品「${productName}」を削除しますか？`,
+        '削除すると元に戻せません。関連する画像やカテゴリ関連付けも削除されます。',
+        '削除',
+        () => deleteProduct(productId)
+    );
+}
+
+/**
+ * 商品削除実行
+ * @param {number} productId - 商品ID
+ */
+async function deleteProduct(productId) {
+    try {
+        showLoadingModal('商品を削除しています...');
+        
+        const response = await fetch(`/Products/Delete/${productId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': getAntiForgeryToken()
+            }
+        });
+        
+        hideLoadingModal();
+        
+        if (response.ok) {
+            showSuccess('商品が正常に削除されました');
+            
+            // 商品一覧に戻る
+            setTimeout(() => {
+                window.location.href = '/Products';
+            }, 1500);
+        } else {
+            const errorText = await response.text();
+            showError('商品の削除に失敗しました: ' + errorText);
+        }
+    } catch (error) {
+        hideLoadingModal();
+        console.error('商品削除エラー:', error);
+        showError('商品削除中にエラーが発生しました');
+    }
+}
+
+/**
+ * 商品複製
+ * @param {number|string} productId - 商品ID
+ */
+async function duplicateProduct(productId) {
+    if (!productId) {
+        console.error('商品IDが指定されていません');
+        return;
+    }
+    
+    if (!confirm('この商品を複製して新しい商品を作成しますか？')) {
+        return;
+    }
+    
+    try {
+        if (typeof showLoadingModal === 'function') {
+            showLoadingModal('商品を複製しています...');
+        }
+        
+        // 複製処理の実装（実際のAPI呼び出しが必要な場合）
+        // const response = await fetch(`/Products/Duplicate/${productId}`, {
+        //     method: 'POST',
+        //     headers: {
+        //         'Content-Type': 'application/json',
+        //         'RequestVerificationToken': getAntiForgeryToken()
+        //     }
+        // });
+        
+        // 暫定的に複製先ページに移動
+        window.location.href = `/Products/Create?duplicateFrom=${productId}`;
+        
+    } catch (error) {
+        if (typeof hideLoadingModal === 'function') {
+            hideLoadingModal();
+        }
+        console.error('商品複製エラー:', error);
+        if (typeof showError === 'function') {
+            showError('商品複製中にエラーが発生しました');
+        }
+    }
+}
+
+/**
+ * 商品共有
+ * @param {string} productId - 商品ID
+ * @param {string} productName - 商品名
+ */
+function shareProduct(productId, productName) {
+    const url = productId ? 
+        `${window.location.origin}/Products/Details/${productId}` : 
+        window.location.href;
+    const name = productName || window.productName || '商品';
+    const shareText = `商品「${name}」の詳細をご覧ください`;
+    
+    if (navigator.share) {
+        // ネイティブ共有API使用
+        navigator.share({
+            title: name,
+            text: shareText,
+            url: url
+        }).catch(error => {
+            console.log('共有がキャンセルされました:', error);
+        });
+    } else {
+        // フォールバック: クリップボードにコピー
+        copyToClipboard(url);
+        if (typeof showSuccess === 'function') {
+            showSuccess('商品URLをクリップボードにコピーしました');
+        }
+    }
+}
+
+/**
+ * クリップボードにコピー
+ * @param {string} text - コピーするテキスト
+ */
+async function copyToClipboard(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        showSuccess('クリップボードにコピーしました');
+    } catch (error) {
+        console.error('クリップボードコピーエラー:', error);
+        
+        // フォールバック
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        showSuccess('クリップボードにコピーしました');
+    }
+}
+
+/**
+ * 変更履歴読み込み
+ */
+async function loadChangeHistory() {
+    const productId = window.productId;
+    if (!productId) return;
+    
+    try {
+        const historyContent = document.getElementById('changeHistoryContent');
+        if (!historyContent) return;
+        
+        historyContent.innerHTML = '<p class="loading-text">変更履歴を読み込み中...</p>';
+        
+        const response = await fetch(`/Products/GetChangeHistory/${productId}`);
+        
+        if (response.ok) {
+            const history = await response.json();
+            renderChangeHistory(history);
+        } else {
+            historyContent.innerHTML = '<p class="error-text">変更履歴の読み込みに失敗しました</p>';
+        }
+    } catch (error) {
+        console.error('変更履歴読み込みエラー:', error);
+        const historyContent = document.getElementById('changeHistoryContent');
+        if (historyContent) {
+            historyContent.innerHTML = '<p class="error-text">変更履歴の読み込み中にエラーが発生しました</p>';
+        }
+    }
+}
+
+/**
+ * 変更履歴表示
+ * @param {Array} history - 変更履歴データ
+ */
+function renderChangeHistory(history) {
+    const historyContent = document.getElementById('changeHistoryContent');
+    if (!historyContent) return;
+    
+    if (!history || history.length === 0) {
+        historyContent.innerHTML = '<p class="no-data-text">変更履歴はありません</p>';
+        return;
+    }
+    
+    const historyHtml = history.map(item => `
+        <div class="history-item">
+            <div class="history-header">
+                <span class="history-date">${new Date(item.changedAt).toLocaleString()}</span>
+                <span class="history-type">${item.changeType}</span>
+            </div>
+            <div class="history-details">
+                ${item.changes.map(change => `
+                    <div class="history-change">
+                        <span class="change-field">${change.fieldName}</span>
+                        <span class="change-from">${change.oldValue || '(空)'}</span>
+                        <span class="change-arrow">→</span>
+                        <span class="change-to">${change.newValue || '(空)'}</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+    
+    historyContent.innerHTML = historyHtml;
+}
+
+// ESCキーで画像ビューアーを閉じる
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeImageViewer();
+    }
+});
+
+// グローバル関数として公開
+window.showTab = showTab;
+window.showImageModal = showImageModal;
+window.closeImageModal = closeImageModal;
+window.openImageViewer = openImageViewer;
+window.closeImageViewer = closeImageViewer;
+window.switchMainImage = switchMainImage;
+window.confirmDeleteProduct = confirmDeleteProduct;
+window.deleteProduct = deleteProduct;
+window.duplicateProduct = duplicateProduct;
+window.shareProduct = shareProduct;
+window.copyToClipboard = copyToClipboard;
+window.loadChangeHistory = loadChangeHistory;
