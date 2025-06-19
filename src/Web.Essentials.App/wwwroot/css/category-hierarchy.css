@@ -327,8 +327,9 @@
     animation: slideUp 0.3s ease-out;
 }
 
-/* Windowsエクスプローラ風の検索結果表示 */
-.search-result .tree-item-content {
+/* Windowsエクスプローラ風の階層表示（検索結果と初期表示共通） */
+.search-result .tree-item-content,
+.hierarchy-item .tree-item-content {
     display: flex;
     align-items: center;
     padding: 0.5rem;
@@ -379,12 +380,14 @@
     background: #ccc;
 }
 
-.search-result .tree-icon {
+.search-result .tree-icon,
+.hierarchy-item .tree-icon {
     font-size: 1rem;
     flex-shrink: 0;
 }
 
-.search-result .category-info {
+.search-result .category-info,
+.hierarchy-item .category-info {
     flex: 1;
     display: flex;
     align-items: center;
@@ -393,7 +396,8 @@
     min-width: 0;
 }
 
-.search-result .category-main {
+.search-result .category-main,
+.hierarchy-item .category-main {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -401,23 +405,27 @@
     min-width: 0;
 }
 
-.search-result .category-name {
+.search-result .category-name,
+.hierarchy-item .category-name {
     color: #333;
     text-decoration: none;
     font-weight: 500;
 }
 
-.search-result .category-name:hover {
+.search-result .category-name:hover,
+.hierarchy-item .category-name:hover {
     color: #2196f3;
     text-decoration: underline;
 }
 
-.search-result .category-description {
+.search-result .category-description,
+.hierarchy-item .category-description {
     color: #666;
     font-size: 0.9rem;
 }
 
-.search-result .category-meta {
+.search-result .category-meta,
+.hierarchy-item .category-meta {
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -425,7 +433,8 @@
     font-size: 0.85rem;
 }
 
-.search-result .level-badge {
+.search-result .level-badge,
+.hierarchy-item .level-badge {
     background: #e3f2fd;
     color: #1976d2;
     padding: 0.125rem 0.375rem;
@@ -438,18 +447,22 @@
 }
 
 .search-result .product-count,
-.search-result .updated-date {
+.search-result .updated-date,
+.hierarchy-item .product-count,
+.hierarchy-item .updated-date {
     color: #666;
     white-space: nowrap;
 }
 
-.search-result .category-actions {
+.search-result .category-actions,
+.hierarchy-item .category-actions {
     display: flex;
     gap: 0.25rem;
     opacity: 0;
     transition: opacity 0.2s ease;
 }
 
-.search-result:hover .category-actions {
+.search-result:hover .category-actions,
+.hierarchy-item:hover .category-actions {
     opacity: 1;
 }

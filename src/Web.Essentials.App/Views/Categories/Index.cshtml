@@ -34,15 +34,8 @@
     </div>
     
     <!-- 表示オプション -->
-    <div class="list-controls">
-        <div class="hierarchy-controls">
-            <button type="button" class="btn btn-sm btn-outline" onclick="expandAll()">
-                すべて展開
-            </button>
-            <button type="button" class="btn btn-sm btn-outline" onclick="collapseAll()">
-                すべて閉じる
-            </button>
-        </div>
+    <div class="list-controls" style="display: none;">
+        <!-- 階層表示では展開/閉じる機能は使用しません -->
     </div>
     
     <!-- カテゴリ一覧コンテンツ -->
@@ -52,46 +45,21 @@
             <div id="categoryTree" class="category-tree">
                 @if (Model?.Categories?.Any() == true)
                 {
-                    @foreach (var category in Model.Categories.Where(c => c.Level == 0 || c.ParentCategoryId == null))
-                    {
-                        var hasChildren = Model.Categories.Any(c => c.ParentCategoryId == category.Id);
-                        <div class="tree-item expandable" data-category-id="@category.Id" data-level="@category.Level">
-                            <div class="tree-item-content">
-                                @if (hasChildren)
-                                {
-                                    <span class="tree-toggle">▶</span>
-                                }
-                                else
-                                {
-                                    <span class="tree-toggle">　</span>
-                                }
-                                <div class="category-info">
-                                    <div class="category-main">
-                                        <a href="/Categories/Details/@category.Id" class="category-name">@category.Name</a>
-                                        @if (!string.IsNullOrEmpty(category.Description))
-                                        {
-                                            <span class="category-description">- @category.Description</span>
-                                        }
-                                    </div>
-                                    <div class="category-meta">
-                                        <span class="product-count">商品数: @category.ProductCount</span>
-                                        <span class="updated-date">更新: @category.UpdatedAt.ToString("yyyy/MM/dd")</span>
-                                        <div class="category-actions">
-                                            <a href="/Categories/Edit/@category.Id" class="btn btn-sm btn-warning">編集</a>
-                                            <button type="button" class="btn btn-sm btn-danger" 
-                                                    onclick="confirmDeleteCategory(@category.Id, '@category.Name', @category.ProductCount, @(hasChildren ? "true" : "false"))"
-                                                    @(category.ProductCount > 0 || hasChildren ? "disabled" : "")>
-                                                削除
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="tree-children" style="display: none;">
-                                <!-- 子カテゴリは動的に読み込まれます -->
-                            </div>
-                        </div>
-                    }
+                    <!-- 初期表示もJavaScriptで生成するため、サーバーサイドデータをJSON形式で渡す -->
+                    <script type="application/json" id="initial-categories-data">
+                        @Html.Raw(Json.Serialize(Model.Categories.Select(c => new {
+                            id = c.Id,
+                            name = c.Name,
+                            description = c.Description,
+                            parentCategoryId = c.ParentCategoryId,
+                            level = c.Level,
+                            sortOrder = c.SortOrder,
+                            productCount = c.ProductCount,
+                            hasChildren = Model.Categories.Any(child => child.ParentCategoryId == c.Id),
+                            createdAt = c.CreatedAt,
+                            updatedAt = c.UpdatedAt
+                        })))
+                    </script>
                 }
                 else
                 {

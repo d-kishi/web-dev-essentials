@@ -39,6 +39,9 @@ function initializeCategoryList() {
     
     // カテゴリ削除の初期化
     setupCategoryDeletion();
+    
+    // 初期データの読み込み
+    loadInitialData();
 }
 
 /**
@@ -66,24 +69,26 @@ function switchView(viewType) {
 }
 
 /**
- * 階層ツリーをすべて展開
+ * 初期データの読み込み
+ * サーバーサイドから渡されたJSONデータを使用してツリー構造を生成
  */
-function expandAll() {
-    const collapsedItems = document.querySelectorAll('.tree-item.expandable.collapsed');
-    collapsedItems.forEach(item => {
-        toggleTreeItem(item);
-    });
+function loadInitialData() {
+    const dataScript = document.getElementById('initial-categories-data');
+    if (dataScript) {
+        try {
+            const initialData = JSON.parse(dataScript.textContent);
+            if (initialData && initialData.length > 0) {
+                // 検索キーワードが空の場合として処理（通常表示）
+                currentSearchParams.searchKeyword = '';
+                updateCategoryList({ categories: initialData });
+            }
+        } catch (error) {
+            console.error('初期データの読み込みエラー:', error);
+        }
+    }
 }
 
-/**
- * 階層ツリーをすべて折りたたみ
- */
-function collapseAll() {
-    const expandedItems = document.querySelectorAll('.tree-item.expandable:not(.collapsed)');
-    expandedItems.forEach(item => {
-        toggleTreeItem(item);
-    });
-}
+// 階層構造表示では展開・縮小機能は使用しません
 
 /**
  * 検索実行
@@ -183,25 +188,26 @@ function updateCategoryList(data) {
         // カテゴリ一覧をツリー構造で表示
         treeContainer.innerHTML = '';
         
-        // 検索結果の場合は、階層構造を維持してソートしてから表示
-        if (currentSearchParams.searchKeyword) {
-            console.log('検索結果を表示中:', categories);
-            // カテゴリを階層構造に沿ってソート（親→子の順序）
-            const sortedCategories = sortCategoriesHierarchically(categories);
-            console.log('ソート済みカテゴリ:', sortedCategories);
-            sortedCategories.forEach(category => {
-                const treeNode = createSearchResultNode(category);
-                console.log('作成されたノード:', treeNode);
-                treeContainer.appendChild(treeNode);
-            });
-        } else {
-            // 通常表示の場合は、最上位カテゴリのみを表示
-            const topLevelCategories = categories.filter(c => c.level === 0 || !c.parentCategoryId);
-            topLevelCategories.forEach(category => {
-                const treeNode = createTreeNode(category);
-                treeContainer.appendChild(treeNode);
-            });
-        }
+        // 検索結果と通常表示の両方で同じツリー構造を使用
+        // カテゴリを階層構造に沿ってソート（親→子の順序）
+        const sortedCategories = sortCategoriesHierarchically(categories);
+        
+        // 各カテゴリの深度を計算
+        const categoryDepths = new Map();
+        
+        sortedCategories.forEach(category => {
+            // 親カテゴリとのレベル差から深度を計算
+            if (category.parentCategoryId) {
+                const parentDepth = categoryDepths.get(category.parentCategoryId) || 0;
+                categoryDepths.set(category.id, parentDepth + 1);
+            } else {
+                categoryDepths.set(category.id, 0);
+            }
+            
+            const depth = categoryDepths.get(category.id);
+            const treeNode = createHierarchyNode(category, depth, currentSearchParams.searchKeyword);
+            treeContainer.appendChild(treeNode);
+        });
         
         // 階層表示の再初期化
         setupTreeView();
@@ -253,23 +259,48 @@ function sortCategoriesHierarchically(categories) {
 }
 
 /**
- * 通常表示用のツリーノードを作成
+ * 階層表示用のツリーノードを作成（統一版）
  * @param {Object} category - カテゴリデータ
+ * @param {number} depth - 階層の深さ
+ * @param {string} searchKeyword - 検索キーワード（検索結果か通常表示かの判定用）
  * @returns {HTMLElement} 作成されたツリーノード要素
  */
-function createTreeNode(category) {
+function createHierarchyNode(category, depth = 0, searchKeyword = '') {
     const treeItem = document.createElement('div');
-    treeItem.className = 'tree-item expandable';
+    
+    // 検索結果か通常表示かでクラス名を決定
+    if (searchKeyword) {
+        treeItem.className = 'tree-item search-result';
+    } else {
+        treeItem.className = 'tree-item hierarchy-item';
+    }
+    
     treeItem.setAttribute('data-category-id', category.id);
     treeItem.setAttribute('data-level', category.level || 0);
     
     const hasChildren = category.hasChildren || false;
     
+    // ツリー線の作成（Windowsエクスプローラ風）
+    let treeLines = '';
+    for (let i = 0; i < depth; i++) {
+        if (i === depth - 1) {
+            // 最後のレベルは分岐線
+            treeLines += '<span class="tree-line tree-branch"></span>';
+        } else {
+            // 中間レベルは縦線
+            treeLines += '<span class="tree-line tree-vertical"></span>';
+        }
+    }
+    
     treeItem.innerHTML = `
         <div class="tree-item-content">
-            ${hasChildren ? '<span class="tree-toggle">▶</span>' : '<span class="tree-toggle">　</span>'}
+            <div class="tree-indent">
+                ${treeLines}
+            </div>
+            <span class="tree-icon">${hasChildren ? '📂' : '🏷️'}</span>
             <div class="category-info">
                 <div class="category-main">
+                    <span class="level-badge">L${category.level || 0}</span>
                     <a href="/Categories/Details/${category.id}" class="category-name">${category.name}</a>
                     ${category.description ? `<span class="category-description">- ${category.description}</span>` : ''}
                 </div>
@@ -287,8 +318,61 @@ function createTreeNode(category) {
                 </div>
             </div>
         </div>
-        <div class="tree-children" style="display: none;">
-            <!-- 子カテゴリは動的に読み込まれます -->
+    `;
+    
+    return treeItem;
+}
+
+/**
+ * 通常表示用のツリーノードを作成（旧版・互換性のため残す）
+ * @param {Object} category - カテゴリデータ
+ * @returns {HTMLElement} 作成されたツリーノード要素
+ */
+function createTreeNode(category, depth = 0) {
+    const treeItem = document.createElement('div');
+    treeItem.className = 'tree-item hierarchy-item';
+    treeItem.setAttribute('data-category-id', category.id);
+    treeItem.setAttribute('data-level', category.level || 0);
+    
+    const hasChildren = category.hasChildren || false;
+    
+    // ツリー線の作成（Windowsエクスプローラ風）
+    let treeLines = '';
+    for (let i = 0; i < depth; i++) {
+        if (i === depth - 1) {
+            // 最後のレベルは分岐線
+            treeLines += '<span class="tree-line tree-branch"></span>';
+        } else {
+            // 中間レベルは縦線
+            treeLines += '<span class="tree-line tree-vertical"></span>';
+        }
+    }
+    
+    treeItem.innerHTML = `
+        <div class="tree-item-content">
+            <div class="tree-indent">
+                ${treeLines}
+            </div>
+            <span class="tree-icon">${hasChildren ? '📂' : '🏷️'}</span>
+            <div class="category-info">
+                <div class="category-main">
+                    <span class="level-badge">L${category.level || 0}</span>
+                    <a href="/Categories/Details/${category.id}" class="category-name">${category.name}</a>
+                    ${category.description ? `<span class="category-description">- ${category.description}</span>` : ''}
+                </div>
+                <div class="category-meta">
+                    <span class="product-count">商品数: ${category.productCount || 0}</span>
+                    <span class="updated-date">更新: ${new Date(category.updatedAt).toLocaleDateString('ja-JP')}</span>
+                    <div class="category-actions">
+                        <a href="/Categories/Edit/${category.id}" class="btn btn-sm btn-warning">編集</a>
+                        <button type="button" class="btn btn-sm btn-danger" 
+                                onclick="confirmDeleteCategory(${category.id}, '${category.name}', ${category.productCount || 0}, ${category.hasChildren ? 'true' : 'false'})"
+                                ${(category.productCount > 0 || category.hasChildren) ? 'disabled' : ''}>
+                            削除
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     `;
     
@@ -435,41 +519,13 @@ function hideLoading() {
 
 /**
  * 階層表示機能の初期化
+ * 階層構造表示では展開・縮小機能は使用しません
  */
 function setupTreeView() {
-    // ツリーアイテムのクリックイベント設定
-    document.addEventListener('click', function(event) {
-        const treeToggle = event.target.closest('.tree-toggle');
-        if (treeToggle) {
-            const treeItem = treeToggle.closest('.tree-item');
-            toggleTreeItem(treeItem);
-        }
-    });
+    // 階層構造表示では特別な初期化処理は不要
 }
 
-/**
- * ツリーアイテムの展開/折りたたみ切り替え
- * @param {HTMLElement} treeItem - 対象のツリーアイテム要素
- */
-function toggleTreeItem(treeItem) {
-    if (!treeItem) return;
-    
-    const isCollapsed = treeItem.classList.contains('collapsed');
-    const children = treeItem.querySelector('.tree-children');
-    const toggle = treeItem.querySelector('.tree-toggle');
-    
-    if (isCollapsed) {
-        // 展開
-        treeItem.classList.remove('collapsed');
-        if (children) children.style.display = 'block';
-        if (toggle) toggle.textContent = '▼';
-    } else {
-        // 折りたたみ
-        treeItem.classList.add('collapsed');
-        if (children) children.style.display = 'none';
-        if (toggle) toggle.textContent = '▶';
-    }
-}
+// 階層構造表示では展開・縮小機能は使用しません
 
 /**
  * 検索フォームの初期化
