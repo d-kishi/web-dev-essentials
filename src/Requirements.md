@@ -190,6 +190,8 @@ Web.Essentials.App
 - 初級者〜中級者向けの理解しやすいコード
 - WSL2環境での開発に対応
 - Viewの記載は.Net Core標準タグヘルパ `Microsoft.AspNetCore.Mvc.TagHelpers` を最大限活用する
+- **インターフェースを使用する場合、`/// <inheritdoc />`を使いコメントの多重管理を避ける**
+- **単一責任の原則に基づき、JavaScript処理、cssスタイルの記述はインライン記述を避け、個別のjsファイル、cssファイルに記載する**
 
 ### 5.3 学習重点項目
 1. **フロントエンド技術**（HTML, JavaScript, CSS）- 最重要
