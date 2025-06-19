@@ -43,35 +43,7 @@
         <!-- 階層表示 -->
         <div id="treeView" class="tree-container">
             <div id="categoryTree" class="category-tree">
-                @if (Model?.Categories?.Any() == true)
-                {
-                    <!-- 初期表示もJavaScriptで生成するため、サーバーサイドデータをJSON形式で渡す -->
-                    <script type="application/json" id="initial-categories-data">
-                        @Html.Raw(Json.Serialize(Model.Categories.Select(c => new {
-                            id = c.Id,
-                            name = c.Name,
-                            description = c.Description,
-                            parentCategoryId = c.ParentCategoryId,
-                            level = c.Level,
-                            sortOrder = c.SortOrder,
-                            productCount = c.ProductCount,
-                            hasChildren = Model.Categories.Any(child => child.ParentCategoryId == c.Id),
-                            createdAt = c.CreatedAt,
-                            updatedAt = c.UpdatedAt
-                        })))
-                    </script>
-                }
-                else
-                {
-                    <div class="no-data-message">
-                        <div class="no-data-icon">🏷️</div>
-                        <h3>カテゴリが見つかりません</h3>
-                        <p>検索条件を変更するか、新しいカテゴリを登録してください。</p>
-                        <a asp-action="Create" asp-controller="Categories" class="btn btn-primary">
-                            カテゴリを登録する
-                        </a>
-                    </div>
-                }
+                <!-- 初期表示、検索、リセット すべてAPIから取得して同じ処理フローで表示 -->
             </div>
         </div>
     </div>

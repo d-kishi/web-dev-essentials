@@ -70,22 +70,14 @@ function switchView(viewType) {
 
 /**
  * 初期データの読み込み
- * サーバーサイドから渡されたJSONデータを使用してツリー構造を生成
+ * 初期表示でも検索・リセットと同じ処理フロー（APIから取得）を使用
  */
 function loadInitialData() {
-    const dataScript = document.getElementById('initial-categories-data');
-    if (dataScript) {
-        try {
-            const initialData = JSON.parse(dataScript.textContent);
-            if (initialData && initialData.length > 0) {
-                // 検索キーワードが空の場合として処理（通常表示）
-                currentSearchParams.searchKeyword = '';
-                updateCategoryList({ categories: initialData });
-            }
-        } catch (error) {
-            console.error('初期データの読み込みエラー:', error);
-        }
-    }
+    // 検索キーワードを明示的に空にして無条件検索を実行
+    currentSearchParams.searchKeyword = '';
+    
+    // 初期表示でも検索・リセットと同じ処理フロー（APIから取得）
+    loadCategoryList();
 }
 
 // 階層構造表示では展開・縮小機能は使用しません
@@ -95,20 +87,25 @@ function loadInitialData() {
  * フォームの入力値を取得して検索を実行
  */
 function performSearch() {
-    const searchKeyword = document.getElementById('searchKeyword').value;
+    const searchKeyword = document.getElementById('searchKeyword').value || '';
     
-    currentSearchParams.searchKeyword = searchKeyword;
+    currentSearchParams.searchKeyword = searchKeyword.trim();
     currentSearchParams.page = 1; // 検索時は1ページ目に戻る
     
+    // キーワード検索、無条件検索に関わらず同じ処理フローでAPIから取得
     loadCategoryList();
 }
 
 /**
  * 検索条件リセット
- * 検索フォームをクリアしてデフォルト状態に戻す
+ * 検索フォームをクリアして無条件検索を実行
  */
 function resetSearch() {
-    document.getElementById('searchForm').reset();
+    const searchForm = document.getElementById('searchForm');
+    if (searchForm) {
+        searchForm.reset();
+    }
+    
     currentSearchParams = {
         searchKeyword: '',
         level: null,
@@ -117,6 +114,8 @@ function resetSearch() {
         pageSize: currentSearchParams.pageSize,
         sortBy: null // ソート機能は使用しない
     };
+    
+    // リセット時は無条件検索と同じ処理フロー（APIから取得）
     loadCategoryList();
 }
 
@@ -133,15 +132,20 @@ async function loadCategoryList() {
         showLoading();
         
         const params = new URLSearchParams();
-        if (currentSearchParams.searchKeyword) {
-            params.append('searchKeyword', currentSearchParams.searchKeyword);
+        
+        // 検索キーワードがある場合のみパラメータに追加
+        if (currentSearchParams.searchKeyword && currentSearchParams.searchKeyword.trim() !== '') {
+            params.append('searchKeyword', currentSearchParams.searchKeyword.trim());
         }
-        if (currentSearchParams.level !== null) {
-            params.append('level', currentSearchParams.level);
-        }
-        if (currentSearchParams.parentId !== null) {
-            params.append('parentId', currentSearchParams.parentId);
-        }
+        
+        // レベルや親IDの条件は使用しない（常に全階層を取得）
+        // if (currentSearchParams.level !== null) {
+        //     params.append('level', currentSearchParams.level);
+        // }
+        // if (currentSearchParams.parentId !== null) {
+        //     params.append('parentId', currentSearchParams.parentId);
+        // }
+        
         // ページングパラメーターは不要（階層表示では全データを取得）
         // params.append('page', currentSearchParams.page);
         // params.append('pageSize', currentSearchParams.pageSize);
@@ -188,9 +192,24 @@ function updateCategoryList(data) {
         // カテゴリ一覧をツリー構造で表示
         treeContainer.innerHTML = '';
         
-        // 検索結果と通常表示の両方で同じツリー構造を使用
+        // 常に同じツリー構造表示処理を使用
+        // 検索キーワードがある場合は、検索にマッチするカテゴリとその関連階層を表示
+        // 検索キーワードがない場合は、全カテゴリを階層表示
+        console.log('updateCategoryList - 受信データ:', categories);
+        console.log('updateCategoryList - 検索キーワード:', currentSearchParams.searchKeyword);
+        
+        let displayCategories = categories;
+        
+        if (currentSearchParams.searchKeyword && currentSearchParams.searchKeyword.trim() !== '') {
+            console.log('検索結果フィルタリング実行');
+            displayCategories = getSearchResultsWithHierarchy(categories, currentSearchParams.searchKeyword.trim());
+        } else {
+            console.log('全カテゴリ表示モード');
+        }
+        
         // カテゴリを階層構造に沿ってソート（親→子の順序）
-        const sortedCategories = sortCategoriesHierarchically(categories);
+        const sortedCategories = sortCategoriesHierarchically(displayCategories);
+        console.log('ソート済みカテゴリ:', sortedCategories);
         
         // 各カテゴリの深度を計算
         const categoryDepths = new Map();
@@ -205,6 +224,7 @@ function updateCategoryList(data) {
             }
             
             const depth = categoryDepths.get(category.id);
+            // 常にcreateHierarchyNodeを使用してツリー構造を生成
             const treeNode = createHierarchyNode(category, depth, currentSearchParams.searchKeyword);
             treeContainer.appendChild(treeNode);
         });
@@ -212,6 +232,62 @@ function updateCategoryList(data) {
         // 階層表示の再初期化
         setupTreeView();
     }
+}
+
+/**
+ * 検索結果から関連する階層全体を取得
+ * 検索にマッチするカテゴリとその親・子カテゴリをすべて含む階層構造を返す
+ * @param {Array} allCategories - 全カテゴリ配列
+ * @param {string} searchKeyword - 検索キーワード
+ * @returns {Array} 関連階層を含むカテゴリ配列
+ */
+function getSearchResultsWithHierarchy(allCategories, searchKeyword) {
+    if (!searchKeyword || searchKeyword.trim() === '') {
+        return allCategories;
+    }
+    
+    // 検索にマッチするカテゴリを特定
+    const matchedCategories = allCategories.filter(category => 
+        category.name.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+        (category.description && category.description.toLowerCase().includes(searchKeyword.toLowerCase()))
+    );
+    
+    if (matchedCategories.length === 0) {
+        return [];
+    }
+    
+    // 関連する全カテゴリを収集するSet
+    const relatedCategoryIds = new Set();
+    
+    // マッチしたカテゴリを追加
+    matchedCategories.forEach(cat => relatedCategoryIds.add(cat.id));
+    
+    // マッチしたカテゴリの親階層をすべて追加
+    function addAncestors(categoryId) {
+        const category = allCategories.find(c => c.id === categoryId);
+        if (category && category.parentCategoryId) {
+            relatedCategoryIds.add(category.parentCategoryId);
+            addAncestors(category.parentCategoryId);
+        }
+    }
+    
+    // マッチしたカテゴリの子孫をすべて追加
+    function addDescendants(categoryId) {
+        const children = allCategories.filter(c => c.parentCategoryId === categoryId);
+        children.forEach(child => {
+            relatedCategoryIds.add(child.id);
+            addDescendants(child.id);
+        });
+    }
+    
+    // すべてのマッチカテゴリに対して親と子を追加
+    matchedCategories.forEach(category => {
+        addAncestors(category.id);
+        addDescendants(category.id);
+    });
+    
+    // 関連するすべてのカテゴリを返す
+    return allCategories.filter(category => relatedCategoryIds.has(category.id));
 }
 
 /**
@@ -523,6 +599,21 @@ function hideLoading() {
  */
 function setupTreeView() {
     // 階層構造表示では特別な初期化処理は不要
+}
+
+/**
+ * 検索語句をハイライト表示
+ * @param {string} text - 対象テキスト
+ * @param {string} searchTerm - 検索語句
+ * @returns {string} ハイライト済みHTML
+ */
+function highlightSearchTerm(text, searchTerm) {
+    if (!text || !searchTerm) {
+        return text;
+    }
+    
+    const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text.replace(regex, '<mark class="search-highlight">$1</mark>');
 }
 
 // 階層構造表示では展開・縮小機能は使用しません

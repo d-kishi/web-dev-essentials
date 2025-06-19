@@ -56,6 +56,7 @@ public class CategoryApiController : ControllerBase
             var allCategories = await _categoryRepository.GetAllAsync();
 
             // 検索条件でフィルタリング
+            // 無条件検索（キーワードが空）の場合は全件を取得し、フロントエンドで階層表示処理
             var filteredCategories = allCategories.AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(searchKeyword))
@@ -64,6 +65,7 @@ public class CategoryApiController : ControllerBase
                     c.Name.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase) ||
                     (!string.IsNullOrEmpty(c.Description) && c.Description.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase)));
             }
+            // キーワードが空の場合はフィルタリングせず、全カテゴリを返す
 
             // 総件数を取得
             var totalCount = filteredCategories.Count();
