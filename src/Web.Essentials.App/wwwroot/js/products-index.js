@@ -9,7 +9,7 @@ let currentSearchParams = {
     categoryId: null,
     page: 1,
     pageSize: 10,
-    sortBy: 'updated_desc'
+    sortBy: 'updatedat_desc'
 };
 
 /**
@@ -30,11 +30,11 @@ function initializeProductList() {
     // ソート機能の初期化
     setupSortFeatures();
     
-    // ビュー切り替えの初期化
-    setupViewToggle();
-    
     // 商品削除の初期化
     setupProductDeletion();
+    
+    // ページング機能の初期化
+    setupPagination();
 }
 
 /**
@@ -63,7 +63,7 @@ function resetSearch() {
         categoryId: null,
         page: 1,
         pageSize: currentSearchParams.pageSize,
-        sortBy: 'updated_desc'
+        sortBy: 'updatedat_desc'
     };
     loadProductList();
 }
@@ -116,6 +116,9 @@ async function loadProductList() {
         params.append('pageSize', currentSearchParams.pageSize);
         params.append('sortBy', currentSearchParams.sortBy);
         
+        console.log('APIリクエストURL:', `/api/products?${params.toString()}`);
+        console.log('現在のソートパラメーター:', currentSearchParams.sortBy);
+        
         const response = await fetch(`/api/products?${params.toString()}`);
         const result = await response.json();
         
@@ -145,11 +148,31 @@ function updateProductList(data) {
     const tbody = container.querySelector('table tbody');
     if (tbody && data.products) {
         tbody.innerHTML = '';
-        data.products.forEach(product => {
-            const row = createProductRow(product);
-            tbody.appendChild(row);
-        });
+        if (data.products.length === 0) {
+            // データが0件の場合のメッセージ表示
+            const noDataRow = document.createElement('tr');
+            noDataRow.className = 'no-data-row';
+            noDataRow.innerHTML = `
+                <td colspan="7" class="no-data-cell">
+                    <div class="no-data-message">
+                        <div class="no-data-icon">📦</div>
+                        <h3>商品が見つかりません</h3>
+                        <p>検索条件を変更するか、新しい商品を登録してください。</p>
+                        <a href="/Products/Create" class="btn btn-primary">商品を登録する</a>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(noDataRow);
+        } else {
+            data.products.forEach(product => {
+                const row = createProductRow(product);
+                tbody.appendChild(row);
+            });
+        }
     }
+    
+    // ソートインジケーターの更新
+    updateSortIndicators();
     
     // ページング情報の更新
     if (data.paging) {
@@ -212,8 +235,133 @@ function createProductRow(product) {
  * @param {Object} paging - ページング情報
  */
 function updatePagination(paging) {
-    // 簡易実装（後で詳細実装予定）
-    console.log('Pagination:', paging);
+    const container = document.getElementById('paginationContainer');
+    if (!container) return;
+    
+    // ページング情報に基づいてHTMLを再構築
+    container.innerHTML = createPaginationHtml(paging);
+    
+    // 表示件数セレクトボックスの値を更新
+    const pageSizeSelect = container.querySelector('#pageSizeSelect');
+    if (pageSizeSelect) {
+        pageSizeSelect.value = currentSearchParams.pageSize;
+    }
+    
+    // イベントリスナーを再設定
+    setupPagination();
+}
+
+/**
+ * ページングHTMLの生成
+ * @param {Object} paging - ページング情報
+ * @returns {string} 生成されたHTML文字列
+ */
+function createPaginationHtml(paging) {
+    if (!paging || paging.totalPages === 0) {
+        return '<div class="pagination-container"><div class="pagination-info"><span class="pagination-text">検索結果が見つかりませんでした</span></div></div>';
+    }
+    
+    if (paging.totalPages === 1) {
+        return `
+        <div class="pagination-container">
+            <div class="pagination-info">
+                <span class="pagination-text">${paging.totalCount} 件中 1 - ${paging.totalCount} 件を表示</span>
+            </div>
+            <div class="page-size-selector">
+                <label for="pageSizeSelect">表示件数:</label>
+                <select id="pageSizeSelect" class="page-size-select" data-action="change-page-size">
+                    <option value="10" ${paging.pageSize === 10 ? 'selected' : ''}>10件</option>
+                    <option value="20" ${paging.pageSize === 20 ? 'selected' : ''}>20件</option>
+                    <option value="50" ${paging.pageSize === 50 ? 'selected' : ''}>50件</option>
+                    <option value="100" ${paging.pageSize === 100 ? 'selected' : ''}>100件</option>
+                </select>
+            </div>
+        </div>`;
+    }
+    
+    const startItem = (paging.currentPage - 1) * paging.pageSize + 1;
+    const endItem = Math.min(paging.currentPage * paging.pageSize, paging.totalCount);
+    
+    let html = `
+    <div class="pagination-container">
+        <div class="pagination-info">
+            <span class="pagination-text">${paging.totalCount} 件中 ${startItem} - ${endItem} 件を表示</span>
+        </div>
+        <nav class="pagination-nav" aria-label="ページネーション">
+            <ul class="pagination-list">`;
+    
+    // 最初のページへ
+    if (paging.currentPage > 1) {
+        html += '<li class="pagination-item"><button type="button" class="pagination-link" data-page="1" data-action="load-page" title="最初のページ">≪</button></li>';
+    } else {
+        html += '<li class="pagination-item disabled"><span class="pagination-link">≪</span></li>';
+    }
+    
+    // 前のページへ
+    if (paging.hasPreviousPage) {
+        html += `<li class="pagination-item"><button type="button" class="pagination-link" data-page="${paging.currentPage - 1}" data-action="load-page" title="前のページ">‹</button></li>`;
+    } else {
+        html += '<li class="pagination-item disabled"><span class="pagination-link">‹</span></li>';
+    }
+    
+    // ページ番号
+    const startPage = Math.max(1, paging.currentPage - 2);
+    const endPage = Math.min(paging.totalPages, paging.currentPage + 2);
+    
+    // 最初のページが表示範囲外の場合
+    if (startPage > 1) {
+        html += '<li class="pagination-item"><button type="button" class="pagination-link" data-page="1" data-action="load-page">1</button></li>';
+        if (startPage > 2) {
+            html += '<li class="pagination-item disabled"><span class="pagination-link">...</span></li>';
+        }
+    }
+    
+    // ページ番号表示
+    for (let i = startPage; i <= endPage; i++) {
+        if (i === paging.currentPage) {
+            html += `<li class="pagination-item active"><span class="pagination-link current">${i}</span></li>`;
+        } else {
+            html += `<li class="pagination-item"><button type="button" class="pagination-link" data-page="${i}" data-action="load-page">${i}</button></li>`;
+        }
+    }
+    
+    // 最後のページが表示範囲外の場合
+    if (endPage < paging.totalPages) {
+        if (endPage < paging.totalPages - 1) {
+            html += '<li class="pagination-item disabled"><span class="pagination-link">...</span></li>';
+        }
+        html += `<li class="pagination-item"><button type="button" class="pagination-link" data-page="${paging.totalPages}" data-action="load-page">${paging.totalPages}</button></li>`;
+    }
+    
+    // 次のページへ
+    if (paging.hasNextPage) {
+        html += `<li class="pagination-item"><button type="button" class="pagination-link" data-page="${paging.currentPage + 1}" data-action="load-page" title="次のページ">›</button></li>`;
+    } else {
+        html += '<li class="pagination-item disabled"><span class="pagination-link">›</span></li>';
+    }
+    
+    // 最後のページへ
+    if (paging.currentPage < paging.totalPages) {
+        html += `<li class="pagination-item"><button type="button" class="pagination-link" data-page="${paging.totalPages}" data-action="load-page" title="最後のページ">≫</button></li>`;
+    } else {
+        html += '<li class="pagination-item disabled"><span class="pagination-link">≫</span></li>';
+    }
+    
+    html += `
+            </ul>
+        </nav>
+        <div class="page-size-selector">
+            <label for="pageSizeSelect">表示件数:</label>
+            <select id="pageSizeSelect" class="page-size-select" data-action="change-page-size">
+                <option value="10" ${paging.pageSize === 10 ? 'selected' : ''}>10件</option>
+                <option value="20" ${paging.pageSize === 20 ? 'selected' : ''}>20件</option>
+                <option value="50" ${paging.pageSize === 50 ? 'selected' : ''}>50件</option>
+                <option value="100" ${paging.pageSize === 100 ? 'selected' : ''}>100件</option>
+            </select>
+        </div>
+    </div>`;
+    
+    return html;
 }
 
 /**
@@ -268,33 +416,56 @@ function setupSearchForm() {
             performSearch();
         });
     }
+    
+    // 検索ボタンとリセットボタンのイベントリスナー
+    const searchButton = document.querySelector('[data-action="perform-search"]');
+    if (searchButton) {
+        searchButton.addEventListener('click', performSearch);
+    }
+    
+    const resetButton = document.querySelector('[data-action="reset-search"]');
+    if (resetButton) {
+        resetButton.addEventListener('click', resetSearch);
+    }
 }
 
 /**
  * ソート機能の初期化
  */
 function setupSortFeatures() {
-    const sortButtons = document.querySelectorAll('[data-sort]');
-    sortButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const sortBy = this.getAttribute('data-sort');
-            currentSearchParams.sortBy = sortBy;
-            loadProductList();
+    const sortableHeaders = document.querySelectorAll('th.sortable');
+    sortableHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+            const column = this.getAttribute('data-column');
+            sortByColumn(column);
         });
     });
+    
+    // 初期表示時のソートインジケーター更新
+    updateSortIndicators();
 }
 
 /**
- * ビュー切り替え機能の初期化
+ * ページング機能の初期化
  */
-function setupViewToggle() {
-    const viewButtons = document.querySelectorAll('.view-toggle');
-    viewButtons.forEach(button => {
+function setupPagination() {
+    // ページ移動ボタンのイベントリスナー
+    const pageButtons = document.querySelectorAll('[data-action="load-page"]');
+    pageButtons.forEach(button => {
         button.addEventListener('click', function() {
-            viewButtons.forEach(btn => btn.classList.remove('active'));
-            this.classList.add('active');
+            const page = parseInt(this.getAttribute('data-page'));
+            loadPage(page);
         });
     });
+    
+    // 表示件数変更のイベントリスナー
+    const pageSizeSelect = document.querySelector('[data-action="change-page-size"]');
+    if (pageSizeSelect) {
+        pageSizeSelect.addEventListener('change', function() {
+            const pageSize = parseInt(this.value);
+            changePageSize(pageSize);
+        });
+    }
 }
 
 /**
@@ -327,35 +498,12 @@ function hideLoading() {
     if (contentElement) contentElement.style.opacity = '1';
 }
 
-/**
- * ビュー切り替え（テーブル/グリッド）
- * @param {string} viewType - 表示タイプ（'table' または 'grid'）
- */
-function switchView(viewType) {
-    const tableView = document.getElementById('tableView');
-    const gridView = document.getElementById('gridView');
-    const viewButtons = document.querySelectorAll('.view-toggle');
-    
-    // ボタンの状態更新
-    viewButtons.forEach(btn => btn.classList.remove('active'));
-    const activeButton = document.querySelector(`[data-view="${viewType}"]`);
-    if (activeButton) activeButton.classList.add('active');
-    
-    // ビューの切り替え
-    if (viewType === 'table') {
-        if (tableView) tableView.style.display = 'block';
-        if (gridView) gridView.style.display = 'none';
-    } else if (viewType === 'grid') {
-        if (tableView) tableView.style.display = 'none';
-        if (gridView) gridView.style.display = 'block';
-    }
-}
 
 /**
  * カラムソート（テーブルヘッダークリック時）
  * @param {string} column - ソート対象のカラム名
  */
-function sortBy(column) {
+function sortByColumn(column) {
     // 現在のソート状態を確認して昇順/降順を切り替え
     const currentSort = currentSearchParams.sortBy;
     let newSort;
@@ -366,7 +514,27 @@ function sortBy(column) {
         newSort = `${column}_asc`;
     }
     
+    console.log('ソート変更:', { column, currentSort, newSort });
     changeSortOrder(newSort);
+}
+
+/**
+ * ソートインジケーターの更新
+ */
+function updateSortIndicators() {
+    // 全てのソートインジケーターをリセット
+    const indicators = document.querySelectorAll('.sort-indicator');
+    indicators.forEach(indicator => {
+        indicator.textContent = '↕';
+    });
+    
+    // 現在のソート状態に基づいてインジケーターを更新
+    const [column, direction] = currentSearchParams.sortBy.split('_');
+    const currentIndicator = document.querySelector(`[data-column="${column}"] .sort-indicator`);
+    
+    if (currentIndicator) {
+        currentIndicator.textContent = direction === 'asc' ? '↑' : '↓';
+    }
 }
 
 // 初期パラメータ設定用の関数（Razorビューから呼び出される）

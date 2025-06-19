@@ -38,35 +38,7 @@
     <!-- 商品一覧テーブル -->
     <div id="productListContent" class="list-content">
         <div class="list-header">
-            <div class="list-controls">
-                <div class="view-options">
-                    <button type="button" 
-                            class="view-toggle active" 
-                            data-view="table" 
-                            data-action="switch-view" data-view="table"
-                            title="テーブル表示">
-                        📋
-                    </button>
-                    <button type="button" 
-                            class="view-toggle" 
-                            data-view="grid" 
-                            data-action="switch-view" data-view="grid"
-                            title="グリッド表示">
-                        🔳
-                    </button>
-                </div>
-                <div class="sort-options">
-                    <label for="sortBy">並び順:</label>
-                    <select id="sortBy" class="sort-select" data-action="change-sort-order">
-                        <option value="updated_desc">更新日時（新しい順）</option>
-                        <option value="updated_asc">更新日時（古い順）</option>
-                        <option value="name_asc">商品名（昇順）</option>
-                        <option value="name_desc">商品名（降順）</option>
-                        <option value="price_asc">価格（安い順）</option>
-                        <option value="price_desc">価格（高い順）</option>
-                    </select>
-                </div>
-            </div>
+            <!-- ソート機能をテーブルヘッダーに移行したため、ここのコントロールは削除 -->
         </div>
         
         <!-- テーブル表示 -->
@@ -75,22 +47,19 @@
                 <thead>
                     <tr>
                         <th class="col-thumbnail">画像</th>
-                        <th class="col-name sortable" data-action="sort-by" data-column="name">
+                        <th class="col-name sortable" data-column="name" style="cursor: pointer;">
                             商品名
-                            <span class="sort-indicator" data-column="name"></span>
+                            <span class="sort-indicator" data-column="name">↕</span>
                         </th>
-                        <th class="col-category sortable" data-action="sort-by" data-column="category">
-                            カテゴリ
-                            <span class="sort-indicator" data-column="category"></span>
-                        </th>
-                        <th class="col-price sortable" data-action="sort-by" data-column="price">
+                        <th class="col-category">カテゴリ</th>
+                        <th class="col-price sortable" data-column="price" style="cursor: pointer;">
                             価格
-                            <span class="sort-indicator" data-column="price"></span>
+                            <span class="sort-indicator" data-column="price">↕</span>
                         </th>
                         <th class="col-jan">JANコード</th>
-                        <th class="col-updated sortable" data-action="sort-by" data-column="updated">
+                        <th class="col-updated sortable" data-column="updatedat" style="cursor: pointer;">
                             更新日時
-                            <span class="sort-indicator" data-column="updated"></span>
+                            <span class="sort-indicator" data-column="updatedat">↓</span>
                         </th>
                         <th class="col-actions">操作</th>
                     </tr>
@@ -182,12 +151,6 @@
             </table>
         </div>
         
-        <!-- グリッド表示 -->
-        <div id="gridView" class="grid-container" style="display: none;">
-            <div id="productGrid" class="product-grid">
-                <!-- Ajax でデータを読み込む -->
-            </div>
-        </div>
     </div>
     
     <!-- ページング -->
@@ -209,7 +172,7 @@
                 categoryId: @(Model?.CategoryId?.ToString() ?? "null"),
                 page: @(Model?.CurrentPage ?? 1),
                 pageSize: @(Model?.PageSize ?? 10),
-                sortBy: 'updated_desc'
+                sortBy: 'updatedat_desc'
             });
         });
     </script>

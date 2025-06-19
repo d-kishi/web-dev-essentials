@@ -51,58 +51,6 @@
             </div>
         </div>
         
-        <!-- 高度な検索オプション（展開可能） -->
-        <div class="advanced-search-toggle">
-            <button type="button" class="toggle-btn" data-action="toggle-advanced-search">
-                <span id="advancedSearchToggleText">高度な検索オプションを表示</span>
-                <span id="advancedSearchToggleIcon" class="toggle-icon">▼</span>
-            </button>
-        </div>
-        
-        <div id="advancedSearchOptions" class="advanced-search-options" style="display: none;">
-            <div class="search-form-row">
-                <!-- 価格範囲検索（商品検索時のみ） -->
-                @if (showCategoryFilter)
-                {
-                    <div class="search-field">
-                        <label for="priceMin" class="search-label">価格範囲</label>
-                        <div class="price-range-group">
-                            <input type="number" 
-                                   id="priceMin" 
-                                   name="priceMin" 
-                                   class="search-input price-input" 
-                                   placeholder="最低価格"
-                                   min="0"
-                                   step="1" />
-                            <span class="price-separator">〜</span>
-                            <input type="number" 
-                                   id="priceMax" 
-                                   name="priceMax" 
-                                   class="search-input price-input" 
-                                   placeholder="最高価格"
-                                   min="0"
-                                   step="1" />
-                        </div>
-                    </div>
-                }
-                
-                <!-- 作成日期間検索 -->
-                <div class="search-field">
-                    <label for="createdDateFrom" class="search-label">作成日期間</label>
-                    <div class="date-range-group">
-                        <input type="date" 
-                               id="createdDateFrom" 
-                               name="createdDateFrom" 
-                               class="search-input date-input" />
-                        <span class="date-separator">〜</span>
-                        <input type="date" 
-                               id="createdDateTo" 
-                               name="createdDateTo" 
-                               class="search-input date-input" />
-                    </div>
-                </div>
-            </div>
-        </div>
     </form>
     
     <!-- 検索結果統計 -->

@@ -41,22 +41,27 @@ public class ProductApiController : ControllerBase
     /// <param name="categoryId">カテゴリIDでの絞り込み（オプション）</param>
     /// <param name="page">ページ番号（デフォルト1）</param>
     /// <param name="pageSize">1ページあたりの件数（デフォルト10）</param>
+    /// <param name="sortBy">ソート項目（name_asc, price_desc, updatedat_asc等）</param>
     /// <returns>商品一覧とページング情報を含むAPI応答</returns>
     [HttpGet]
     public async Task<ActionResult<ApiResponse<ProductListDto>>> GetProducts(
         [FromQuery] string? searchKeyword = null,
         [FromQuery] int? categoryId = null,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10)
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string sortBy = "updatedat_desc")
     {
         try
         {
-            _logger.LogInformation("商品一覧取得API呼び出し。検索キーワード: {SearchKeyword}, カテゴリID: {CategoryId}, ページ: {Page}, ページサイズ: {PageSize}",
-                searchKeyword, categoryId, page, pageSize);
+            _logger.LogInformation("商品一覧取得API呼び出し。検索キーワード: {SearchKeyword}, カテゴリID: {CategoryId}, ページ: {Page}, ページサイズ: {PageSize}, ソート: {SortBy}",
+                searchKeyword, categoryId, page, pageSize, sortBy);
 
             // 入力値バリデーション
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 100) pageSize = 10;
+
+            // ソートパラメーターの解析
+            var (repositorySortBy, repositorySortOrder) = ParseSortParameter(sortBy);
 
             // 商品一覧を取得（検索・フィルタリング・ページング対応）
             var (allProducts, totalCount) = await _productRepository.GetAllAsync(
@@ -66,8 +71,8 @@ public class ProductApiController : ControllerBase
                 status: null,
                 minPrice: null,
                 maxPrice: null,
-                sortBy: "createdAt",
-                sortOrder: "desc",
+                sortBy: repositorySortBy,
+                sortOrder: repositorySortOrder,
                 page: page,
                 pageSize: pageSize);
 
@@ -279,5 +284,46 @@ public class ProductApiController : ControllerBase
 
             return StatusCode(500, errorResponse);
         }
+    }
+
+    /// <summary>
+    /// ソートパラメーターの解析
+    /// フロントエンドから送信される "column_direction" 形式を
+    /// リポジトリが期待する形式に変換
+    /// </summary>
+    /// <param name="sortBy">ソートパラメーター（例: "name_asc", "price_desc", "updatedat_desc"）</param>
+    /// <returns>リポジトリ用のソート項目と順序のタプル</returns>
+    private static (string sortBy, string sortOrder) ParseSortParameter(string sortBy)
+    {
+        if (string.IsNullOrWhiteSpace(sortBy))
+        {
+            return ("updatedat", "desc");
+        }
+
+        var parts = sortBy.Split('_');
+        if (parts.Length != 2)
+        {
+            return ("updatedat", "desc");
+        }
+
+        var column = parts[0].ToLowerInvariant();
+        var direction = parts[1].ToLowerInvariant();
+
+        // カラム名のマッピング（フロントエンド → リポジトリ）
+        var repositoryColumn = column switch
+        {
+            "name" => "name",
+            "price" => "price", 
+            "updatedat" => "updatedat", // リポジトリは updatedat をサポート
+            "updated" => "updated",     // リポジトリは updated もサポート
+            "created" => "created",
+            "createdat" => "createdat",
+            _ => "updatedat" // デフォルトは更新日時
+        };
+
+        // 方向のバリデーション
+        var repositoryOrder = direction == "asc" ? "asc" : "desc";
+
+        return (repositoryColumn, repositoryOrder);
     }
 }

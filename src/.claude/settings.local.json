@@ -18,7 +18,8 @@
       "Bash(code --version)",
       "Bash(dotnet clean:*)",
       "Bash(node:*)",
-      "Bash(dotnet restore --verbosity quiet)"
+      "Bash(dotnet restore --verbosity quiet)",
+      "Bash(pkill:*)"
     ],
     "deny": []
   }
