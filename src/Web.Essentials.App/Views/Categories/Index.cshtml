@@ -35,22 +35,6 @@
     
     <!-- 表示オプション -->
     <div class="list-controls">
-        <div class="view-options">
-            <button type="button" 
-                    class="view-toggle active" 
-                    data-view="tree" 
-                    onclick="switchView('tree')"
-                    title="階層表示">
-                🌳
-            </button>
-            <button type="button" 
-                    class="view-toggle" 
-                    data-view="table" 
-                    onclick="switchView('table')"
-                    title="テーブル表示">
-                📋
-            </button>
-        </div>
         <div class="hierarchy-controls">
             <button type="button" class="btn btn-sm btn-outline" onclick="expandAll()">
                 すべて展開
@@ -58,17 +42,6 @@
             <button type="button" class="btn btn-sm btn-outline" onclick="collapseAll()">
                 すべて閉じる
             </button>
-        </div>
-        <div class="sort-options">
-            <label for="sortBy">並び順:</label>
-            <select id="sortBy" class="sort-select" data-action="change-sort-order">
-                <option value="name_asc">カテゴリ名（昇順）</option>
-                <option value="name_desc">カテゴリ名（降順）</option>
-                <option value="level_asc">階層レベル（浅い順）</option>
-                <option value="level_desc">階層レベル（深い順）</option>
-                <option value="updated_desc">更新日時（新しい順）</option>
-                <option value="updated_asc">更新日時（古い順）</option>
-            </select>
         </div>
     </div>
     
@@ -94,134 +67,6 @@
                 }
             </div>
         </div>
-        
-        <!-- テーブル表示 -->
-        <div id="tableView" class="table-container" style="display: none;">
-            <table class="category-table">
-                <thead>
-                    <tr>
-                        <th class="col-hierarchy">階層</th>
-                        <th class="col-name sortable" onclick="sortBy('name')">
-                            カテゴリ名
-                            <span class="sort-indicator" data-column="name"></span>
-                        </th>
-                        <th class="col-description">説明</th>
-                        <th class="col-parent">親カテゴリ</th>
-                        <th class="col-products">商品数</th>
-                        <th class="col-updated sortable" onclick="sortBy('updated')">
-                            更新日時
-                            <span class="sort-indicator" data-column="updated"></span>
-                        </th>
-                        <th class="col-actions">操作</th>
-                    </tr>
-                </thead>
-                <tbody id="categoryTableBody">
-                    @if (Model?.Categories?.Any() == true)
-                    {
-                        @foreach (var category in Model.Categories.OrderBy(c => c.Level).ThenBy(c => c.SortOrder))
-                        {
-                            <tr class="category-row" data-category-id="@category.Id" data-level="@category.Level">
-                                <td class="col-hierarchy">
-                                    <div class="hierarchy-indicator level-@category.Level">
-                                        @for (int i = 0; i < category.Level; i++)
-                                        {
-                                            <span class="hierarchy-spacer">│</span>
-                                        }
-                                        @if (category.Level > 0)
-                                        {
-                                            <span class="hierarchy-connector">├─</span>
-                                        }
-                                        <span class="level-badge">L@category.Level</span>
-                                    </div>
-                                </td>
-                                <td class="col-name">
-                                    <div class="category-name">
-                                        <a asp-action="Details" asp-controller="Categories" asp-route-id="@category.Id" class="category-link">
-                                            @category.Name
-                                        </a>
-                                    </div>
-                                    @if (!string.IsNullOrEmpty(category.FullPath))
-                                    {
-                                        <div class="category-path">
-                                            <small>@category.FullPath</small>
-                                        </div>
-                                    }
-                                </td>
-                                <td class="col-description">
-                                    @if (!string.IsNullOrEmpty(category.Description))
-                                    {
-                                        <span class="description-text">
-                                            @(category.Description.Length > 50 ? category.Description.Substring(0, 50) + "..." : category.Description)
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span class="no-data">-</span>
-                                    }
-                                </td>
-                                <td class="col-parent">
-                                    @if (category.ParentCategoryId.HasValue && !string.IsNullOrEmpty(category.ParentCategoryName))
-                                    {
-                                        <a asp-action="Details" asp-controller="Categories" asp-route-id="@category.ParentCategoryId" 
-                                           class="parent-link">
-                                            @category.ParentCategoryName
-                                        </a>
-                                    }
-                                    else
-                                    {
-                                        <span class="root-indicator">ルート</span>
-                                    }
-                                </td>
-                                <td class="col-products">
-                                    <span class="product-count">@category.ProductCount</span>
-                                </td>
-                                <td class="col-updated">
-                                    <time class="updated-time" datetime="@category.UpdatedAt.ToString("yyyy-MM-dd")">
-                                        @category.UpdatedAt.ToString("yyyy/MM/dd")
-                                    </time>
-                                </td>
-                                <td class="col-actions">
-                                    <div class="action-buttons">
-                                        <a asp-action="Details" asp-controller="Categories" asp-route-id="@category.Id" 
-                                           class="btn btn-info btn-sm" 
-                                           title="詳細表示">
-                                            詳細
-                                        </a>
-                                        <a asp-action="Edit" asp-controller="Categories" asp-route-id="@category.Id" 
-                                           class="btn btn-warning btn-sm" 
-                                           title="編集">
-                                            編集
-                                        </a>
-                                        <button type="button" 
-                                                class="btn btn-danger btn-sm" 
-                                                onclick="confirmDeleteCategory(@category.Id, '@category.Name', @category.ProductCount, @(category.HasChildren ? "true" : "false"))"
-                                                title="削除"
-                                                @(category.ProductCount > 0 || category.HasChildren ? "disabled" : "")>
-                                            削除
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    }
-                    else
-                    {
-                        <tr class="no-data-row">
-                            <td colspan="7" class="no-data-cell">
-                                <div class="no-data-message">
-                                    <div class="no-data-icon">🏷️</div>
-                                    <h3>カテゴリが見つかりません</h3>
-                                    <p>検索条件を変更するか、新しいカテゴリを登録してください。</p>
-                                    <a asp-action="Create" asp-controller="Categories" class="btn btn-primary">
-                                        カテゴリを登録する
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
     </div>
     
     <!-- ページング -->
@@ -244,7 +89,7 @@
                 parentId: null,
                 page: @(Model?.CurrentPage ?? 1),
                 pageSize: @(Model?.PageSize ?? 20),
-                sortBy: 'name_asc'
+                sortBy: null
             });
         });
     </script>

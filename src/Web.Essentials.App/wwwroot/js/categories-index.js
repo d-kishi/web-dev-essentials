@@ -10,7 +10,7 @@ let currentSearchParams = {
     parentId: null,
     page: 1,
     pageSize: 20,
-    sortBy: 'name_asc'
+    sortBy: null // ソート機能は使用しない
 };
 
 /**
@@ -28,11 +28,11 @@ function initializeCategoryList() {
     // 検索フォームの初期化
     setupSearchForm();
     
-    // ソート機能の初期化
-    setupSortFeatures();
+    // ソート機能は使用しないためコメントアウト
+    // setupSortFeatures();
     
-    // ビュー切り替えの初期化
-    setupViewToggle();
+    // ビュー切り替え機能は使用しないためコメントアウト
+    // setupViewToggle();
     
     // 階層表示の初期化
     setupTreeView();
@@ -110,39 +110,14 @@ function resetSearch() {
         parentId: null,
         page: 1,
         pageSize: currentSearchParams.pageSize,
-        sortBy: 'name_asc'
+        sortBy: null // ソート機能は使用しない
     };
     loadCategoryList();
 }
 
-/**
- * ページ読み込み
- * @param {number} page - 読み込むページ番号
- */
-function loadPage(page) {
-    currentSearchParams.page = page;
-    loadCategoryList();
-}
+// ページング機能は階層表示では使用しないためコメントアウト
 
-/**
- * ページサイズ変更
- * @param {number} pageSize - 1ページあたりの表示件数
- */
-function changePageSize(pageSize) {
-    currentSearchParams.pageSize = parseInt(pageSize);
-    currentSearchParams.page = 1; // 1ページ目に戻る
-    loadCategoryList();
-}
-
-/**
- * ソート順変更
- * @param {string} sortBy - ソート項目（name_asc, level_asc等）
- */
-function changeSortOrder(sortBy) {
-    currentSearchParams.sortBy = sortBy;
-    currentSearchParams.page = 1; // 1ページ目に戻る
-    loadCategoryList();
-}
+// ソート機能は使用しないためコメントアウト
 
 /**
  * カテゴリ一覧をAjaxで読み込み
@@ -154,7 +129,7 @@ async function loadCategoryList() {
         
         const params = new URLSearchParams();
         if (currentSearchParams.searchKeyword) {
-            params.append('nameTerm', currentSearchParams.searchKeyword);
+            params.append('searchKeyword', currentSearchParams.searchKeyword);
         }
         if (currentSearchParams.level !== null) {
             params.append('level', currentSearchParams.level);
@@ -162,7 +137,9 @@ async function loadCategoryList() {
         if (currentSearchParams.parentId !== null) {
             params.append('parentId', currentSearchParams.parentId);
         }
-        params.append('includeProductCount', 'true');
+        // ページングパラメーターは不要（階層表示では全データを取得）
+        // params.append('page', currentSearchParams.page);
+        // params.append('pageSize', currentSearchParams.pageSize);
         
         const response = await fetch(`/api/categories?${params.toString()}`);
         const result = await response.json();
@@ -186,8 +163,27 @@ async function loadCategoryList() {
  * @param {Array} data - APIレスポンスデータ（カテゴリ配列）
  */
 function updateCategoryList(data) {
-    // 実装は後で詳細化（現在は簡易実装）
-    console.log('Category list updated:', data);
+    const treeContainer = document.getElementById('categoryTree');
+    if (!treeContainer || !data) return;
+    
+    if (Array.isArray(data) && data.length === 0) {
+        // データが0件の場合のメッセージ表示
+        treeContainer.innerHTML = `
+            <div class="no-data-message">
+                <div class="no-data-icon">🏷️</div>
+                <h3>カテゴリが見つかりません</h3>
+                <p>検索条件を変更するか、新しいカテゴリを登録してください。</p>
+                <a href="/Categories/Create" class="btn btn-primary">カテゴリを登録する</a>
+            </div>
+        `;
+    } else {
+        // 階層データの場合は、階層構造のHTMLを生成する必要があります
+        // ここでは簡易的に実装（実際の階層構造表示は _CategoryHierarchy パーシャルビューが担当）
+        console.log('Category list updated:', data);
+        
+        // 階層表示の再初期化
+        setupTreeView();
+    }
 }
 
 /**
@@ -321,32 +317,10 @@ function setupSearchForm() {
     }
 }
 
-/**
- * ソート機能の初期化
- */
-function setupSortFeatures() {
-    const sortButtons = document.querySelectorAll('[data-sort]');
-    sortButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const sortBy = this.getAttribute('data-sort');
-            currentSearchParams.sortBy = sortBy;
-            loadCategoryList();
-        });
-    });
-}
+// ソート機能は使用しないためコメントアウト
 
-/**
- * ビュー切り替え機能の初期化
- */
-function setupViewToggle() {
-    const viewButtons = document.querySelectorAll('.view-toggle');
-    viewButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            viewButtons.forEach(btn => btn.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
-}
+// ビュー切り替え機能は使用しないためコメントアウト
+// 階層表示のみを使用
 
 /**
  * カテゴリ削除機能の初期化
@@ -356,23 +330,7 @@ function setupCategoryDeletion() {
     // updateCategoryList内で設定
 }
 
-/**
- * カラムソート（テーブルヘッダークリック時）
- * @param {string} column - ソート対象のカラム名
- */
-function sortBy(column) {
-    // 現在のソート状態を確認して昇順/降順を切り替え
-    const currentSort = currentSearchParams.sortBy;
-    let newSort;
-    
-    if (currentSort === `${column}_asc`) {
-        newSort = `${column}_desc`;
-    } else {
-        newSort = `${column}_asc`;
-    }
-    
-    changeSortOrder(newSort);
-}
+// ソート機能は使用しないためコメントアウト
 
 // 初期パラメータ設定用の関数（Razorビューから呼び出される）
 function setInitialSearchParams(params) {
@@ -380,4 +338,7 @@ function setInitialSearchParams(params) {
         ...currentSearchParams,
         ...params
     };
+    
+    // 階層表示では初期データはサーバーサイドレンダリングで表示されるため、
+    // 自動的なデータ取得は行わない
 }
