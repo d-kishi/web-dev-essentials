@@ -53,15 +53,18 @@
 }
 
 <!-- バリデーションサマリー表示エリア -->
-<div asp-validation-summary="All" class="message-container validation-error-message validation-summary" id="validationErrorMessage">
-    <div class="message-content">
-        <span class="message-icon">⚠</span>
-        <div class="message-text">
-            <strong>入力エラーがあります:</strong>
-            <!-- ASP.NET Core TagHelper が自動生成するバリデーションエラーリスト -->
+@if (!ViewData.ModelState.IsValid)
+{
+    <div asp-validation-summary="All" class="message-container validation-error-message validation-summary" id="validationErrorMessage">
+        <div class="message-content">
+            <span class="message-icon">⚠</span>
+            <div class="message-text">
+                <strong>入力エラーがあります:</strong>
+                <!-- ASP.NET Core TagHelper が自動生成するバリデーションエラーリスト -->
+            </div>
+            <button type="button" class="message-close" data-message-id="validationErrorMessage" aria-label="閉じる">
+                <span aria-hidden="true">×</span>
+            </button>
         </div>
-        <button type="button" class="message-close" data-message-id="validationErrorMessage" aria-label="閉じる">
-            <span aria-hidden="true">×</span>
-        </button>
     </div>
-</div>
+}
