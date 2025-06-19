@@ -81,6 +81,12 @@ public class CategoryApiController : ControllerBase
                 Id = c.Id,
                 Name = c.Name,
                 Description = c.Description,
+                ParentCategoryId = c.ParentCategoryId,
+                Level = c.Level,
+                SortOrder = c.SortOrder,
+                FullPath = c.GetFullPath(),
+                ProductCount = c.ProductCategories?.Count ?? 0,
+                HasChildren = allCategories.Any(child => child.ParentCategoryId == c.Id),
                 CreatedAt = c.CreatedAt,
                 UpdatedAt = c.UpdatedAt
             }).ToList();
@@ -156,11 +162,18 @@ public class CategoryApiController : ControllerBase
             }
 
             // DTOに変換
+            var allCategories = await _categoryRepository.GetAllAsync();
             var categoryDTO = new CategoryDto
             {
                 Id = category.Id,
                 Name = category.Name,
                 Description = category.Description,
+                ParentCategoryId = category.ParentCategoryId,
+                Level = category.Level,
+                SortOrder = category.SortOrder,
+                FullPath = category.GetFullPath(),
+                ProductCount = category.ProductCategories?.Count ?? 0,
+                HasChildren = allCategories.Any(child => child.ParentCategoryId == category.Id),
                 CreatedAt = category.CreatedAt,
                 UpdatedAt = category.UpdatedAt
             };

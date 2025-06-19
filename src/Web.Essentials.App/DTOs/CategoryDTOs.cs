@@ -51,6 +51,11 @@ public class CategoryDto
     public int? ProductCount { get; set; }
 
     /// <summary>
+    /// 子カテゴリを持つかどうか
+    /// </summary>
+    public bool HasChildren { get; set; }
+
+    /// <summary>
     /// 作成日時（UTC）
     /// </summary>
     public DateTime CreatedAt { get; set; }

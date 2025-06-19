@@ -52,7 +52,46 @@
             <div id="categoryTree" class="category-tree">
                 @if (Model?.Categories?.Any() == true)
                 {
-                    <partial name="_CategoryHierarchy" model="Model.Categories" />
+                    @foreach (var category in Model.Categories.Where(c => c.Level == 0 || c.ParentCategoryId == null))
+                    {
+                        var hasChildren = Model.Categories.Any(c => c.ParentCategoryId == category.Id);
+                        <div class="tree-item expandable" data-category-id="@category.Id" data-level="@category.Level">
+                            <div class="tree-item-content">
+                                @if (hasChildren)
+                                {
+                                    <span class="tree-toggle">▶</span>
+                                }
+                                else
+                                {
+                                    <span class="tree-toggle">　</span>
+                                }
+                                <div class="category-info">
+                                    <div class="category-main">
+                                        <a href="/Categories/Details/@category.Id" class="category-name">@category.Name</a>
+                                        @if (!string.IsNullOrEmpty(category.Description))
+                                        {
+                                            <span class="category-description">- @category.Description</span>
+                                        }
+                                    </div>
+                                    <div class="category-meta">
+                                        <span class="product-count">商品数: @category.ProductCount</span>
+                                        <span class="updated-date">更新: @category.UpdatedAt.ToString("yyyy/MM/dd")</span>
+                                        <div class="category-actions">
+                                            <a href="/Categories/Edit/@category.Id" class="btn btn-sm btn-warning">編集</a>
+                                            <button type="button" class="btn btn-sm btn-danger" 
+                                                    onclick="confirmDeleteCategory(@category.Id, '@category.Name', @category.ProductCount, @(hasChildren ? "true" : "false"))"
+                                                    @(category.ProductCount > 0 || hasChildren ? "disabled" : "")>
+                                                削除
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tree-children" style="display: none;">
+                                <!-- 子カテゴリは動的に読み込まれます -->
+                            </div>
+                        </div>
+                    }
                 }
                 else
                 {
@@ -77,6 +116,10 @@
         }
     </div>
 </div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/category-hierarchy.css" asp-append-version="true" />
+}
 
 @section Scripts {
     <script src="~/js/categories-index.js" asp-append-version="true" defer></script>

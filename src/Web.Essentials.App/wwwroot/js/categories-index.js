@@ -160,13 +160,16 @@ async function loadCategoryList() {
 /**
  * カテゴリ一覧の更新
  * APIから取得したデータで画面を更新
- * @param {Array} data - APIレスポンスデータ（カテゴリ配列）
+ * @param {Object} data - APIレスポンスデータ
  */
 function updateCategoryList(data) {
     const treeContainer = document.getElementById('categoryTree');
     if (!treeContainer || !data) return;
     
-    if (Array.isArray(data) && data.length === 0) {
+    // 検索結果の場合はdata.categories、そうでない場合は配列として扱う
+    const categories = data.categories || data;
+    
+    if (!Array.isArray(categories) || categories.length === 0) {
         // データが0件の場合のメッセージ表示
         treeContainer.innerHTML = `
             <div class="no-data-message">
@@ -177,13 +180,177 @@ function updateCategoryList(data) {
             </div>
         `;
     } else {
-        // 階層データの場合は、階層構造のHTMLを生成する必要があります
-        // ここでは簡易的に実装（実際の階層構造表示は _CategoryHierarchy パーシャルビューが担当）
-        console.log('Category list updated:', data);
+        // カテゴリ一覧をツリー構造で表示
+        treeContainer.innerHTML = '';
+        
+        // 検索結果の場合は、階層構造を維持してソートしてから表示
+        if (currentSearchParams.searchKeyword) {
+            console.log('検索結果を表示中:', categories);
+            // カテゴリを階層構造に沿ってソート（親→子の順序）
+            const sortedCategories = sortCategoriesHierarchically(categories);
+            console.log('ソート済みカテゴリ:', sortedCategories);
+            sortedCategories.forEach(category => {
+                const treeNode = createSearchResultNode(category);
+                console.log('作成されたノード:', treeNode);
+                treeContainer.appendChild(treeNode);
+            });
+        } else {
+            // 通常表示の場合は、最上位カテゴリのみを表示
+            const topLevelCategories = categories.filter(c => c.level === 0 || !c.parentCategoryId);
+            topLevelCategories.forEach(category => {
+                const treeNode = createTreeNode(category);
+                treeContainer.appendChild(treeNode);
+            });
+        }
         
         // 階層表示の再初期化
         setupTreeView();
     }
+}
+
+/**
+ * カテゴリを階層構造に沿ってソート
+ * Windowsエクスプローラのように親カテゴリの直後に子カテゴリが表示されるようにソート
+ * @param {Array} categories - カテゴリ配列
+ * @returns {Array} ソート済みカテゴリ配列
+ */
+function sortCategoriesHierarchically(categories) {
+    if (!Array.isArray(categories) || categories.length === 0) {
+        return [];
+    }
+    
+    // カテゴリをIDでマップ化
+    const categoryMap = new Map();
+    categories.forEach(cat => {
+        categoryMap.set(cat.id, { ...cat, children: [] });
+    });
+    
+    // 子カテゴリを親に関連付け
+    const rootCategories = [];
+    categories.forEach(cat => {
+        if (cat.parentCategoryId && categoryMap.has(cat.parentCategoryId)) {
+            categoryMap.get(cat.parentCategoryId).children.push(categoryMap.get(cat.id));
+        } else {
+            rootCategories.push(categoryMap.get(cat.id));
+        }
+    });
+    
+    // 階層順でフラット化
+    function flattenHierarchy(cats) {
+        const result = [];
+        cats.sort((a, b) => a.name.localeCompare(b.name, 'ja')); // 名前順にソート
+        
+        cats.forEach(cat => {
+            result.push(cat);
+            if (cat.children.length > 0) {
+                result.push(...flattenHierarchy(cat.children));
+            }
+        });
+        return result;
+    }
+    
+    return flattenHierarchy(rootCategories);
+}
+
+/**
+ * 通常表示用のツリーノードを作成
+ * @param {Object} category - カテゴリデータ
+ * @returns {HTMLElement} 作成されたツリーノード要素
+ */
+function createTreeNode(category) {
+    const treeItem = document.createElement('div');
+    treeItem.className = 'tree-item expandable';
+    treeItem.setAttribute('data-category-id', category.id);
+    treeItem.setAttribute('data-level', category.level || 0);
+    
+    const hasChildren = category.hasChildren || false;
+    
+    treeItem.innerHTML = `
+        <div class="tree-item-content">
+            ${hasChildren ? '<span class="tree-toggle">▶</span>' : '<span class="tree-toggle">　</span>'}
+            <div class="category-info">
+                <div class="category-main">
+                    <a href="/Categories/Details/${category.id}" class="category-name">${category.name}</a>
+                    ${category.description ? `<span class="category-description">- ${category.description}</span>` : ''}
+                </div>
+                <div class="category-meta">
+                    <span class="product-count">商品数: ${category.productCount || 0}</span>
+                    <span class="updated-date">更新: ${new Date(category.updatedAt).toLocaleDateString('ja-JP')}</span>
+                    <div class="category-actions">
+                        <a href="/Categories/Edit/${category.id}" class="btn btn-sm btn-warning">編集</a>
+                        <button type="button" class="btn btn-sm btn-danger" 
+                                onclick="confirmDeleteCategory(${category.id}, '${category.name}', ${category.productCount || 0}, ${category.hasChildren ? 'true' : 'false'})"
+                                ${(category.productCount > 0 || category.hasChildren) ? 'disabled' : ''}>
+                            削除
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="tree-children" style="display: none;">
+            <!-- 子カテゴリは動的に読み込まれます -->
+        </div>
+    `;
+    
+    return treeItem;
+}
+
+/**
+ * 検索結果用のツリーノードを作成（Windowsエクスプローラ風の階層表示）
+ * @param {Object} category - カテゴリデータ
+ * @returns {HTMLElement} 作成されたツリーノード要素
+ */
+function createSearchResultNode(category) {
+    const treeItem = document.createElement('div');
+    treeItem.className = 'tree-item search-result';
+    treeItem.setAttribute('data-category-id', category.id);
+    treeItem.setAttribute('data-level', category.level || 0);
+    
+    // 階層レベルに応じたインデントを作成
+    const level = category.level || 0;
+    const indentSpaces = '　'.repeat(level); // 全角スペースでインデント
+    
+    // ツリー線の作成（Windowsエクスプローラ風）
+    let treeLines = '';
+    for (let i = 0; i < level; i++) {
+        if (i === level - 1) {
+            // 最後のレベルは分岐線
+            treeLines += '<span class="tree-line tree-branch"></span>';
+        } else {
+            // 中間レベルは縦線
+            treeLines += '<span class="tree-line tree-vertical"></span>';
+        }
+    }
+    
+    treeItem.innerHTML = `
+        <div class="tree-item-content">
+            <div class="tree-indent">
+                ${treeLines}
+            </div>
+            <span class="tree-icon">${category.hasChildren ? '📂' : '🏷️'}</span>
+            <div class="category-info">
+                <div class="category-main">
+                    <span class="level-badge">L${level}</span>
+                    <a href="/Categories/Details/${category.id}" class="category-name">${category.name}</a>
+                    ${category.description ? `<span class="category-description">- ${category.description}</span>` : ''}
+                </div>
+                <div class="category-meta">
+                    <span class="product-count">商品数: ${category.productCount || 0}</span>
+                    <span class="updated-date">更新: ${new Date(category.updatedAt).toLocaleDateString('ja-JP')}</span>
+                    <div class="category-actions">
+                        <a href="/Categories/Edit/${category.id}" class="btn btn-sm btn-warning">編集</a>
+                        <button type="button" class="btn btn-sm btn-danger" 
+                                onclick="confirmDeleteCategory(${category.id}, '${category.name}', ${category.productCount || 0}, ${category.hasChildren ? 'true' : 'false'})"
+                                ${(category.productCount > 0 || category.hasChildren) ? 'disabled' : ''}>
+                            削除
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return treeItem;
 }
 
 /**
