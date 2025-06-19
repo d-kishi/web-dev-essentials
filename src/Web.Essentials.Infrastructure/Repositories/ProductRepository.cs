@@ -32,12 +32,7 @@ public class ProductRepository : IProductRepository
         _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
-    /// <summary>
-    /// 商品IDによる単一商品取得
-    /// </summary>
-    /// <param name="id">商品ID</param>
-    /// <param name="includeRelations">関連エンティティを含むかどうか</param>
-    /// <returns>商品エンティティ、存在しない場合はnull</returns>
+    /// <inheritdoc />
     public async Task<Product?> GetByIdAsync(int id, bool includeRelations = false)
     {
         var query = _context.Products.AsQueryable();
@@ -55,20 +50,14 @@ public class ProductRepository : IProductRepository
         return await query.FirstOrDefaultAsync(p => p.Id == id);
     }
 
-    /// <summary>
-    /// JANコードによる商品取得
-    /// </summary>
-    /// <param name="janCode">JANコード</param>
-    /// <returns>商品エンティティ、存在しない場合はnull</returns>
+    /// <inheritdoc />
     public async Task<Product?> GetByJanCodeAsync(string janCode)
     {
         return await _context.Products
             .FirstOrDefaultAsync(p => p.JanCode == janCode);
     }
 
-    /// <summary>
-    /// 商品一覧取得（検索・フィルタリング・ページング対応）
-    /// </summary>
+    /// <inheritdoc />
     public async Task<(IEnumerable<Product> Products, int TotalCount)> GetAllAsync(
         string? nameTerm = null,
         string? janCodeTerm = null,
@@ -139,12 +128,7 @@ public class ProductRepository : IProductRepository
         return (products, totalCount);
     }
 
-    /// <summary>
-    /// 指定カテゴリに属する商品一覧取得
-    /// </summary>
-    /// <param name="categoryId">カテゴリID</param>
-    /// <param name="includeDescendants">子孫カテゴリの商品も含むかどうか</param>
-    /// <returns>カテゴリに属する商品一覧</returns>
+    /// <inheritdoc />
     public async Task<IEnumerable<Product>> GetByCategoryAsync(int categoryId, bool includeDescendants = false)
     {
         var categoryIds = includeDescendants
@@ -160,11 +144,7 @@ public class ProductRepository : IProductRepository
             .ToListAsync();
     }
 
-    /// <summary>
-    /// 最新商品取得
-    /// </summary>
-    /// <param name="count">取得件数</param>
-    /// <returns>作成日時順での最新商品一覧</returns>
+    /// <inheritdoc />
     public async Task<IEnumerable<Product>> GetLatestAsync(int count = 10)
     {
         return await _context.Products
@@ -175,11 +155,7 @@ public class ProductRepository : IProductRepository
             .ToListAsync();
     }
 
-    /// <summary>
-    /// 商品追加
-    /// </summary>
-    /// <param name="product">追加する商品エンティティ</param>
-    /// <returns>追加された商品エンティティ</returns>
+    /// <inheritdoc />
     public async Task<Product> AddAsync(Product product)
     {
         if (product == null)
@@ -190,11 +166,7 @@ public class ProductRepository : IProductRepository
         return product;
     }
 
-    /// <summary>
-    /// 商品更新
-    /// </summary>
-    /// <param name="product">更新する商品エンティティ</param>
-    /// <returns>更新された商品エンティティ</returns>
+    /// <inheritdoc />
     public async Task<Product> UpdateAsync(Product product)
     {
         if (product == null)
@@ -205,11 +177,7 @@ public class ProductRepository : IProductRepository
         return product;
     }
 
-    /// <summary>
-    /// 商品削除
-    /// </summary>
-    /// <param name="id">削除する商品ID</param>
-    /// <returns>削除の成功可否</returns>
+    /// <inheritdoc />
     public async Task<bool> DeleteAsync(int id)
     {
         var product = await _context.Products.FindAsync(id);
@@ -221,22 +189,13 @@ public class ProductRepository : IProductRepository
         return true;
     }
 
-    /// <summary>
-    /// 商品存在確認
-    /// </summary>
-    /// <param name="id">商品ID</param>
-    /// <returns>存在する場合true</returns>
+    /// <inheritdoc />
     public async Task<bool> ExistsAsync(int id)
     {
         return await _context.Products.AnyAsync(p => p.Id == id);
     }
 
-    /// <summary>
-    /// JANコードの重複確認
-    /// </summary>
-    /// <param name="janCode">JANコード</param>
-    /// <param name="excludeProductId">確認対象から除外する商品ID</param>
-    /// <returns>重複する場合true</returns>
+    /// <inheritdoc />
     public async Task<bool> IsJanCodeDuplicateAsync(string janCode, int? excludeProductId = null)
     {
         var query = _context.Products.Where(p => p.JanCode == janCode);
@@ -249,10 +208,7 @@ public class ProductRepository : IProductRepository
         return await query.AnyAsync();
     }
 
-    /// <summary>
-    /// 商品統計情報取得
-    /// </summary>
-    /// <returns>商品の統計情報</returns>
+    /// <inheritdoc />
     public async Task<ProductStatistics> GetStatisticsAsync()
     {
         var products = await _context.Products.ToListAsync();

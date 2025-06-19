@@ -33,14 +33,7 @@ public class CategoryService : ICategoryService
         _logger = logger;
     }
 
-    /// <summary>
-    /// カテゴリ一覧取得（検索・ページング対応）
-    /// コントローラーから呼び出されるカテゴリ一覧取得の共通ロジック
-    /// </summary>
-    /// <param name="searchKeyword">検索キーワード</param>
-    /// <param name="page">ページ番号</param>
-    /// <param name="pageSize">1ページあたりの件数</param>
-    /// <returns>カテゴリ一覧とページング情報</returns>
+    /// <inheritdoc />
     public async Task<CategoryListDto> GetCategoryListAsync(
         string? searchKeyword = null,
         int page = 1,
@@ -91,12 +84,7 @@ public class CategoryService : ICategoryService
         }
     }
 
-    /// <summary>
-    /// カテゴリ詳細取得
-    /// 指定されたIDのカテゴリ詳細を取得
-    /// </summary>
-    /// <param name="id">カテゴリID</param>
-    /// <returns>カテゴリ詳細情報、存在しない場合はnull</returns>
+    /// <inheritdoc />
     public async Task<CategoryDetailsViewModel?> GetCategoryDetailsAsync(int id)
     {
         try
@@ -135,12 +123,7 @@ public class CategoryService : ICategoryService
         }
     }
 
-    /// <summary>
-    /// カテゴリ編集用のViewModel準備
-    /// 既存のカテゴリデータを含む編集用ViewModelを作成
-    /// </summary>
-    /// <param name="id">カテゴリID</param>
-    /// <returns>カテゴリ編集用ViewModel、存在しない場合はnull</returns>
+    /// <inheritdoc />
     public async Task<CategoryEditViewModel?> PrepareEditViewModelAsync(int id)
     {
         try
@@ -168,13 +151,7 @@ public class CategoryService : ICategoryService
         }
     }
 
-    /// <summary>
-    /// カテゴリ名重複チェック
-    /// 指定されたカテゴリ名が既に使用されているかをチェック
-    /// </summary>
-    /// <param name="name">チェック対象のカテゴリ名</param>
-    /// <param name="excludeCategoryId">除外するカテゴリID（編集時に自分自身を除外）</param>
-    /// <returns>重複している場合はtrue</returns>
+    /// <inheritdoc />
     public async Task<bool> IsCategoryNameDuplicateAsync(string name, int? excludeCategoryId = null)
     {
         try
@@ -207,12 +184,7 @@ public class CategoryService : ICategoryService
         }
     }
 
-    /// <summary>
-    /// カテゴリ削除可能性チェック
-    /// 指定されたカテゴリが削除可能かをチェック（関連商品の有無を確認）
-    /// </summary>
-    /// <param name="id">カテゴリID</param>
-    /// <returns>削除可能な場合はtrue、関連商品がある場合はfalse</returns>
+    /// <inheritdoc />
     public async Task<bool> CanDeleteCategoryAsync(int id)
     {
         try
@@ -237,11 +209,7 @@ public class CategoryService : ICategoryService
         }
     }
 
-    /// <summary>
-    /// 全カテゴリ一覧取得（選択肢用）
-    /// セレクトボックスなどで使用するための全カテゴリを取得
-    /// </summary>
-    /// <returns>全カテゴリのDTO一覧</returns>
+    /// <inheritdoc />
     public async Task<List<CategoryDto>> GetAllCategoriesForSelectionAsync()
     {
         try
@@ -346,11 +314,7 @@ public class CategoryService : ICategoryService
 
     #region Additional Interface Methods
 
-    /// <summary>
-    /// カテゴリ存在確認
-    /// </summary>
-    /// <param name="id">カテゴリID</param>
-    /// <returns>存在する場合true</returns>
+    /// <inheritdoc />
     public async Task<bool> ExistsAsync(int id)
     {
         try
@@ -367,11 +331,7 @@ public class CategoryService : ICategoryService
         }
     }
 
-    /// <summary>
-    /// カテゴリ削除
-    /// </summary>
-    /// <param name="id">カテゴリID</param>
-    /// <returns>削除成功の場合true</returns>
+    /// <inheritdoc />
     public async Task<bool> DeleteCategoryAsync(int id)
     {
         try
@@ -405,14 +365,10 @@ public class CategoryService : ICategoryService
         }
     }
 
-    /// <summary>
-    /// インターフェース用のメソッド名エイリアス
-    /// </summary>
+    /// <inheritdoc />
     public async Task<bool> CanDeleteAsync(int id) => await CanDeleteCategoryAsync(id);
 
-    /// <summary>
-    /// カテゴリ一覧取得（インターフェース用）
-    /// </summary>
+    /// <inheritdoc />
     public async Task<CategoryListDto> GetCategoriesAsync(CategorySearchRequestDto searchRequest)
     {
         return await GetCategoryListAsync(
@@ -421,9 +377,7 @@ public class CategoryService : ICategoryService
             10); // デフォルトページサイズ
     }
 
-    /// <summary>
-    /// 選択用カテゴリ一覧取得（インターフェース用）
-    /// </summary>
+    /// <inheritdoc />
     public async Task<IEnumerable<CategorySelectDto>> GetCategoriesForSelectAsync()
     {
         var categories = await GetAllCategoriesForSelectionAsync();
@@ -436,17 +390,13 @@ public class CategoryService : ICategoryService
         });
     }
 
-    /// <summary>
-    /// カテゴリ編集用データ取得（インターフェース用）
-    /// </summary>
+    /// <inheritdoc />
     public async Task<CategoryEditViewModel?> GetCategoryForEditAsync(int id)
     {
         return await PrepareEditViewModelAsync(id);
     }
 
-    /// <summary>
-    /// カテゴリ作成用データ取得
-    /// </summary>
+    /// <inheritdoc />
     public async Task<CategoryCreateViewModel> GetCategoryForCreateAsync()
     {
         var allCategories = await _categoryRepository.GetAllAsync();
@@ -464,9 +414,7 @@ public class CategoryService : ICategoryService
         };
     }
 
-    /// <summary>
-    /// カテゴリ作成
-    /// </summary>
+    /// <inheritdoc />
     public async Task<int> CreateCategoryAsync(CategoryCreateViewModel createModel)
     {
         try
@@ -491,9 +439,7 @@ public class CategoryService : ICategoryService
         }
     }
 
-    /// <summary>
-    /// カテゴリ更新
-    /// </summary>
+    /// <inheritdoc />
     public async Task<bool> UpdateCategoryAsync(CategoryEditViewModel editModel)
     {
         try
@@ -523,12 +469,14 @@ public class CategoryService : ICategoryService
 
     // 以下は基本的なスタブ実装（将来的に完全実装予定）
 
+    /// <inheritdoc />
     public async Task<CategoryIndexViewModel> GetCategoryIndexAsync(CategoryIndexViewModel viewModel)
     {
         // 基本実装
         return await Task.FromResult(viewModel);
     }
 
+    /// <inheritdoc />
     public async Task<IEnumerable<CategoryTreeDto>> GetCategoryTreeAsync(int? rootCategoryId = null)
     {
         var categories = await _categoryRepository.GetAllAsync();
@@ -542,12 +490,14 @@ public class CategoryService : ICategoryService
         });
     }
 
+    /// <inheritdoc />
     public async Task<IEnumerable<CategoryListItemViewModel>> GetChildCategoriesAsync(int parentId)
     {
         // 階層構造が実装されていないため、空のリストを返す
         return await Task.FromResult(new List<CategoryListItemViewModel>());
     }
 
+    /// <inheritdoc />
     public async Task<IEnumerable<CategoryBreadcrumbDto>> GetAncestorsAsync(int categoryId)
     {
         var category = await _categoryRepository.GetByIdAsync(categoryId);
@@ -565,12 +515,14 @@ public class CategoryService : ICategoryService
         };
     }
 
+    /// <inheritdoc />
     public async Task<bool> CanMoveToParentAsync(int categoryId, int? newParentId)
     {
         // 基本実装：階層構造が実装されていないため、常にtrue
         return await Task.FromResult(true);
     }
 
+    /// <inheritdoc />
     public async Task<IEnumerable<CategoryListItemViewModel>> GetCategoriesByLevelAsync(int level)
     {
         var categories = await _categoryRepository.GetAllAsync();
@@ -585,6 +537,7 @@ public class CategoryService : ICategoryService
         });
     }
 
+    /// <inheritdoc />
     public async Task<bool> ReorderCategoriesAsync(int? parentId, IEnumerable<int> categoryIds)
     {
         // 基本実装：順序管理が実装されていないため、常にtrue

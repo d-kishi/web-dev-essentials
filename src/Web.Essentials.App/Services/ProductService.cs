@@ -37,15 +37,7 @@ public class ProductService : IProductService
         _logger = logger;
     }
 
-    /// <summary>
-    /// 商品一覧取得（検索・ページング対応）
-    /// コントローラーから呼び出される商品一覧取得の共通ロジック
-    /// </summary>
-    /// <param name="searchKeyword">検索キーワード</param>
-    /// <param name="categoryId">カテゴリID（オプション）</param>
-    /// <param name="page">ページ番号</param>
-    /// <param name="pageSize">1ページあたりの件数</param>
-    /// <returns>商品一覧とページング情報</returns>
+    /// <inheritdoc />
     public async Task<ProductListDto> GetProductListAsync(
         string? searchKeyword = null,
         int? categoryId = null,
@@ -99,12 +91,7 @@ public class ProductService : IProductService
         }
     }
 
-    /// <summary>
-    /// 商品詳細取得
-    /// 指定されたIDの商品詳細を取得
-    /// </summary>
-    /// <param name="id">商品ID</param>
-    /// <returns>商品詳細情報、存在しない場合はnull</returns>
+    /// <inheritdoc />
     public async Task<ProductDetailsViewModel?> GetProductDetailsAsync(int id)
     {
         try
@@ -162,11 +149,7 @@ public class ProductService : IProductService
         }
     }
 
-    /// <summary>
-    /// 商品登録用のViewModel準備
-    /// カテゴリ一覧などの必要なデータを含む登録用ViewModelを作成
-    /// </summary>
-    /// <returns>商品登録用ViewModel</returns>
+    /// <inheritdoc />
     public async Task<ProductCreateViewModel> PrepareCreateViewModelAsync()
     {
         try
@@ -193,12 +176,7 @@ public class ProductService : IProductService
         }
     }
 
-    /// <summary>
-    /// 商品編集用のViewModel準備
-    /// 既存の商品データとカテゴリ一覧を含む編集用ViewModelを作成
-    /// </summary>
-    /// <param name="id">商品ID</param>
-    /// <returns>商品編集用ViewModel、存在しない場合はnull</returns>
+    /// <inheritdoc />
     public async Task<ProductEditViewModel?> PrepareEditViewModelAsync(int id)
     {
         try
@@ -249,13 +227,7 @@ public class ProductService : IProductService
         }
     }
 
-    /// <summary>
-    /// JANコード重複チェック
-    /// 指定されたJANコードが既に使用されているかをチェック
-    /// </summary>
-    /// <param name="janCode">チェック対象のJANコード</param>
-    /// <param name="excludeProductId">除外する商品ID（編集時に自分自身を除外）</param>
-    /// <returns>重複している場合はtrue</returns>
+    /// <inheritdoc />
     public async Task<bool> IsJanCodeDuplicateAsync(string janCode, int? excludeProductId = null)
     {
         try
@@ -383,11 +355,7 @@ public class ProductService : IProductService
 
     #region Additional Interface Methods
 
-    /// <summary>
-    /// 商品存在確認
-    /// </summary>
-    /// <param name="id">商品ID</param>
-    /// <returns>存在する場合true</returns>
+    /// <inheritdoc />
     public async Task<bool> ExistsAsync(int id)
     {
         try
@@ -404,11 +372,7 @@ public class ProductService : IProductService
         }
     }
 
-    /// <summary>
-    /// 商品作成
-    /// </summary>
-    /// <param name="createModel">作成用ViewModel</param>
-    /// <returns>作成された商品ID</returns>
+    /// <inheritdoc />
     public async Task<int> CreateProductAsync(ProductCreateViewModel createModel)
     {
         try
@@ -453,11 +417,7 @@ public class ProductService : IProductService
         }
     }
 
-    /// <summary>
-    /// 商品更新
-    /// </summary>
-    /// <param name="editModel">更新用ViewModel</param>
-    /// <returns>更新成功の場合true</returns>
+    /// <inheritdoc />
     public async Task<bool> UpdateProductAsync(ProductEditViewModel editModel)
     {
         try
@@ -506,11 +466,7 @@ public class ProductService : IProductService
         }
     }
 
-    /// <summary>
-    /// 商品削除
-    /// </summary>
-    /// <param name="id">商品ID</param>
-    /// <returns>削除成功の場合true</returns>
+    /// <inheritdoc />
     public async Task<bool> DeleteProductAsync(int id)
     {
         try
@@ -536,25 +492,19 @@ public class ProductService : IProductService
         }
     }
 
-    /// <summary>
-    /// インターフェース用のメソッド名エイリアス
-    /// </summary>
+    /// <inheritdoc />
     public async Task<ProductCreateViewModel> GetProductForCreateAsync()
     {
         return await PrepareCreateViewModelAsync();
     }
 
-    /// <summary>
-    /// インターフェース用のメソッド名エイリアス
-    /// </summary>
+    /// <inheritdoc />
     public async Task<ProductEditViewModel?> GetProductForEditAsync(int id)
     {
         return await PrepareEditViewModelAsync(id);
     }
 
-    /// <summary>
-    /// インターフェース用の商品一覧取得
-    /// </summary>
+    /// <inheritdoc />
     public async Task<ProductListDto> GetProductsAsync(ProductSearchRequestDto searchRequest)
     {
         // 基本実装: 既存のGetProductListAsyncを活用
@@ -565,18 +515,14 @@ public class ProductService : IProductService
             searchRequest.PageSize);
     }
 
-    /// <summary>
-    /// インターフェース用のViewModel一覧取得
-    /// </summary>
+    /// <inheritdoc />
     public async Task<ProductIndexViewModel> GetProductIndexAsync(ProductIndexViewModel viewModel)
     {
         // 基本実装
         return await Task.FromResult(viewModel);
     }
 
-    /// <summary>
-    /// 商品統計情報取得
-    /// </summary>
+    /// <inheritdoc />
     public async Task<ProductStatisticsDto> GetStatisticsAsync()
     {
         try
@@ -605,9 +551,7 @@ public class ProductService : IProductService
         }
     }
 
-    /// <summary>
-    /// カテゴリ別商品数取得
-    /// </summary>
+    /// <inheritdoc />
     public async Task<int> GetProductCountByCategoryAsync(int categoryId)
     {
         try
