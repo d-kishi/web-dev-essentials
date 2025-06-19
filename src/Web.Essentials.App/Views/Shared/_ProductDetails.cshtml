@@ -129,7 +129,7 @@
                                     <span class="category-path">@category.FullPath</span>
                                     @if (showActions && !isDeleteMode)
                                     {
-                                        <a href="@Url.Action("Details", "Categories", new { id = category.Id })" 
+                                        <a asp-action="Details" asp-controller="Categories" asp-route-id="@category.Id" 
                                            class="category-link"
                                            title="カテゴリ詳細を表示">
                                             →
@@ -148,7 +148,7 @@
         {
             <div class="product-actions-section">
                 <div class="action-buttons">
-                    <a href="@Url.Action("Edit", "Products", new { id = product.Id })" 
+                    <a asp-action="Edit" asp-controller="Products" asp-route-id="@product.Id" 
                        class="btn btn-primary">
                         <span class="btn-icon">✏️</span>
                         編集

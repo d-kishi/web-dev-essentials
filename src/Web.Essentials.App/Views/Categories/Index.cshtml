@@ -13,7 +13,7 @@
         <p class="page-description">登録されているカテゴリの一覧を階層構造で表示します。検索や並び替えが可能です。</p>
     </div>
     <div class="page-actions">
-        <a href="@Url.Action("Create", "Categories")" class="btn btn-primary">
+        <a asp-action="Create" asp-controller="Categories" class="btn btn-primary">
             <span class="btn-icon">➕</span>
             新規カテゴリ登録
         </a>
@@ -21,7 +21,7 @@
 </div>
 
 <!-- 検索フォーム -->
-@Html.Partial("_SearchForm")
+<partial name="_SearchForm" />
 
 <!-- カテゴリ一覧コンテナ -->
 <div class="category-list-container">
@@ -61,7 +61,7 @@
         </div>
         <div class="sort-options">
             <label for="sortBy">並び順:</label>
-            <select id="sortBy" class="sort-select" onchange="changeSortOrder(this.value)">
+            <select id="sortBy" class="sort-select" data-action="change-sort-order">
                 <option value="name_asc">カテゴリ名（昇順）</option>
                 <option value="name_desc">カテゴリ名（降順）</option>
                 <option value="level_asc">階層レベル（浅い順）</option>
@@ -79,7 +79,7 @@
             <div id="categoryTree" class="category-tree">
                 @if (Model?.Categories?.Any() == true)
                 {
-                    @Html.Partial("_CategoryHierarchy", Model.Categories)
+                    <partial name="_CategoryHierarchy" model="Model.Categories" />
                 }
                 else
                 {
@@ -87,7 +87,7 @@
                         <div class="no-data-icon">🏷️</div>
                         <h3>カテゴリが見つかりません</h3>
                         <p>検索条件を変更するか、新しいカテゴリを登録してください。</p>
-                        <a href="@Url.Action("Create", "Categories")" class="btn btn-primary">
+                        <a asp-action="Create" asp-controller="Categories" class="btn btn-primary">
                             カテゴリを登録する
                         </a>
                     </div>
@@ -136,7 +136,7 @@
                                 </td>
                                 <td class="col-name">
                                     <div class="category-name">
-                                        <a href="@Url.Action("Details", "Categories", new { id = category.Id })" class="category-link">
+                                        <a asp-action="Details" asp-controller="Categories" asp-route-id="@category.Id" class="category-link">
                                             @category.Name
                                         </a>
                                     </div>
@@ -162,7 +162,7 @@
                                 <td class="col-parent">
                                     @if (category.ParentCategoryId.HasValue && !string.IsNullOrEmpty(category.ParentCategoryName))
                                     {
-                                        <a href="@Url.Action("Details", "Categories", new { id = category.ParentCategoryId })" 
+                                        <a asp-action="Details" asp-controller="Categories" asp-route-id="@category.ParentCategoryId" 
                                            class="parent-link">
                                             @category.ParentCategoryName
                                         </a>
@@ -182,12 +182,12 @@
                                 </td>
                                 <td class="col-actions">
                                     <div class="action-buttons">
-                                        <a href="@Url.Action("Details", "Categories", new { id = category.Id })" 
+                                        <a asp-action="Details" asp-controller="Categories" asp-route-id="@category.Id" 
                                            class="btn btn-info btn-sm" 
                                            title="詳細表示">
                                             詳細
                                         </a>
-                                        <a href="@Url.Action("Edit", "Categories", new { id = category.Id })" 
+                                        <a asp-action="Edit" asp-controller="Categories" asp-route-id="@category.Id" 
                                            class="btn btn-warning btn-sm" 
                                            title="編集">
                                             編集
@@ -212,7 +212,7 @@
                                     <div class="no-data-icon">🏷️</div>
                                     <h3>カテゴリが見つかりません</h3>
                                     <p>検索条件を変更するか、新しいカテゴリを登録してください。</p>
-                                    <a href="@Url.Action("Create", "Categories")" class="btn btn-primary">
+                                    <a asp-action="Create" asp-controller="Categories" class="btn btn-primary">
                                         カテゴリを登録する
                                     </a>
                                 </div>
@@ -228,7 +228,7 @@
     <div id="paginationContainer" class="pagination-wrapper">
         @if (Model?.Paging != null)
         {
-            @Html.Partial("_Pagination", Model.Paging)
+            <partial name="_Pagination" model="Model.Paging" />
         }
     </div>
 </div>

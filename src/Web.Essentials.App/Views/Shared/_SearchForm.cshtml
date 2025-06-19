@@ -32,23 +32,8 @@
             {
                 <div class="search-field">
                     <label for="categoryFilter" class="search-label">カテゴリ</label>
-                    <select id="categoryFilter" name="categoryId" class="search-select">
+                    <select id="categoryFilter" name="categoryId" class="search-select" asp-items="@(ViewBag.CategorySelectList ?? new SelectList(categories, "Id", "FullPath", categoryId))">
                         <option value="">すべてのカテゴリ</option>
-                        @foreach (var category in categories)
-                        {
-                            @if (categoryId == category.Id)
-                            {
-                                <option value="@category.Id" selected>
-                                    @category.FullPath
-                                </option>
-                            }
-                            else
-                            {
-                                <option value="@category.Id">
-                                    @category.FullPath
-                                </option>
-                            }
-                        }
                     </select>
                 </div>
             }

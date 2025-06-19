@@ -108,17 +108,17 @@
             @if (showActions)
             {
                 <div class="tree-actions">
-                    <a href="@Url.Action("Details", "Categories", new { id = Model.Id })" 
+                    <a asp-action="Details" asp-controller="Categories" asp-route-id="@Model.Id" 
                        class="tree-action-btn detail-btn" 
                        title="詳細表示">
                         👁️
                     </a>
-                    <a href="@Url.Action("Edit", "Categories", new { id = Model.Id })" 
+                    <a asp-action="Edit" asp-controller="Categories" asp-route-id="@Model.Id" 
                        class="tree-action-btn edit-btn" 
                        title="編集">
                         ✏️
                     </a>
-                    <a href="@Url.Action("Create", "Categories", new { parentId = Model.Id })" 
+                    <a asp-action="Create" asp-controller="Categories" asp-route-parentId="@Model.Id" 
                        class="tree-action-btn add-btn" 
                        title="子カテゴリを追加">
                         ➕

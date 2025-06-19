@@ -10,7 +10,7 @@
         <p class="page-description">新しい商品を登録します。必須項目を入力してください。</p>
     </div>
     <div class="page-actions">
-        <a href="@Url.Action("Index", "Products")" class="btn btn-secondary">
+        <a asp-action="Index" asp-controller="Products" class="btn btn-secondary">
             <span class="btn-icon">←</span>
             商品一覧に戻る
         </a>
@@ -21,10 +21,10 @@
 <nav class="breadcrumb-nav" aria-label="パンくずナビ">
     <ol class="breadcrumb">
         <li class="breadcrumb-item">
-            <a href="@Url.Action("Index", "Home")">ホーム</a>
+            <a asp-action="Index" asp-controller="Home">ホーム</a>
         </li>
         <li class="breadcrumb-item">
-            <a href="@Url.Action("Index", "Products")">商品一覧</a>
+            <a asp-action="Index" asp-controller="Products">商品一覧</a>
         </li>
         <li class="breadcrumb-item active" aria-current="page">
             商品登録
@@ -35,16 +35,16 @@
 <!-- 商品登録フォーム -->
 <div class="form-container">
     <form asp-action="Create" 
+          asp-controller="Products"
           method="post" 
           enctype="multipart/form-data" 
           id="productCreateForm" 
           class="product-form"
+          asp-antiforgery="true"
           novalidate>
         
-        @Html.AntiForgeryToken()
-        
         <!-- 商品フォーム（部分ビュー） -->
-        @Html.Partial("_ProductForm", Model)
+        <partial name="_ProductForm" model="Model" />
         
         <!-- フォーム操作ボタン -->
         <div class="form-actions">

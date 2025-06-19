@@ -15,13 +15,13 @@
 <nav class="breadcrumb-nav" aria-label="パンくずナビ">
     <ol class="breadcrumb">
         <li class="breadcrumb-item">
-            <a href="@Url.Action("Index", "Home")">ホーム</a>
+            <a asp-action="Index" asp-controller="Home">ホーム</a>
         </li>
         <li class="breadcrumb-item">
-            <a href="@Url.Action("Index", "Categories")">カテゴリ一覧</a>
+            <a asp-action="Index" asp-controller="Categories">カテゴリ一覧</a>
         </li>
         <li class="breadcrumb-item">
-            <a href="@Url.Action("Details", "Categories", new { id = Model.Id })">@Model.Name</a>
+            <a asp-action="Details" asp-controller="Categories" asp-route-id="@Model.Id">@Model.Name</a>
         </li>
         <li class="breadcrumb-item active" aria-current="page">
             削除確認
@@ -220,9 +220,9 @@ else
                             <div class="blocking-item">
                                 <span class="item-name">@product.Name</span>
                                 <span class="item-price">¥@product.Price.ToString("N0")</span>
-                                <a href="@Url.Action("Details", "Products", new { id = product.Id })" 
+                                <a asp-action="Details" asp-controller="Products" asp-route-id="@product.Id" 
                                    class="btn btn-sm btn-info">詳細</a>
-                                <a href="@Url.Action("Edit", "Products", new { id = product.Id })" 
+                                <a asp-action="Edit" asp-controller="Products" asp-route-id="@product.Id" 
                                    class="btn btn-sm btn-warning">編集</a>
                             </div>
                         }
@@ -230,14 +230,14 @@ else
                         {
                             <div class="more-items">
                                 他 @(Model.RelatedProducts.Count() - 5) 個の商品...
-                                <a href="@Url.Action("Index", "Products", new { categoryId = Model.Id })" 
+                                <a asp-action="Index" asp-controller="Products" asp-route-categoryId="@Model.Id" 
                                    class="view-all-link">すべて表示</a>
                             </div>
                         }
                     </div>
                     <div class="resolution-action">
                         <p class="resolution-text">これらの商品のカテゴリ関連付けを削除または変更してください。</p>
-                        <a href="@Url.Action("Index", "Products", new { categoryId = Model.Id })" 
+                        <a asp-action="Index" asp-controller="Products" asp-route-categoryId="@Model.Id" 
                            class="btn btn-warning">関連商品を管理</a>
                     </div>
                 </div>
@@ -254,16 +254,16 @@ else
                                 <span class="item-name">@child.Name</span>
                                 <span class="item-path">(@child.FullPath)</span>
                                 <span class="item-products">@child.ProductCount 商品</span>
-                                <a href="@Url.Action("Details", "Categories", new { id = child.Id })" 
+                                <a asp-action="Details" asp-controller="Categories" asp-route-id="@child.Id" 
                                    class="btn btn-sm btn-info">詳細</a>
-                                <a href="@Url.Action("Edit", "Categories", new { id = child.Id })" 
+                                <a asp-action="Edit" asp-controller="Categories" asp-route-id="@child.Id" 
                                    class="btn btn-sm btn-warning">編集</a>
                             </div>
                         }
                     </div>
                     <div class="resolution-action">
                         <p class="resolution-text">これらの子カテゴリを削除するか、他の親カテゴリに移動してください。</p>
-                        <a href="@Url.Action("Index", "Categories")" 
+                        <a asp-action="Index" asp-controller="Categories" 
                            class="btn btn-warning">子カテゴリを管理</a>
                     </div>
                 </div>
@@ -275,9 +275,8 @@ else
     @if (canDelete)
     {
         <div class="deletion-form">
-            <form asp-action="Delete" method="post" id="deleteForm" class="delete-confirmation-form">
-                @Html.AntiForgeryToken()
-                @Html.HiddenFor(model => model.Id)
+            <form asp-action="Delete" asp-controller="Categories" method="post" id="deleteForm" class="delete-confirmation-form" asp-antiforgery="true">
+                <input asp-for="Id" type="hidden" />
                 
                 <!-- 削除確認チェックボックス -->
                 <div class="confirmation-checks">
@@ -320,12 +319,12 @@ else
                             <span class="btn-icon">🗑️</span>
                             カテゴリを削除する
                         </button>
-                        <a href="@Url.Action("Details", "Categories", new { id = Model.Id })" 
+                        <a asp-action="Details" asp-controller="Categories" asp-route-id="@Model.Id" 
                            class="btn btn-secondary btn-large">
                             <span class="btn-icon">↩️</span>
                             キャンセル（詳細に戻る）
                         </a>
-                        <a href="@Url.Action("Index", "Categories")" 
+                        <a asp-action="Index" asp-controller="Categories" 
                            class="btn btn-light btn-large">
                             <span class="btn-icon">📋</span>
                             カテゴリ一覧に戻る
@@ -340,17 +339,17 @@ else
         <!-- 削除不可の場合のアクション -->
         <div class="cannot-delete-actions">
             <div class="action-buttons">
-                <a href="@Url.Action("Details", "Categories", new { id = Model.Id })" 
+                <a asp-action="Details" asp-controller="Categories" asp-route-id="@Model.Id" 
                    class="btn btn-secondary btn-large">
                     <span class="btn-icon">↩️</span>
                     詳細に戻る
                 </a>
-                <a href="@Url.Action("Index", "Categories")" 
+                <a asp-action="Index" asp-controller="Categories" 
                    class="btn btn-light btn-large">
                     <span class="btn-icon">📋</span>
                     カテゴリ一覧に戻る
                 </a>
-                <a href="@Url.Action("Edit", "Categories", new { id = Model.Id })" 
+                <a asp-action="Edit" asp-controller="Categories" asp-route-id="@Model.Id" 
                    class="btn btn-warning btn-large">
                     <span class="btn-icon">✏</span>
                     カテゴリを編集

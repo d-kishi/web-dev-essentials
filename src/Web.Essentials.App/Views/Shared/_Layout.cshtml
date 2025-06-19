@@ -13,7 +13,14 @@
     @await RenderSectionAsync("Styles", required: false)
     
     <!-- RxJS ライブラリ -->
-    <script src="https://unpkg.com/rxjs@7.8.1/dist/bundles/rxjs.umd.min.js"></script>
+    <environment include="Development">
+        <script src="https://unpkg.com/rxjs@7.8.1/dist/bundles/rxjs.umd.min.js"></script>
+    </environment>
+    <environment exclude="Development">
+        <script src="https://unpkg.com/rxjs@7.8.1/dist/bundles/rxjs.umd.min.js" 
+                asp-fallback-src="~/lib/rxjs/rxjs.umd.min.js" 
+                asp-fallback-test="window.rxjs"></script>
+    </environment>
     
     <!-- 共通JavaScript -->
     <script src="~/js/common.js" asp-append-version="true" defer></script>
@@ -29,27 +36,27 @@
     <header class="main-header">
         <div class="header-container">
             <div class="header-logo">
-                <a href="@Url.Action("Index", "Home")" class="logo-link">
+                <a asp-action="Index" asp-controller="Home" class="logo-link">
                     <h1>ECサイト商品管理システム</h1>
                 </a>
             </div>
             <nav class="header-nav">
                 <ul class="nav-list">
                     <li class="nav-item">
-                        <a href="@Url.Action("Index", "Home")" class="nav-link">ホーム</a>
+                        <a asp-action="Index" asp-controller="Home" class="nav-link">ホーム</a>
                     </li>
                     <li class="nav-item dropdown">
                         <a href="#" class="nav-link dropdown-toggle">商品管理</a>
                         <ul class="dropdown-menu">
-                            <li><a href="@Url.Action("Index", "Products")" class="dropdown-link">商品一覧</a></li>
-                            <li><a href="@Url.Action("Create", "Products")" class="dropdown-link">商品登録</a></li>
+                            <li><a asp-action="Index" asp-controller="Products" class="dropdown-link">商品一覧</a></li>
+                            <li><a asp-action="Create" asp-controller="Products" class="dropdown-link">商品登録</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
                         <a href="#" class="nav-link dropdown-toggle">カテゴリ管理</a>
                         <ul class="dropdown-menu">
-                            <li><a href="@Url.Action("Index", "Categories")" class="dropdown-link">カテゴリ一覧</a></li>
-                            <li><a href="@Url.Action("Create", "Categories")" class="dropdown-link">カテゴリ登録</a></li>
+                            <li><a asp-action="Index" asp-controller="Categories" class="dropdown-link">カテゴリ一覧</a></li>
+                            <li><a asp-action="Create" asp-controller="Categories" class="dropdown-link">カテゴリ登録</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -58,7 +65,7 @@
     </header>
 
     <!-- メッセージ表示エリア -->
-    @Html.Partial("_Messages")
+    <partial name="_Messages" />
 
     <!-- メインコンテンツ -->
     <main class="main-content">
@@ -75,6 +82,6 @@
     </footer>
 
     <!-- 確認モーダル -->
-    @Html.Partial("_ConfirmationModal")
+    <partial name="_ConfirmationModal" />
 </body>
 </html>

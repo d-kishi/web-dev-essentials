@@ -146,39 +146,15 @@
         <!-- ページサイズ選択 -->
         <div class="page-size-selector">
             <label for="pageSizeSelect">表示件数:</label>
-            <select id="pageSizeSelect" class="page-size-select" data-action="change-page-size">
-                @if (Model.PageSize == 10)
-                {
-                    <option value="10" selected>10件</option>
-                }
-                else
-                {
-                    <option value="10">10件</option>
-                }
-                @if (Model.PageSize == 20)
-                {
-                    <option value="20" selected>20件</option>
-                }
-                else
-                {
-                    <option value="20">20件</option>
-                }
-                @if (Model.PageSize == 50)
-                {
-                    <option value="50" selected>50件</option>
-                }
-                else
-                {
-                    <option value="50">50件</option>
-                }
-                @if (Model.PageSize == 100)
-                {
-                    <option value="100" selected>100件</option>
-                }
-                else
-                {
-                    <option value="100">100件</option>
-                }
+            <select id="pageSizeSelect" 
+                    class="page-size-select" 
+                    data-action="change-page-size"
+                    asp-items="@(new SelectList(new[] { 
+                        new { Value = 10, Text = "10件" },
+                        new { Value = 20, Text = "20件" }, 
+                        new { Value = 50, Text = "50件" }, 
+                        new { Value = 100, Text = "100件" } 
+                    }, "Value", "Text", Model.PageSize))">
             </select>
         </div>
     </div>

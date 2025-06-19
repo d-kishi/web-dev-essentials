@@ -53,23 +53,15 @@
 }
 
 <!-- バリデーションサマリー表示エリア -->
-@if (ViewData.ModelState != null && !ViewData.ModelState.IsValid)
-{
-    <div class="message-container validation-error-message" id="validationErrorMessage">
-        <div class="message-content">
-            <span class="message-icon">⚠</span>
-            <div class="message-text">
-                <strong>入力エラーがあります:</strong>
-                <ul class="validation-list">
-                    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
-                    {
-                        <li>@error.ErrorMessage</li>
-                    }
-                </ul>
-            </div>
-            <button type="button" class="message-close" data-message-id="validationErrorMessage" aria-label="閉じる">
-                <span aria-hidden="true">×</span>
-            </button>
+<div asp-validation-summary="All" class="message-container validation-error-message validation-summary" id="validationErrorMessage">
+    <div class="message-content">
+        <span class="message-icon">⚠</span>
+        <div class="message-text">
+            <strong>入力エラーがあります:</strong>
+            <!-- ASP.NET Core TagHelper が自動生成するバリデーションエラーリスト -->
         </div>
+        <button type="button" class="message-close" data-message-id="validationErrorMessage" aria-label="閉じる">
+            <span aria-hidden="true">×</span>
+        </button>
     </div>
-}
+</div>

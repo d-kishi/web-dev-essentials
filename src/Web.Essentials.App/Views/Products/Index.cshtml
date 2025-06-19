@@ -15,7 +15,7 @@
         <p class="page-description">登録されている商品の一覧を表示します。検索やフィルタリングが可能です。</p>
     </div>
     <div class="page-actions">
-        <a href="@Url.Action("Create", "Products")" class="btn btn-primary">
+        <a asp-action="Create" asp-controller="Products" class="btn btn-primary">
             <span class="btn-icon">➕</span>
             新規商品登録
         </a>
@@ -23,7 +23,7 @@
 </div>
 
 <!-- 検索フォーム -->
-@Html.Partial("_SearchForm")
+<partial name="_SearchForm" />
 
 <!-- 商品一覧コンテナ -->
 <div class="product-list-container">
@@ -43,21 +43,21 @@
                     <button type="button" 
                             class="view-toggle active" 
                             data-view="table" 
-                            onclick="switchView('table')"
+                            data-action="switch-view" data-view="table"
                             title="テーブル表示">
                         📋
                     </button>
                     <button type="button" 
                             class="view-toggle" 
                             data-view="grid" 
-                            onclick="switchView('grid')"
+                            data-action="switch-view" data-view="grid"
                             title="グリッド表示">
                         🔳
                     </button>
                 </div>
                 <div class="sort-options">
                     <label for="sortBy">並び順:</label>
-                    <select id="sortBy" class="sort-select" onchange="changeSortOrder(this.value)">
+                    <select id="sortBy" class="sort-select" data-action="change-sort-order">
                         <option value="updated_desc">更新日時（新しい順）</option>
                         <option value="updated_asc">更新日時（古い順）</option>
                         <option value="name_asc">商品名（昇順）</option>
@@ -75,20 +75,20 @@
                 <thead>
                     <tr>
                         <th class="col-thumbnail">画像</th>
-                        <th class="col-name sortable" onclick="sortBy('name')">
+                        <th class="col-name sortable" data-action="sort-by" data-column="name">
                             商品名
                             <span class="sort-indicator" data-column="name"></span>
                         </th>
-                        <th class="col-category sortable" onclick="sortBy('category')">
+                        <th class="col-category sortable" data-action="sort-by" data-column="category">
                             カテゴリ
                             <span class="sort-indicator" data-column="category"></span>
                         </th>
-                        <th class="col-price sortable" onclick="sortBy('price')">
+                        <th class="col-price sortable" data-action="sort-by" data-column="price">
                             価格
                             <span class="sort-indicator" data-column="price"></span>
                         </th>
                         <th class="col-jan">JANコード</th>
-                        <th class="col-updated sortable" onclick="sortBy('updated')">
+                        <th class="col-updated sortable" data-action="sort-by" data-column="updated">
                             更新日時
                             <span class="sort-indicator" data-column="updated"></span>
                         </th>
@@ -108,7 +108,7 @@
                                 </td>
                                 <td class="col-name">
                                     <div class="product-name">
-                                        <a href="@Url.Action("Details", "Products", new { id = product.Id })" class="product-link">
+                                        <a asp-action="Details" asp-controller="Products" asp-route-id="@product.Id" class="product-link">
                                             @product.Name
                                         </a>
                                     </div>
@@ -142,19 +142,19 @@
                                 </td>
                                 <td class="col-actions">
                                     <div class="action-buttons">
-                                        <a href="@Url.Action("Details", "Products", new { id = product.Id })" 
+                                        <a asp-action="Details" asp-controller="Products" asp-route-id="@product.Id"
                                            class="btn btn-info btn-sm" 
                                            title="詳細表示">
                                             詳細
                                         </a>
-                                        <a href="@Url.Action("Edit", "Products", new { id = product.Id })" 
+                                        <a asp-action="Edit" asp-controller="Products" asp-route-id="@product.Id"
                                            class="btn btn-warning btn-sm" 
                                            title="編集">
                                             編集
                                         </a>
                                         <button type="button" 
                                                 class="btn btn-danger btn-sm" 
-                                                onclick="confirmDeleteProduct(@product.Id, '@product.Name')"
+                                                data-action="confirm-delete-product" data-product-id="@product.Id" data-product-name="@product.Name"
                                                 title="削除">
                                             削除
                                         </button>
@@ -171,7 +171,7 @@
                                     <div class="no-data-icon">📦</div>
                                     <h3>商品が見つかりません</h3>
                                     <p>検索条件を変更するか、新しい商品を登録してください。</p>
-                                    <a href="@Url.Action("Create", "Products")" class="btn btn-primary">
+                                    <a asp-action="Create" asp-controller="Products" class="btn btn-primary">
                                         商品を登録する
                                     </a>
                                 </div>
@@ -194,7 +194,7 @@
     <div id="paginationContainer" class="pagination-wrapper">
         @if (Model?.Paging != null)
         {
-            @Html.Partial("_Pagination", Model.Paging)
+            <partial name="_Pagination" model="Model.Paging" />
         }
     </div>
 </div>

@@ -752,6 +752,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return false;
     });
+    
+    // ソート順変更
+    Utils.onAll('[data-action="change-sort-order"]', 'change', function() {
+        const sortValue = this.value;
+        if (sortValue && typeof changeSortOrder === 'function') {
+            changeSortOrder(sortValue);
+        }
+    });
+    
+    // カテゴリレベル更新
+    Utils.onAll('[data-action="update-category-level"]', 'change', function() {
+        if (typeof updateCategoryLevel === 'function') {
+            updateCategoryLevel();
+        }
+    });
 });
 
 // Utils をグローバルに公開

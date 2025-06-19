@@ -10,11 +10,11 @@
         <p class="page-description">カテゴリ「@Model.Name」の情報を編集します。</p>
     </div>
     <div class="page-actions">
-        <a href="@Url.Action("Details", "Categories", new { id = Model.Id })" class="btn btn-info">
+        <a asp-action="Details" asp-controller="Categories" asp-route-id="@Model.Id" class="btn btn-info">
             <span class="btn-icon">👁</span>
             詳細表示
         </a>
-        <a href="@Url.Action("Index", "Categories")" class="btn btn-secondary">
+        <a asp-action="Index" asp-controller="Categories" class="btn btn-secondary">
             <span class="btn-icon">←</span>
             カテゴリ一覧に戻る
         </a>
@@ -25,13 +25,13 @@
 <nav class="breadcrumb-nav" aria-label="パンくずナビ">
     <ol class="breadcrumb">
         <li class="breadcrumb-item">
-            <a href="@Url.Action("Index", "Home")">ホーム</a>
+            <a asp-action="Index" asp-controller="Home">ホーム</a>
         </li>
         <li class="breadcrumb-item">
-            <a href="@Url.Action("Index", "Categories")">カテゴリ一覧</a>
+            <a asp-action="Index" asp-controller="Categories">カテゴリ一覧</a>
         </li>
         <li class="breadcrumb-item">
-            <a href="@Url.Action("Details", "Categories", new { id = Model.Id })">@Model.Name</a>
+            <a asp-action="Details" asp-controller="Categories" asp-route-id="@Model.Id">@Model.Name</a>
         </li>
         <li class="breadcrumb-item active" aria-current="page">
             編集
@@ -42,13 +42,14 @@
 <!-- カテゴリ編集フォーム -->
 <div class="form-container">
     <form asp-action="Edit" 
+          asp-controller="Categories"
           method="post" 
           id="categoryEditForm" 
           class="category-form"
+          asp-antiforgery="true"
           novalidate>
         
-        @Html.AntiForgeryToken()
-        @Html.HiddenFor(model => model.Id)
+        <input asp-for="Id" type="hidden" />
         
         <!-- 編集履歴情報 -->
         <div class="form-section info-section">
@@ -107,22 +108,12 @@
             <div class="form-group">
                 <label asp-for="ParentCategoryId" class="form-label">親カテゴリ</label>
                 <select asp-for="ParentCategoryId" 
+                        asp-items="@(new SelectList(Model.ParentCategories ?? new List<Web.Essentials.App.ViewModels.CategorySelectItem>(), "Id", "FullPath", Model.ParentCategoryId))"
                         class="form-select" 
                         id="parentCategorySelect"
-                        onchange="updateCategoryLevel()"
+                        data-action="update-category-level"
                         disabled="@(Model.ChildCategories?.Any() == true)">
                     <option value="">ルートカテゴリとして設定</option>
-                    @if (Model.ParentCategories?.Any() == true)
-                    {
-                        @foreach (var parentCategory in Model.ParentCategories)
-                        {
-                            <option value="@parentCategory.Id" 
-                                    data-level="@parentCategory.Level"
-                                    selected="@(Model.ParentCategoryId == parentCategory.Id)">
-                                @parentCategory.FullPath
-                            </option>
-                        }
-                    }
                 </select>
                 <span asp-validation-for="ParentCategoryId" class="validation-error"></span>
                 @if (Model.ChildCategories?.Any() == true)
@@ -165,7 +156,7 @@
                             <div class="child-category-item">
                                 <span class="child-category-name">@child.Name</span>
                                 <span class="child-category-path">(@child.FullPath)</span>
-                                <a href="@Url.Action("Edit", "Categories", new { id = child.Id })" 
+                                <a asp-action="Edit" asp-controller="Categories" asp-route-id="@child.Id" 
                                    class="btn btn-sm btn-outline">編集</a>
                             </div>
                         }
@@ -175,7 +166,7 @@
         </div>
         
         <!-- カテゴリフォーム（部分ビュー） -->
-        @Html.Partial("_CategoryForm", Model)
+        <partial name="_CategoryForm" model="Model" />
         
         <!-- 変更履歴セクション -->
         <div class="form-section">

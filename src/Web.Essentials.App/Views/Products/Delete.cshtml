@@ -15,13 +15,13 @@
 <nav class="breadcrumb-nav" aria-label="パンくずナビ">
     <ol class="breadcrumb">
         <li class="breadcrumb-item">
-            <a href="@Url.Action("Index", "Home")">ホーム</a>
+            <a asp-action="Index" asp-controller="Home">ホーム</a>
         </li>
         <li class="breadcrumb-item">
-            <a href="@Url.Action("Index", "Products")">商品一覧</a>
+            <a asp-action="Index" asp-controller="Products">商品一覧</a>
         </li>
         <li class="breadcrumb-item">
-            <a href="@Url.Action("Details", "Products", new { id = Model.Id })">@Model.Name</a>
+            <a asp-action="Details" asp-controller="Products" asp-route-id="@Model.Id">@Model.Name</a>
         </li>
         <li class="breadcrumb-item active" aria-current="page">
             削除確認
@@ -199,9 +199,8 @@
     
     <!-- 削除実行フォーム -->
     <div class="deletion-form">
-        <form asp-action="Delete" method="post" id="deleteForm" class="delete-confirmation-form">
-            @Html.AntiForgeryToken()
-            @Html.HiddenFor(model => model.Id)
+        <form asp-action="Delete" asp-controller="Products" method="post" id="deleteForm" class="delete-confirmation-form" asp-antiforgery="true">
+            <input asp-for="Id" type="hidden" />
             
             <!-- 削除確認チェックボックス -->
             <div class="confirmation-checks">
@@ -244,12 +243,12 @@
                         <span class="btn-icon">🗑️</span>
                         商品を削除する
                     </button>
-                    <a href="@Url.Action("Details", "Products", new { id = Model.Id })" 
+                    <a asp-action="Details" asp-controller="Products" asp-route-id="@Model.Id" 
                        class="btn btn-secondary btn-large">
                         <span class="btn-icon">↩️</span>
                         キャンセル（詳細に戻る）
                     </a>
-                    <a href="@Url.Action("Index", "Products")" 
+                    <a asp-action="Index" asp-controller="Products" 
                        class="btn btn-light btn-large">
                         <span class="btn-icon">📋</span>
                         商品一覧に戻る

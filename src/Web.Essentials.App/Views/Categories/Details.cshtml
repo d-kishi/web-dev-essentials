@@ -10,7 +10,7 @@
         <p class="page-description">カテゴリ「@Model.Name」の詳細情報を表示します。</p>
     </div>
     <div class="page-actions">
-        <a href="@Url.Action("Edit", "Categories", new { id = Model.Id })" class="btn btn-warning">
+        <a asp-action="Edit" asp-controller="Categories" asp-route-id="@Model.Id" class="btn btn-warning">
             <span class="btn-icon">✏</span>
             編集
         </a>
@@ -21,7 +21,7 @@
             <span class="btn-icon">🗑</span>
             削除
         </button>
-        <a href="@Url.Action("Index", "Categories")" class="btn btn-secondary">
+        <a asp-action="Index" asp-controller="Categories" class="btn btn-secondary">
             <span class="btn-icon">←</span>
             カテゴリ一覧に戻る
         </a>
@@ -32,10 +32,10 @@
 <nav class="breadcrumb-nav" aria-label="パンくずナビ">
     <ol class="breadcrumb">
         <li class="breadcrumb-item">
-            <a href="@Url.Action("Index", "Home")">ホーム</a>
+            <a asp-action="Index" asp-controller="Home">ホーム</a>
         </li>
         <li class="breadcrumb-item">
-            <a href="@Url.Action("Index", "Categories")">カテゴリ一覧</a>
+            <a asp-action="Index" asp-controller="Categories">カテゴリ一覧</a>
         </li>
         @if (!string.IsNullOrEmpty(Model.FullPath))
         {
@@ -153,12 +153,12 @@
             <!-- アクションボタン -->
             <div class="category-actions">
                 <div class="action-buttons">
-                    <a href="@Url.Action("Edit", "Categories", new { id = Model.Id })" 
+                    <a asp-action="Edit" asp-controller="Categories" asp-route-id="@Model.Id" 
                        class="btn btn-primary btn-large">
                         <span class="btn-icon">✏</span>
                         このカテゴリを編集
                     </a>
-                    <a href="@Url.Action("Create", "Categories", new { parentId = Model.Id })" 
+                    <a asp-action="Create" asp-controller="Categories" asp-route-parentId="@Model.Id" 
                        class="btn btn-outline btn-large">
                         <span class="btn-icon">➕</span>
                         子カテゴリを作成
@@ -216,7 +216,7 @@
                                     </div>
                                     <div class="product-info">
                                         <h4 class="product-name">
-                                            <a href="@Url.Action("Details", "Products", new { id = product.Id })">
+                                            <a asp-action="Details" asp-controller="Products" asp-route-id="@product.Id">
                                                 @product.Name
                                             </a>
                                         </h4>
@@ -243,9 +243,9 @@
                                         </div>
                                     </div>
                                     <div class="product-actions">
-                                        <a href="@Url.Action("Details", "Products", new { id = product.Id })" 
+                                        <a asp-action="Details" asp-controller="Products" asp-route-id="@product.Id" 
                                            class="btn btn-info btn-sm">詳細</a>
-                                        <a href="@Url.Action("Edit", "Products", new { id = product.Id })" 
+                                        <a asp-action="Edit" asp-controller="Products" asp-route-id="@product.Id" 
                                            class="btn btn-warning btn-sm">編集</a>
                                     </div>
                                 </div>
@@ -254,7 +254,7 @@
                         
                         <!-- 商品一覧へのリンク -->
                         <div class="view-all-products">
-                            <a href="@Url.Action("Index", "Products", new { categoryId = Model.Id })" 
+                            <a asp-action="Index" asp-controller="Products" asp-route-categoryId="@Model.Id" 
                                class="btn btn-outline">
                                 このカテゴリの商品をすべて表示
                             </a>
@@ -267,11 +267,11 @@
                             <h3>このカテゴリには商品がありません</h3>
                             <p>新しい商品を登録するか、既存の商品をこのカテゴリに関連付けてください。</p>
                             <div class="action-buttons">
-                                <a href="@Url.Action("Create", "Products", new { categoryId = Model.Id })" 
+                                <a asp-action="Create" asp-controller="Products" asp-route-categoryId="@Model.Id" 
                                    class="btn btn-primary">
                                     新しい商品を登録
                                 </a>
-                                <a href="@Url.Action("Index", "Products")" 
+                                <a asp-action="Index" asp-controller="Products" 
                                    class="btn btn-outline">
                                     既存商品を関連付け
                                 </a>
@@ -292,7 +292,7 @@
                                 <div class="child-category-card">
                                     <div class="child-category-header">
                                         <h4 class="child-category-name">
-                                            <a href="@Url.Action("Details", "Categories", new { id = childCategory.Id })">
+                                            <a asp-action="Details" asp-controller="Categories" asp-route-id="@childCategory.Id">
                                                 @childCategory.Name
                                             </a>
                                         </h4>
@@ -318,9 +318,9 @@
                                         }
                                     </div>
                                     <div class="child-category-actions">
-                                        <a href="@Url.Action("Details", "Categories", new { id = childCategory.Id })" 
+                                        <a asp-action="Details" asp-controller="Categories" asp-route-id="@childCategory.Id" 
                                            class="btn btn-info btn-sm">詳細</a>
-                                        <a href="@Url.Action("Edit", "Categories", new { id = childCategory.Id })" 
+                                        <a asp-action="Edit" asp-controller="Categories" asp-route-id="@childCategory.Id" 
                                            class="btn btn-warning btn-sm">編集</a>
                                     </div>
                                 </div>
@@ -329,7 +329,7 @@
                         
                         <!-- 子カテゴリ追加 -->
                         <div class="add-child-category">
-                            <a href="@Url.Action("Create", "Categories", new { parentId = Model.Id })" 
+                            <a asp-action="Create" asp-controller="Categories" asp-route-parentId="@Model.Id" 
                                class="btn btn-primary">
                                 <span class="btn-icon">➕</span>
                                 新しい子カテゴリを作成
@@ -350,7 +350,7 @@
                             <div class="parent-category-card">
                                 <div class="parent-category-info">
                                     <h4 class="parent-category-name">
-                                        <a href="@Url.Action("Details", "Categories", new { id = Model.ParentCategory.Id })">
+                                        <a asp-action="Details" asp-controller="Categories" asp-route-id="@Model.ParentCategory.Id">
                                             @Model.ParentCategory.Name
                                         </a>
                                     </h4>
@@ -370,7 +370,7 @@
                     <div class="hierarchy-section">
                         <h3 class="hierarchy-title">階層構造</h3>
                         <div class="hierarchy-tree">
-                            @Html.Partial("_CategoryHierarchy", new List<dynamic> { Model })
+                            <partial name="_CategoryHierarchy" model="new List<dynamic> { Model }" />
                         </div>
                     </div>
                     
@@ -389,7 +389,7 @@
                                         }
                                         else
                                         {
-                                            <a href="@Url.Action("Details", "Categories", new { id = sibling.Id })" 
+                                            <a asp-action="Details" asp-controller="Categories" asp-route-id="@sibling.Id" 
                                                class="sibling-link">
                                                 @sibling.Name
                                             </a>

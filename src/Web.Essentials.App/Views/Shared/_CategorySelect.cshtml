@@ -56,26 +56,60 @@
     
     <!-- 選択リストモード -->
     <div id="selectMode" class="category-mode select-mode active">
-        <select name="@fieldName" 
-                id="@fieldName" 
-                class="form-select category-select"
-                @(isRequired ? "required" : "")
-                @(allowMultiple ? "multiple" : "")
-                data-category-select="true">
-            @if (!allowMultiple)
+        @if (allowMultiple)
+        {
+            @if (isRequired)
             {
-                <option value="">カテゴリを選択してください</option>
+                <select name="@fieldName" 
+                        id="@fieldName" 
+                        class="form-select category-select"
+                        asp-items="@(new SelectList(categories.OrderBy(c => c.Level).ThenBy(c => c.Name).Select(c => new { Value = c.Id, Text = $"{new string('　', c.Level * 2)}{c.Name}", Level = c.Level, FullPath = c.FullPath }), "Value", "Text", selectedCategoryId))"
+                        required
+                        multiple
+                        data-category-select="true">
+                </select>
             }
-            @foreach (var category in categories.OrderBy(c => c.Level).ThenBy(c => c.Name))
+            else
             {
-                <option value="@category.Id" 
-                        data-level="@category.Level"
-                        data-full-path="@category.FullPath"
-                        selected="@(selectedCategoryId == category.Id)">
-                    @(new string('　', category.Level * 2))@category.Name
-                </option>
+                <select name="@fieldName" 
+                        id="@fieldName" 
+                        class="form-select category-select"
+                        asp-items="@(new SelectList(categories.OrderBy(c => c.Level).ThenBy(c => c.Name).Select(c => new { Value = c.Id, Text = $"{new string('　', c.Level * 2)}{c.Name}", Level = c.Level, FullPath = c.FullPath }), "Value", "Text", selectedCategoryId))"
+                        multiple
+                        data-category-select="true">
+                </select>
             }
-        </select>
+        }
+        else
+        {
+            @if (isRequired)
+            {
+                <select name="@fieldName" 
+                        id="@fieldName" 
+                        class="form-select category-select"
+                        asp-items="@(new SelectList(categories.OrderBy(c => c.Level).ThenBy(c => c.Name).Select(c => new { Value = c.Id, Text = $"{new string('　', c.Level * 2)}{c.Name}", Level = c.Level, FullPath = c.FullPath }), "Value", "Text", selectedCategoryId))"
+                        required
+                        data-category-select="true">
+                    @if (!allowMultiple)
+                    {
+                        <option value="">カテゴリを選択してください</option>
+                    }
+                </select>
+            }
+            else
+            {
+                <select name="@fieldName" 
+                        id="@fieldName" 
+                        class="form-select category-select"
+                        asp-items="@(new SelectList(categories.OrderBy(c => c.Level).ThenBy(c => c.Name).Select(c => new { Value = c.Id, Text = $"{new string('　', c.Level * 2)}{c.Name}", Level = c.Level, FullPath = c.FullPath }), "Value", "Text", selectedCategoryId))"
+                        data-category-select="true">
+                    @if (!allowMultiple)
+                    {
+                        <option value="">カテゴリを選択してください</option>
+                    }
+                </select>
+            }
+        }
         <div class="selected-category-info" id="selectedCategoryInfo" style="display: none;">
             <div class="info-label">選択中のカテゴリ:</div>
             <div class="info-path" id="selectedCategoryPath"></div>
@@ -88,7 +122,7 @@
             <div id="categoryTree" class="category-tree">
                 @if (categories.Any())
                 {
-                    @Html.Partial("_CategoryHierarchy", categories.Where(c => c.Level == 0))
+                    <partial name="_CategoryHierarchy" model="categories.Where(c => c.Level == 0)" />
                 }
                 else
                 {
@@ -99,7 +133,7 @@
             </div>
         </div>
         <!-- 隠しフィールド（ツリーモード用） -->
-        <input type="hidden" name="@fieldName" id="@(fieldName)_Tree" value="@selectedCategoryId" />
+        <input type="hidden" name="@fieldName" id="@(fieldName)_Tree" value="@selectedCategoryId" asp-for="@fieldName" />
     </div>
     
     <!-- 複数選択モード -->
@@ -110,7 +144,7 @@
                 @foreach (var category in categories.OrderBy(c => c.Level).ThenBy(c => c.Name))
                 {
                     <div class="category-checkbox-item level-@category.Level" data-category-id="@category.Id">
-                        <label class="checkbox-label">
+                        <label class="checkbox-label" asp-for="@fieldName">
                             <input type="checkbox" 
                                    name="@fieldName" 
                                    value="@category.Id" 

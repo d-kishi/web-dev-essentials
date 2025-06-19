@@ -10,7 +10,7 @@
         <p class="page-description">新しいカテゴリを登録します。必須項目を入力してください。</p>
     </div>
     <div class="page-actions">
-        <a href="@Url.Action("Index", "Categories")" class="btn btn-secondary">
+        <a asp-action="Index" asp-controller="Categories" class="btn btn-secondary">
             <span class="btn-icon">←</span>
             カテゴリ一覧に戻る
         </a>
@@ -21,10 +21,10 @@
 <nav class="breadcrumb-nav" aria-label="パンくずナビ">
     <ol class="breadcrumb">
         <li class="breadcrumb-item">
-            <a href="@Url.Action("Index", "Home")">ホーム</a>
+            <a asp-action="Index" asp-controller="Home">ホーム</a>
         </li>
         <li class="breadcrumb-item">
-            <a href="@Url.Action("Index", "Categories")">カテゴリ一覧</a>
+            <a asp-action="Index" asp-controller="Categories">カテゴリ一覧</a>
         </li>
         <li class="breadcrumb-item active" aria-current="page">
             カテゴリ登録
@@ -35,12 +35,13 @@
 <!-- カテゴリ登録フォーム -->
 <div class="form-container">
     <form asp-action="Create" 
+          asp-controller="Categories"
           method="post" 
           id="categoryCreateForm" 
           class="category-form"
+          asp-antiforgery="true"
           novalidate>
         
-        @Html.AntiForgeryToken()
         
         <!-- 親カテゴリ選択セクション -->
         <div class="form-section">
@@ -48,21 +49,11 @@
             <div class="form-group">
                 <label asp-for="ParentCategoryId" class="form-label">親カテゴリ</label>
                 <select asp-for="ParentCategoryId" 
+                        asp-items="@(new SelectList(Model.ParentCategories ?? new List<Web.Essentials.App.ViewModels.CategorySelectItem>(), "Id", "FullPath", Model.ParentCategoryId))"
                         class="form-select" 
                         id="parentCategorySelect"
-                        onchange="updateCategoryLevel()">
+                        data-action="update-category-level">
                     <option value="">ルートカテゴリとして作成</option>
-                    @if (Model.ParentCategories?.Any() == true)
-                    {
-                        @foreach (var parentCategory in Model.ParentCategories)
-                        {
-                            <option value="@parentCategory.Id" 
-                                    data-level="@parentCategory.Level"
-                                    selected="@(Model.ParentCategoryId == parentCategory.Id)">
-                                @parentCategory.FullPath
-                            </option>
-                        }
-                    }
                 </select>
                 <span asp-validation-for="ParentCategoryId" class="validation-error"></span>
                 <div class="field-help">
@@ -87,7 +78,7 @@
         </div>
         
         <!-- カテゴリフォーム（部分ビュー） -->
-        @Html.Partial("_CategoryForm", Model)
+        <partial name="_CategoryForm" model="Model" />
         
         <!-- フォーム操作ボタン -->
         <div class="form-actions">
