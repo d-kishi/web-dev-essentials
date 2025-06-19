@@ -25,8 +25,8 @@
       "launchBrowser": {
         "enabled": true,
         "windows": {
-          "command": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-          "args": "--remote-debugging-port=9222 --user-data-dir=\"${workspaceFolder}\\.vscode\\chrome-debug\" --new-window --no-first-run --disable-default-apps --disable-extensions https://localhost:7136"
+          "command": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+          "args": "--remote-debugging-port=9222 --user-data-dir=\"${workspaceFolder}\\.vscode\\edge-debug\" --new-window --no-first-run --disable-default-apps --disable-extensions https://localhost:7136"
         },
         "linux": {
           "command": "google-chrome",
