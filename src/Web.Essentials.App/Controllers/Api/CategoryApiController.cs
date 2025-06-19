@@ -55,25 +55,14 @@ public class CategoryApiController : ControllerBase
             // 全カテゴリを取得（実際のプロジェクトではDBでフィルタリング・ページングを行う）
             var allCategories = await _categoryRepository.GetAllAsync();
 
-            // 検索条件でフィルタリング
-            // 無条件検索（キーワードが空）の場合は全件を取得し、フロントエンドで階層表示処理
-            var filteredCategories = allCategories.AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(searchKeyword))
-            {
-                filteredCategories = filteredCategories.Where(c => 
-                    c.Name.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase) ||
-                    (!string.IsNullOrEmpty(c.Description) && c.Description.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase)));
-            }
-            // キーワードが空の場合はフィルタリングせず、全カテゴリを返す
-
-            // 総件数を取得
-            var totalCount = filteredCategories.Count();
-
-            // 階層表示では全カテゴリを取得（ページング無し）
-            var pagedCategories = filteredCategories
+            // 階層表示では検索キーワードの有無に関わらず、常に全カテゴリを取得
+            // フロントエンド側で検索結果フィルタリングと階層構築を行う
+            var pagedCategories = allCategories
                 .OrderByDescending(c => c.UpdatedAt)
                 .ToList();
+
+            // 総件数は全カテゴリ数
+            var totalCount = pagedCategories.Count;
 
             // DTOに変換
             var categoryDTOs = pagedCategories.Select(c => new CategoryDto

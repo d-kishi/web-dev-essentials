@@ -138,19 +138,9 @@ async function loadCategoryList() {
             params.append('searchKeyword', currentSearchParams.searchKeyword.trim());
         }
         
-        // レベルや親IDの条件は使用しない（常に全階層を取得）
-        // if (currentSearchParams.level !== null) {
-        //     params.append('level', currentSearchParams.level);
-        // }
-        // if (currentSearchParams.parentId !== null) {
-        //     params.append('parentId', currentSearchParams.parentId);
-        // }
+        const apiUrl = `/api/categories?${params.toString()}`;
         
-        // ページングパラメーターは不要（階層表示では全データを取得）
-        // params.append('page', currentSearchParams.page);
-        // params.append('pageSize', currentSearchParams.pageSize);
-        
-        const response = await fetch(`/api/categories?${params.toString()}`);
+        const response = await fetch(apiUrl);
         const result = await response.json();
         
         if (result.success) {
@@ -178,6 +168,7 @@ function updateCategoryList(data) {
     // 検索結果の場合はdata.categories、そうでない場合は配列として扱う
     const categories = data.categories || data;
     
+    
     if (!Array.isArray(categories) || categories.length === 0) {
         // データが0件の場合のメッセージ表示
         treeContainer.innerHTML = `
@@ -195,35 +186,40 @@ function updateCategoryList(data) {
         // 常に同じツリー構造表示処理を使用
         // 検索キーワードがある場合は、検索にマッチするカテゴリとその関連階層を表示
         // 検索キーワードがない場合は、全カテゴリを階層表示
-        console.log('updateCategoryList - 受信データ:', categories);
-        console.log('updateCategoryList - 検索キーワード:', currentSearchParams.searchKeyword);
-        
         let displayCategories = categories;
         
         if (currentSearchParams.searchKeyword && currentSearchParams.searchKeyword.trim() !== '') {
-            console.log('検索結果フィルタリング実行');
             displayCategories = getSearchResultsWithHierarchy(categories, currentSearchParams.searchKeyword.trim());
-        } else {
-            console.log('全カテゴリ表示モード');
         }
         
         // カテゴリを階層構造に沿ってソート（親→子の順序）
         const sortedCategories = sortCategoriesHierarchically(displayCategories);
-        console.log('ソート済みカテゴリ:', sortedCategories);
         
-        // 各カテゴリの深度を計算
+        // 各カテゴリの深度を計算（検索結果でも正しい階層深度を維持）
         const categoryDepths = new Map();
         
-        sortedCategories.forEach(category => {
-            // 親カテゴリとのレベル差から深度を計算
-            if (category.parentCategoryId) {
-                const parentDepth = categoryDepths.get(category.parentCategoryId) || 0;
-                categoryDepths.set(category.id, parentDepth + 1);
-            } else {
-                categoryDepths.set(category.id, 0);
+        // 全カテゴリから深度を計算（検索結果に含まれていないカテゴリも考慮）
+        function calculateDepth(categoryId, allCategoriesForDepth) {
+            if (categoryDepths.has(categoryId)) {
+                return categoryDepths.get(categoryId);
             }
             
-            const depth = categoryDepths.get(category.id);
+            const category = allCategoriesForDepth.find(c => c.id === categoryId);
+            if (!category || !category.parentCategoryId) {
+                categoryDepths.set(categoryId, 0);
+                return 0;
+            }
+            
+            const parentDepth = calculateDepth(category.parentCategoryId, allCategoriesForDepth);
+            const depth = parentDepth + 1;
+            categoryDepths.set(categoryId, depth);
+            return depth;
+        }
+        
+        // 元の全カテゴリリストを使用して正しい深度を計算
+        sortedCategories.forEach(category => {
+            const depth = calculateDepth(category.id, categories);
+            
             // 常にcreateHierarchyNodeを使用してツリー構造を生成
             const treeNode = createHierarchyNode(category, depth, currentSearchParams.searchKeyword);
             treeContainer.appendChild(treeNode);
@@ -265,6 +261,7 @@ function getSearchResultsWithHierarchy(allCategories, searchKeyword) {
     // マッチしたカテゴリの親階層をすべて追加
     function addAncestors(categoryId) {
         const category = allCategories.find(c => c.id === categoryId);
+        
         if (category && category.parentCategoryId) {
             relatedCategoryIds.add(category.parentCategoryId);
             addAncestors(category.parentCategoryId);
@@ -344,11 +341,11 @@ function sortCategoriesHierarchically(categories) {
 function createHierarchyNode(category, depth = 0, searchKeyword = '') {
     const treeItem = document.createElement('div');
     
-    // 検索結果か通常表示かでクラス名を決定
-    if (searchKeyword) {
-        treeItem.className = 'tree-item search-result';
-    } else {
-        treeItem.className = 'tree-item hierarchy-item';
+    // 常に階層構造表示クラスを適用（検索結果でもツリー構造を維持）
+    treeItem.className = 'tree-item hierarchy-item';
+    if (searchKeyword && searchKeyword.trim() !== '') {
+        // 検索結果の場合は追加クラスを付与
+        treeItem.classList.add('search-result');
     }
     
     treeItem.setAttribute('data-category-id', category.id);
@@ -368,16 +365,24 @@ function createHierarchyNode(category, depth = 0, searchKeyword = '') {
         }
     }
     
-    // 検索キーワードがある場合はハイライト処理を適用
-    const displayName = searchKeyword && searchKeyword.trim() !== '' 
-        ? highlightSearchTerm(category.name, searchKeyword.trim())
-        : category.name;
+    // 検索キーワードがある場合は、マッチするカテゴリのみハイライト処理を適用
+    let displayName = category.name;
+    let displayDescription = category.description || '';
     
-    const displayDescription = category.description 
-        ? (searchKeyword && searchKeyword.trim() !== '' 
-            ? highlightSearchTerm(category.description, searchKeyword.trim())
-            : category.description)
-        : '';
+    if (searchKeyword && searchKeyword.trim() !== '') {
+        // このカテゴリが検索キーワードにマッチするかチェック
+        const keyword = searchKeyword.trim().toLowerCase();
+        const nameMatches = category.name.toLowerCase().includes(keyword);
+        const descMatches = category.description && category.description.toLowerCase().includes(keyword);
+        
+        if (nameMatches) {
+            displayName = highlightSearchTerm(category.name, searchKeyword.trim());
+        }
+        
+        if (descMatches && category.description) {
+            displayDescription = highlightSearchTerm(category.description, searchKeyword.trim());
+        }
+    }
     
     treeItem.innerHTML = `
         <div class="tree-item-content">
