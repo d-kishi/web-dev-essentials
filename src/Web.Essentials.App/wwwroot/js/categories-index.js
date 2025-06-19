@@ -368,6 +368,17 @@ function createHierarchyNode(category, depth = 0, searchKeyword = '') {
         }
     }
     
+    // 検索キーワードがある場合はハイライト処理を適用
+    const displayName = searchKeyword && searchKeyword.trim() !== '' 
+        ? highlightSearchTerm(category.name, searchKeyword.trim())
+        : category.name;
+    
+    const displayDescription = category.description 
+        ? (searchKeyword && searchKeyword.trim() !== '' 
+            ? highlightSearchTerm(category.description, searchKeyword.trim())
+            : category.description)
+        : '';
+    
     treeItem.innerHTML = `
         <div class="tree-item-content">
             <div class="tree-indent">
@@ -377,8 +388,8 @@ function createHierarchyNode(category, depth = 0, searchKeyword = '') {
             <div class="category-info">
                 <div class="category-main">
                     <span class="level-badge">L${category.level || 0}</span>
-                    <a href="/Categories/Details/${category.id}" class="category-name">${category.name}</a>
-                    ${category.description ? `<span class="category-description">- ${category.description}</span>` : ''}
+                    <a href="/Categories/Details/${category.id}" class="category-name">${displayName}</a>
+                    ${displayDescription ? `<span class="category-description">- ${displayDescription}</span>` : ''}
                 </div>
                 <div class="category-meta">
                     <span class="product-count">商品数: ${category.productCount || 0}</span>

@@ -70,11 +70,9 @@ public class CategoryApiController : ControllerBase
             // 総件数を取得
             var totalCount = filteredCategories.Count();
 
-            // ページング処理
+            // 階層表示では全カテゴリを取得（ページング無し）
             var pagedCategories = filteredCategories
                 .OrderByDescending(c => c.UpdatedAt)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
                 .ToList();
 
             // DTOに変換
