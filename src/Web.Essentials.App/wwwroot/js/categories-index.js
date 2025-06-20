@@ -5,12 +5,7 @@
 
 // 現在の検索条件を保持するグローバル変数
 let currentSearchParams = {
-    searchKeyword: '',
-    level: null,
-    parentId: null,
-    page: 1,
-    pageSize: 20,
-    sortBy: null // ソート機能は使用しない
+    searchKeyword: ''
 };
 
 /**
@@ -90,7 +85,6 @@ function performSearch() {
     const searchKeyword = document.getElementById('searchKeyword').value || '';
     
     currentSearchParams.searchKeyword = searchKeyword.trim();
-    currentSearchParams.page = 1; // 検索時は1ページ目に戻る
     
     // キーワード検索、無条件検索に関わらず同じ処理フローでAPIから取得
     loadCategoryList();
@@ -107,12 +101,7 @@ function resetSearch() {
     }
     
     currentSearchParams = {
-        searchKeyword: '',
-        level: null,
-        parentId: null,
-        page: 1,
-        pageSize: currentSearchParams.pageSize,
-        sortBy: null // ソート機能は使用しない
+        searchKeyword: ''
     };
     
     // リセット時は無条件検索と同じ処理フロー（APIから取得）
@@ -159,15 +148,11 @@ async function loadCategoryList() {
 /**
  * カテゴリ一覧の更新
  * APIから取得したデータで画面を更新
- * @param {Object} data - APIレスポンスデータ
+ * @param {Array} categories - APIから取得したカテゴリ配列
  */
-function updateCategoryList(data) {
+function updateCategoryList(categories) {
     const treeContainer = document.getElementById('categoryTree');
-    if (!treeContainer || !data) return;
-    
-    // 検索結果の場合はdata.categories、そうでない場合は配列として扱う
-    const categories = data.categories || data;
-    
+    if (!treeContainer) return;
     
     if (!Array.isArray(categories) || categories.length === 0) {
         // データが0件の場合のメッセージ表示
@@ -183,22 +168,13 @@ function updateCategoryList(data) {
         // カテゴリ一覧をツリー構造で表示
         treeContainer.innerHTML = '';
         
-        // 常に同じツリー構造表示処理を使用
-        // 検索キーワードがある場合は、検索にマッチするカテゴリとその関連階層を表示
-        // 検索キーワードがない場合は、全カテゴリを階層表示
-        let displayCategories = categories;
+        // バックエンドから取得したカテゴリをそのまま表示
+        // （バックエンドでフィルタリング済み）
+        const sortedCategories = sortCategoriesHierarchically(categories);
         
-        if (currentSearchParams.searchKeyword && currentSearchParams.searchKeyword.trim() !== '') {
-            displayCategories = getSearchResultsWithHierarchy(categories, currentSearchParams.searchKeyword.trim());
-        }
-        
-        // カテゴリを階層構造に沿ってソート（親→子の順序）
-        const sortedCategories = sortCategoriesHierarchically(displayCategories);
-        
-        // 各カテゴリの深度を計算（検索結果でも正しい階層深度を維持）
+        // 各カテゴリの深度を計算
         const categoryDepths = new Map();
         
-        // 全カテゴリから深度を計算（検索結果に含まれていないカテゴリも考慮）
         function calculateDepth(categoryId, allCategoriesForDepth) {
             if (categoryDepths.has(categoryId)) {
                 return categoryDepths.get(categoryId);
@@ -216,11 +192,9 @@ function updateCategoryList(data) {
             return depth;
         }
         
-        // 元の全カテゴリリストを使用して正しい深度を計算
+        // 各カテゴリのツリーノードを作成
         sortedCategories.forEach(category => {
             const depth = calculateDepth(category.id, categories);
-            
-            // 常にcreateHierarchyNodeを使用してツリー構造を生成
             const treeNode = createHierarchyNode(category, depth, currentSearchParams.searchKeyword);
             treeContainer.appendChild(treeNode);
         });
@@ -230,62 +204,6 @@ function updateCategoryList(data) {
     }
 }
 
-/**
- * 検索結果から関連する階層全体を取得
- * 検索にマッチするカテゴリとその親・子カテゴリをすべて含む階層構造を返す
- * @param {Array} allCategories - 全カテゴリ配列
- * @param {string} searchKeyword - 検索キーワード
- * @returns {Array} 関連階層を含むカテゴリ配列
- */
-function getSearchResultsWithHierarchy(allCategories, searchKeyword) {
-    if (!searchKeyword || searchKeyword.trim() === '') {
-        return allCategories;
-    }
-    
-    // 検索にマッチするカテゴリを特定
-    const matchedCategories = allCategories.filter(category => 
-        category.name.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        (category.description && category.description.toLowerCase().includes(searchKeyword.toLowerCase()))
-    );
-    
-    if (matchedCategories.length === 0) {
-        return [];
-    }
-    
-    // 関連する全カテゴリを収集するSet
-    const relatedCategoryIds = new Set();
-    
-    // マッチしたカテゴリを追加
-    matchedCategories.forEach(cat => relatedCategoryIds.add(cat.id));
-    
-    // マッチしたカテゴリの親階層をすべて追加
-    function addAncestors(categoryId) {
-        const category = allCategories.find(c => c.id === categoryId);
-        
-        if (category && category.parentCategoryId) {
-            relatedCategoryIds.add(category.parentCategoryId);
-            addAncestors(category.parentCategoryId);
-        }
-    }
-    
-    // マッチしたカテゴリの子孫をすべて追加
-    function addDescendants(categoryId) {
-        const children = allCategories.filter(c => c.parentCategoryId === categoryId);
-        children.forEach(child => {
-            relatedCategoryIds.add(child.id);
-            addDescendants(child.id);
-        });
-    }
-    
-    // すべてのマッチカテゴリに対して親と子を追加
-    matchedCategories.forEach(category => {
-        addAncestors(category.id);
-        addDescendants(category.id);
-    });
-    
-    // 関連するすべてのカテゴリを返す
-    return allCategories.filter(category => relatedCategoryIds.has(category.id));
-}
 
 /**
  * カテゴリを階層構造に沿ってソート

@@ -30,78 +30,86 @@ public class CategoryApiController : ControllerBase
     }
 
     /// <summary>
-    /// カテゴリ一覧取得（検索・ページング対応）
+    /// カテゴリ一覧取得（検索対応）
     /// Ajax通信で呼び出され、カテゴリ一覧をJSON形式で返却
+    /// 検索キーワードが指定された場合は、ヒットしたカテゴリとその祖先のみを返却
     /// </summary>
     /// <param name="searchKeyword">検索キーワード（カテゴリ名での部分一致検索）</param>
-    /// <param name="page">ページ番号（デフォルト1）</param>
-    /// <param name="pageSize">1ページあたりの件数（デフォルト10）</param>
-    /// <returns>カテゴリ一覧とページング情報を含むAPI応答</returns>
+    /// <returns>カテゴリ一覧を含むAPI応答</returns>
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<CategoryListDto>>> GetCategories(
-        [FromQuery] string? searchKeyword = null,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10)
+    public async Task<ActionResult<ApiResponse<List<CategoryDto>>>> GetCategories(
+        [FromQuery] string? searchKeyword = null)
     {
         try
         {
-            _logger.LogInformation("カテゴリ一覧取得API呼び出し。検索キーワード: {SearchKeyword}, ページ: {Page}, ページサイズ: {PageSize}",
-                searchKeyword, page, pageSize);
+            _logger.LogInformation("カテゴリ一覧取得API呼び出し。検索キーワード: {SearchKeyword}",
+                searchKeyword);
 
-            // 入力値バリデーション
-            if (page < 1) page = 1;
-            if (pageSize < 1 || pageSize > 100) pageSize = 10;
-
-            // 全カテゴリを取得（実際のプロジェクトではDBでフィルタリング・ページングを行う）
+            // 全カテゴリを取得
             var allCategories = await _categoryRepository.GetAllAsync();
+            
+            List<CategoryDto> resultCategories;
 
-            // 階層表示では検索キーワードの有無に関わらず、常に全カテゴリを取得
-            // フロントエンド側で検索結果フィルタリングと階層構築を行う
-            var pagedCategories = allCategories
-                .OrderByDescending(c => c.UpdatedAt)
-                .ToList();
-
-            // 総件数は全カテゴリ数
-            var totalCount = pagedCategories.Count;
-
-            // DTOに変換
-            var categoryDTOs = pagedCategories.Select(c => new CategoryDto
+            if (string.IsNullOrWhiteSpace(searchKeyword))
             {
-                Id = c.Id,
-                Name = c.Name,
-                Description = c.Description,
-                ParentCategoryId = c.ParentCategoryId,
-                Level = c.Level,
-                SortOrder = c.SortOrder,
-                FullPath = c.GetFullPath(),
-                ProductCount = c.ProductCategories?.Count ?? 0,
-                HasChildren = allCategories.Any(child => child.ParentCategoryId == c.Id),
-                CreatedAt = c.CreatedAt,
-                UpdatedAt = c.UpdatedAt
-            }).ToList();
-
-            // ページング情報を作成
-            var paging = new PagingDto
+                // 検索キーワードが無い場合は全カテゴリを返却
+                resultCategories = allCategories
+                    .OrderBy(c => c.Level)
+                    .ThenBy(c => c.SortOrder)
+                    .Select(c => CreateCategoryDto(c, allCategories))
+                    .ToList();
+            }
+            else
             {
-                CurrentPage = page,
-                PageSize = pageSize,
-                TotalCount = totalCount,
-                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize),
-                HasPreviousPage = page > 1,
-                HasNextPage = page < (int)Math.Ceiling((double)totalCount / pageSize)
-            };
+                // 検索キーワードに部分一致するカテゴリを取得
+                var hitCategories = allCategories
+                    .Where(c => c.Name.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                // ヒットしたカテゴリとその祖先カテゴリのIDセットを作成
+                var resultCategoryIds = new HashSet<int>();
+                
+                foreach (var hitCategory in hitCategories)
+                {
+                    // ヒットしたカテゴリ自体を追加
+                    resultCategoryIds.Add(hitCategory.Id);
+                    
+                    // 祖先カテゴリを辿って追加
+                    var currentCategory = hitCategory;
+                    while (currentCategory.ParentCategoryId.HasValue)
+                    {
+                        var parentCategory = allCategories
+                            .FirstOrDefault(c => c.Id == currentCategory.ParentCategoryId.Value);
+                        
+                        if (parentCategory != null)
+                        {
+                            resultCategoryIds.Add(parentCategory.Id);
+                            currentCategory = parentCategory;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                // 結果に含めるカテゴリを抽出してソート
+                resultCategories = allCategories
+                    .Where(c => resultCategoryIds.Contains(c.Id))
+                    .OrderBy(c => c.Level)
+                    .ThenBy(c => c.SortOrder)
+                    .Select(c => CreateCategoryDto(c, allCategories))
+                    .ToList();
+            }
 
             // レスポンスDTO作成
-            var response = new ApiResponse<CategoryListDto>
+            var response = new ApiResponse<List<CategoryDto>>
             {
                 Success = true,
-                Data = new CategoryListDto
-                {
-                    Categories = categoryDTOs,
-                    Paging = paging,
-                    SearchKeyword = searchKeyword
-                },
-                Message = "カテゴリ一覧を正常に取得しました"
+                Data = resultCategories,
+                Message = string.IsNullOrWhiteSpace(searchKeyword) 
+                    ? "カテゴリ一覧を正常に取得しました"
+                    : $"検索キーワード「{searchKeyword}」に該当するカテゴリとその祖先を取得しました（{resultCategories.Count}件）"
             };
 
             return Ok(response);
@@ -110,16 +118,40 @@ public class CategoryApiController : ControllerBase
         {
             _logger.LogError(ex, "カテゴリ一覧取得API実行中にエラーが発生しました");
             
-            var errorResponse = new ApiResponse<CategoryListDto>
+            var errorResponse = new ApiResponse<List<CategoryDto>>
             {
                 Success = false,
-                Data = null,
+                Data = new List<CategoryDto>(),
                 Message = "カテゴリ一覧の取得中にエラーが発生しました",
                 Errors = new List<ApiErrorDto> { new ApiErrorDto("サーバー内部エラーが発生しました") }
             };
 
             return StatusCode(500, errorResponse);
         }
+    }
+
+    /// <summary>
+    /// カテゴリエンティティからDTOを作成するヘルパーメソッド
+    /// </summary>
+    /// <param name="category">カテゴリエンティティ</param>
+    /// <param name="allCategories">全カテゴリリスト（子カテゴリ存在判定用）</param>
+    /// <returns>カテゴリDTO</returns>
+    private CategoryDto CreateCategoryDto(Domain.Entities.Category category, IEnumerable<Domain.Entities.Category> allCategories)
+    {
+        return new CategoryDto
+        {
+            Id = category.Id,
+            Name = category.Name,
+            Description = category.Description,
+            ParentCategoryId = category.ParentCategoryId,
+            Level = category.Level,
+            SortOrder = category.SortOrder,
+            FullPath = category.GetFullPath(),
+            ProductCount = category.ProductCategories?.Count ?? 0,
+            HasChildren = allCategories.Any(child => child.ParentCategoryId == category.Id),
+            CreatedAt = category.CreatedAt,
+            UpdatedAt = category.UpdatedAt
+        };
     }
 
     /// <summary>

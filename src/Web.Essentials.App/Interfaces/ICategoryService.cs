@@ -20,7 +20,7 @@ public interface ICategoryService
     /// </summary>
     /// <param name="searchRequest">検索条件</param>
     /// <returns>カテゴリ一覧DTO</returns>
-    Task<CategoryListDto> GetCategoriesAsync(CategorySearchRequestDto searchRequest);
+    Task<List<CategoryDto>> GetCategoriesAsync(CategorySearchRequestDto searchRequest);
 
     /// <summary>
     /// カテゴリ一覧取得（ViewModel用）

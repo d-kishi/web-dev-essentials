@@ -34,48 +34,22 @@ public class CategoryService : ICategoryService
     }
 
     /// <inheritdoc />
-    public async Task<CategoryListDto> GetCategoryListAsync(
-        string? searchKeyword = null,
-        int page = 1,
-        int pageSize = 10)
+    public async Task<List<CategoryDto>> GetCategoriesAsync(CategorySearchRequestDto searchRequest)
     {
         try
         {
-            _logger.LogInformation("カテゴリ一覧取得サービス実行。検索キーワード: {SearchKeyword}", searchKeyword);
-
-            // 入力値バリデーション
-            if (page < 1) page = 1;
-            if (pageSize < 1 || pageSize > 100) pageSize = 10;
+            _logger.LogInformation("カテゴリ一覧取得サービス実行。検索キーワード: {SearchKeyword}", searchRequest.NameTerm);
 
             // 全カテゴリを取得
             var allCategories = await _categoryRepository.GetAllAsync();
 
             // 検索・フィルタリング処理
-            var filteredCategories = FilterCategories(allCategories, searchKeyword);
-
-            // 総件数を取得
-            var totalCount = filteredCategories.Count();
-
-            // ページング処理
-            var pagedCategories = filteredCategories
-                .OrderByDescending(c => c.UpdatedAt)
-                .ThenBy(c => c.Name)  // 同じ更新日時の場合は名前順
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
+            var filteredCategories = FilterCategories(allCategories, searchRequest);
 
             // DTOに変換（商品数も含む）
-            var categoryDTOs = await ConvertToCategoryDtosAsync(pagedCategories);
+            var categoryDTOs = await ConvertToCategoryDtosAsync(filteredCategories);
 
-            // ページング情報を作成
-            var paging = CreatePagingInfo(page, pageSize, totalCount);
-
-            return new CategoryListDto
-            {
-                Categories = categoryDTOs,
-                Paging = paging,
-                SearchKeyword = searchKeyword
-            };
+            return categoryDTOs;
         }
         catch (Exception ex)
         {
@@ -240,26 +214,38 @@ public class CategoryService : ICategoryService
 
     /// <summary>
     /// カテゴリのフィルタリング処理
-    /// 検索キーワードによるカテゴリフィルタリング
+    /// 検索条件に基づいてカテゴリをフィルタリング
     /// </summary>
     /// <param name="categories">フィルタリング対象のカテゴリ一覧</param>
-    /// <param name="searchKeyword">検索キーワード</param>
+    /// <param name="searchRequest">検索条件</param>
     /// <returns>フィルタリング後のカテゴリ一覧</returns>
-    private static IQueryable<Category> FilterCategories(
+    private static IList<Category> FilterCategories(
         IEnumerable<Category> categories, 
-        string? searchKeyword)
+        CategorySearchRequestDto searchRequest)
     {
         var query = categories.AsQueryable();
 
         // 検索キーワードによるフィルタリング
-        if (!string.IsNullOrWhiteSpace(searchKeyword))
+        if (!string.IsNullOrWhiteSpace(searchRequest.NameTerm))
         {
             query = query.Where(c => 
-                c.Name.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase) ||
-                (!string.IsNullOrEmpty(c.Description) && c.Description.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase)));
+                c.Name.Contains(searchRequest.NameTerm, StringComparison.OrdinalIgnoreCase) ||
+                (!string.IsNullOrEmpty(c.Description) && c.Description.Contains(searchRequest.NameTerm, StringComparison.OrdinalIgnoreCase)));
         }
 
-        return query;
+        // レベル指定フィルタリング
+        if (searchRequest.Level.HasValue)
+        {
+            query = query.Where(c => c.Level == searchRequest.Level.Value);
+        }
+
+        // 親カテゴリID指定フィルタリング
+        if (searchRequest.ParentId.HasValue)
+        {
+            query = query.Where(c => c.ParentCategoryId == searchRequest.ParentId.Value);
+        }
+
+        return query.ToList();
     }
 
     /// <summary>
@@ -368,14 +354,6 @@ public class CategoryService : ICategoryService
     /// <inheritdoc />
     public async Task<bool> CanDeleteAsync(int id) => await CanDeleteCategoryAsync(id);
 
-    /// <inheritdoc />
-    public async Task<CategoryListDto> GetCategoriesAsync(CategorySearchRequestDto searchRequest)
-    {
-        return await GetCategoryListAsync(
-            searchRequest.NameTerm, 
-            1, // デフォルトページ
-            10); // デフォルトページサイズ
-    }
 
     /// <inheritdoc />
     public async Task<IEnumerable<CategorySelectDto>> GetCategoriesForSelectAsync()

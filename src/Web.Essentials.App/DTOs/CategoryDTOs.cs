@@ -262,27 +262,3 @@ public class CategoryBreadcrumbDto
     public bool IsLast { get; set; }
 }
 
-/// <summary>
-/// カテゴリ一覧応答DTO
-/// </summary>
-/// <remarks>
-/// カテゴリ一覧API応答用のラッパークラス
-/// カテゴリリストとページング情報を含む
-/// </remarks>
-public class CategoryListDto
-{
-    /// <summary>
-    /// カテゴリ一覧
-    /// </summary>
-    public List<CategoryDto> Categories { get; set; } = new();
-
-    /// <summary>
-    /// ページング情報
-    /// </summary>
-    public PagingDto Paging { get; set; } = new();
-
-    /// <summary>
-    /// 検索キーワード
-    /// </summary>
-    public string? SearchKeyword { get; set; }
-}
