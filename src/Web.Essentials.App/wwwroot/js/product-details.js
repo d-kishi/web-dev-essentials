@@ -25,6 +25,9 @@ function initializeProductDetails() {
     
     // イベントリスナーの設定
     setupEventListeners();
+    
+    // ボタンイベントハンドラーの設定
+    setupButtonEventHandlers();
 }
 
 /**
@@ -405,13 +408,105 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-// グローバル関数として公開
+/**
+ * ボタンイベントハンドラーの設定
+ */
+function setupButtonEventHandlers() {
+    // 商品削除ボタン（IDとdata属性ベース）
+    const deleteButton = document.getElementById('deleteProductButton');
+    if (deleteButton) {
+        deleteButton.addEventListener('click', function() {
+            const productId = deleteButton.dataset.productId;
+            const productName = deleteButton.dataset.productName;
+            confirmDeleteProduct(parseInt(productId), productName);
+        });
+    }
+    
+    // 画像モーダル表示ボタン（クラスとdata属性ベース）
+    const openImageButtons = document.querySelectorAll('.open-image-modal');
+    openImageButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const imagePath = button.dataset.imagePath;
+            const altText = button.dataset.altText || '';
+            openImageModal(imagePath, altText);
+        });
+    });
+    
+    // メイン画像変更ボタン（クラスとdata属性ベース）
+    const changeMainImageButtons = document.querySelectorAll('.change-main-image');
+    changeMainImageButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const imagePath = button.dataset.imagePath;
+            const altText = button.dataset.altText || '';
+            changeMainImage(imagePath, altText, button);
+        });
+    });
+    
+    // 商品複製ボタン（IDとdata属性ベース）
+    const duplicateButton = document.getElementById('duplicateProductButton');
+    if (duplicateButton) {
+        duplicateButton.addEventListener('click', function() {
+            const productId = duplicateButton.dataset.productId;
+            duplicateProduct(parseInt(productId));
+        });
+    }
+    
+    // 商品共有ボタン（IDとdata属性ベース）
+    const shareButton = document.getElementById('shareProductButton');
+    if (shareButton) {
+        shareButton.addEventListener('click', function() {
+            const productId = shareButton.dataset.productId;
+            const productName = shareButton.dataset.productName;
+            shareProduct(productId, productName);
+        });
+    }
+    
+    // タブ表示切り替えボタン（クラスとdata属性ベース）
+    const tabButtons = document.querySelectorAll('.tab-button');
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const tabName = button.dataset.tab;
+            if (tabName) {
+                showTab(tabName);
+            }
+        });
+    });
+    
+    // クリップボードコピーボタン（クラスとdata属性ベース）
+    const copyButtons = document.querySelectorAll('.copy-to-clipboard');
+    copyButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const copyText = button.dataset.copyText;
+            copyToClipboard(copyText);
+        });
+    });
+    
+    // 画像モーダル閉じるボタン（クラスベース）
+    const closeImageButtons = document.querySelectorAll('.close-image-modal');
+    closeImageButtons.forEach(button => {
+        button.addEventListener('click', closeImageModal);
+    });
+}
+
+// 関数名の互換性のためのエイリアス
+function openImageModal(imagePath, altText) {
+    openImageViewer(imagePath, altText);
+}
+
+function changeMainImage(imagePath, altText, element) {
+    switchMainImage(imagePath, altText, element);
+}
+
+// 互換性のためのグローバル関数公開（段階的に削除予定）
+// 新しいID/class/data属性アプローチに移行済み
 window.showTab = showTab;
 window.showImageModal = showImageModal;
 window.closeImageModal = closeImageModal;
 window.openImageViewer = openImageViewer;
 window.closeImageViewer = closeImageViewer;
 window.switchMainImage = switchMainImage;
+window.changeMainImage = changeMainImage;
+window.openImageModal = openImageModal;
 window.confirmDeleteProduct = confirmDeleteProduct;
 window.deleteProduct = deleteProduct;
 window.duplicateProduct = duplicateProduct;

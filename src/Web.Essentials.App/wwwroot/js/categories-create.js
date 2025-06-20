@@ -29,6 +29,9 @@ function initializeCategoryCreateForm() {
     
     // カテゴリ名変更時の階層パス更新
     setupNameChangeHandler();
+    
+    // ボタンイベントハンドラーの設定
+    setupButtonEventHandlers();
 }
 
 /**
@@ -323,7 +326,42 @@ function setupFormChangeDetection() {
     console.log('Form change detection setup');
 }
 
-// HTMLのonchange属性から呼び出されるグローバル関数
+/**
+ * ボタンイベントハンドラーの設定
+ */
+function setupButtonEventHandlers() {
+    // プレビューボタン
+    const previewButton = document.getElementById('previewButton');
+    if (previewButton) {
+        previewButton.addEventListener('click', previewCategory);
+    }
+    
+    // リセットボタン
+    const resetButton = document.getElementById('resetButton');
+    if (resetButton) {
+        resetButton.addEventListener('click', resetForm);
+    }
+    
+    // プレビューモーダルの閉じるボタン（X）
+    const closePreviewModalX = document.getElementById('closePreviewModalX');
+    if (closePreviewModalX) {
+        closePreviewModalX.addEventListener('click', closePreviewModal);
+    }
+    
+    // プレビューモーダルの閉じるボタン
+    const closePreviewModalButton = document.getElementById('closePreviewModalButton');
+    if (closePreviewModalButton) {
+        closePreviewModalButton.addEventListener('click', closePreviewModal);
+    }
+    
+    // プレビューからの送信ボタン
+    const submitFromPreviewButton = document.getElementById('submitFromPreviewButton');
+    if (submitFromPreviewButton) {
+        submitFromPreviewButton.addEventListener('click', submitFromPreview);
+    }
+}
+
+// HTMLのonchange属性から呼び出されるグローバル関数（段階的に削除予定）
 window.updateCategoryLevel = updateCategoryLevel;
 window.previewCategory = previewCategory;
 window.submitFromPreview = submitFromPreview;

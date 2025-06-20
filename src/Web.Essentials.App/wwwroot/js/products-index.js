@@ -222,10 +222,20 @@ function createProductRow(product) {
             <div class="action-buttons">
                 <a href="/Products/Details/${product.id}" class="btn btn-info btn-sm" title="詳細表示">詳細</a>
                 <a href="/Products/Edit/${product.id}" class="btn btn-warning btn-sm" title="編集">編集</a>
-                <button type="button" class="btn btn-danger btn-sm" onclick="confirmDeleteProduct(${product.id}, '${product.name}')" title="削除">削除</button>
+                <button type="button" class="btn btn-danger btn-sm product-delete-button" data-product-id="${product.id}" data-product-name="${product.name.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" title="削除">削除</button>
             </div>
         </td>
     `;
+    
+    // 削除ボタンのイベントリスナーを設定
+    const deleteButton = row.querySelector('.product-delete-button');
+    if (deleteButton) {
+        deleteButton.addEventListener('click', function() {
+            const productId = parseInt(this.getAttribute('data-product-id'));
+            const productName = this.getAttribute('data-product-name');
+            confirmDeleteProduct(productId, productName);
+        });
+    }
     
     return row;
 }

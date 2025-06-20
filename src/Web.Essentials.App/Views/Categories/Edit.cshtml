@@ -186,15 +186,15 @@
                     <span class="btn-icon">💾</span>
                     変更を保存
                 </button>
-                <button type="button" class="btn btn-warning btn-large" onclick="showSaveAsNewModal()">
+                <button type="button" class="btn btn-warning btn-large" id="saveAsNewButton">
                     <span class="btn-icon">📋</span>
                     別カテゴリとして保存
                 </button>
-                <button type="button" class="btn btn-outline btn-large" onclick="previewCategory()">
+                <button type="button" class="btn btn-outline btn-large" id="previewButton">
                     <span class="btn-icon">👁</span>
                     プレビュー
                 </button>
-                <button type="button" class="btn btn-light btn-large" onclick="resetForm()">
+                <button type="button" class="btn btn-light btn-large" id="resetButton">
                     <span class="btn-icon">↻</span>
                     変更を破棄
                 </button>
@@ -227,7 +227,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">別カテゴリとして保存</h3>
-                <button type="button" class="modal-close" onclick="closeSaveAsNewModal()">
+                <button type="button" class="modal-close" id="closeSaveAsNewModalX">
                     <span>×</span>
                 </button>
             </div>
@@ -259,10 +259,10 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeSaveAsNewModal()">
+                <button type="button" class="btn btn-secondary" id="closeSaveAsNewModalButton">
                     キャンセル
                 </button>
-                <button type="button" class="btn btn-primary" onclick="saveAsNewCategory()">
+                <button type="button" class="btn btn-primary" id="saveAsNewCategoryButton">
                     新しいカテゴリとして保存
                 </button>
             </div>
@@ -276,7 +276,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">カテゴリプレビュー</h3>
-                <button type="button" class="modal-close" onclick="closePreviewModal()">
+                <button type="button" class="modal-close" id="closePreviewModalX">
                     <span>×</span>
                 </button>
             </div>
@@ -286,10 +286,10 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closePreviewModal()">
+                <button type="button" class="btn btn-secondary" id="closePreviewModalButton">
                     閉じる
                 </button>
-                <button type="button" class="btn btn-primary" onclick="submitFromPreview()">
+                <button type="button" class="btn btn-primary" id="submitFromPreviewButton">
                     このまま保存する
                 </button>
             </div>

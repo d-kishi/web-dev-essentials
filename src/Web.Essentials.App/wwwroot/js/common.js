@@ -418,7 +418,7 @@ const Notifications = {
             <div class="message-content">
                 <span class="message-icon">${icons[type]}</span>
                 <span class="message-text">${Utils.escapeHtml(message)}</span>
-                <button type="button" class="message-close" onclick="this.parentNode.parentNode.remove()">
+                <button type="button" class="message-close">
                     <span>×</span>
                 </button>
             </div>
@@ -665,18 +665,24 @@ document.addEventListener('DOMContentLoaded', function() {
  * 共通イベントリスナー設定
  */
 document.addEventListener('DOMContentLoaded', function() {
-    // メッセージクローズボタン
-    Utils.onAll('.message-close', 'click', function() {
-        const messageId = this.dataset.messageId;
-        if (messageId) {
-            // データ属性で指定されたメッセージIDの場合
-            const messageElement = document.getElementById(messageId);
-            if (messageElement) {
-                messageElement.remove();
+    // メッセージクローズボタン（委譲パターンで動的要素にも対応）
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.message-close')) {
+            const button = e.target.closest('.message-close');
+            const messageId = button.dataset.messageId;
+            if (messageId) {
+                // データ属性で指定されたメッセージIDの場合
+                const messageElement = document.getElementById(messageId);
+                if (messageElement) {
+                    messageElement.remove();
+                }
+            } else {
+                // 通常のメッセージクローズ処理
+                const messageContainer = button.closest('.message-container');
+                if (messageContainer) {
+                    messageContainer.remove();
+                }
             }
-        } else {
-            // 通常のメッセージクローズ処理
-            this.closest('.message-container').remove();
         }
     });
     

@@ -201,6 +201,9 @@ function updateCategoryList(categories) {
         
         // 階層表示の再初期化
         setupTreeView();
+        
+        // 動的に生成されたボタンのイベントリスナーを設定
+        setupDynamicEventHandlers();
     }
 }
 
@@ -319,8 +322,11 @@ function createHierarchyNode(category, depth = 0, searchKeyword = '') {
                     <span class="updated-date">更新: ${new Date(category.updatedAt).toLocaleDateString('ja-JP')}</span>
                     <div class="category-actions">
                         <a href="/Categories/Edit/${category.id}" class="btn btn-sm btn-warning">編集</a>
-                        <button type="button" class="btn btn-sm btn-danger" 
-                                onclick="confirmDeleteCategory(${category.id}, '${category.name}', ${category.productCount || 0}, ${category.hasChildren ? 'true' : 'false'})"
+                        <button type="button" class="btn btn-sm btn-danger category-delete-button" 
+                                data-category-id="${category.id}" 
+                                data-category-name="${category.name}" 
+                                data-product-count="${category.productCount || 0}" 
+                                data-has-children="${category.hasChildren ? 'true' : 'false'}"
                                 ${(category.productCount > 0 || category.hasChildren) ? 'disabled' : ''}>
                             削除
                         </button>
@@ -375,8 +381,11 @@ function createTreeNode(category, depth = 0) {
                     <span class="updated-date">更新: ${new Date(category.updatedAt).toLocaleDateString('ja-JP')}</span>
                     <div class="category-actions">
                         <a href="/Categories/Edit/${category.id}" class="btn btn-sm btn-warning">編集</a>
-                        <button type="button" class="btn btn-sm btn-danger" 
-                                onclick="confirmDeleteCategory(${category.id}, '${category.name}', ${category.productCount || 0}, ${category.hasChildren ? 'true' : 'false'})"
+                        <button type="button" class="btn btn-sm btn-danger category-delete-button" 
+                                data-category-id="${category.id}" 
+                                data-category-name="${category.name}" 
+                                data-product-count="${category.productCount || 0}" 
+                                data-has-children="${category.hasChildren ? 'true' : 'false'}"
                                 ${(category.productCount > 0 || category.hasChildren) ? 'disabled' : ''}>
                             削除
                         </button>
@@ -433,8 +442,11 @@ function createSearchResultNode(category) {
                     <span class="updated-date">更新: ${new Date(category.updatedAt).toLocaleDateString('ja-JP')}</span>
                     <div class="category-actions">
                         <a href="/Categories/Edit/${category.id}" class="btn btn-sm btn-warning">編集</a>
-                        <button type="button" class="btn btn-sm btn-danger" 
-                                onclick="confirmDeleteCategory(${category.id}, '${category.name}', ${category.productCount || 0}, ${category.hasChildren ? 'true' : 'false'})"
+                        <button type="button" class="btn btn-sm btn-danger category-delete-button" 
+                                data-category-id="${category.id}" 
+                                data-category-name="${category.name}" 
+                                data-product-count="${category.productCount || 0}" 
+                                data-has-children="${category.hasChildren ? 'true' : 'false'}"
                                 ${(category.productCount > 0 || category.hasChildren) ? 'disabled' : ''}>
                             削除
                         </button>
@@ -576,6 +588,30 @@ function setupSearchForm() {
 function setupCategoryDeletion() {
     // 削除ボタンのイベントハンドラーは動的コンテンツのため、
     // updateCategoryList内で設定
+}
+
+/**
+ * 動的に生成されたボタンのイベントハンドラーを設定
+ */
+function setupDynamicEventHandlers() {
+    // カテゴリ削除ボタン
+    const deleteButtons = document.querySelectorAll('.category-delete-button');
+    deleteButtons.forEach(button => {
+        const categoryId = parseInt(button.dataset.categoryId);
+        const categoryName = button.dataset.categoryName;
+        const productCount = parseInt(button.dataset.productCount);
+        const hasChildren = button.dataset.hasChildren === 'true';
+        
+        // 既存のイベントリスナーを削除（重複を避けるため）
+        button.replaceWith(button.cloneNode(true));
+        const newButton = document.querySelector(`[data-category-id="${categoryId}"]`);
+        
+        if (newButton) {
+            newButton.addEventListener('click', () => {
+                confirmDeleteCategory(categoryId, categoryName, productCount, hasChildren);
+            });
+        }
+    });
 }
 
 // ソート機能は使用しないためコメントアウト

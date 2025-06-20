@@ -16,7 +16,9 @@
         </a>
         <button type="button" 
                 class="btn btn-danger" 
-                onclick="confirmDeleteProduct(@Model.Id, '@Model.Name')">
+                id="deleteButton"
+                data-product-id="@Model.Id"
+                data-product-name="@Model.Name">
             <span class="btn-icon">🗑</span>
             削除
         </button>
@@ -59,7 +61,7 @@
                              src="@mainImage.ImagePath" 
                              alt="@mainImage.AltText" 
                              class="main-product-image" />
-                        <div class="image-zoom-overlay" onclick="openImageModal('@mainImage.ImagePath', '@mainImage.AltText')">
+                        <div class="image-zoom-overlay" data-image-path="@mainImage.ImagePath" data-image-alt="@mainImage.AltText">
                             <span class="zoom-icon">🔍</span>
                         </div>
                     </div>
@@ -71,7 +73,8 @@
                             @foreach (var image in Model.Images.OrderBy(img => img.DisplayOrder))
                             {
                                 <div class="thumbnail-item @(image.IsMain ? "active" : "")"
-                                     onclick="changeMainImage('@image.ImagePath', '@image.AltText', this)">
+                                     data-image-path="@image.ImagePath" 
+                                     data-image-alt="@image.AltText">
                                     <img src="@image.ImagePath" 
                                          alt="@image.AltText" 
                                          class="thumbnail-image" />
@@ -155,13 +158,14 @@
                     </a>
                     <button type="button" 
                             class="btn btn-outline btn-large" 
-                            onclick="duplicateProduct(@Model.Id)">
+                            id="duplicateButton"
+                            data-product-id="@Model.Id">
                         <span class="btn-icon">📋</span>
                         複製して新規作成
                     </button>
                     <button type="button" 
                             class="btn btn-light btn-large" 
-                            onclick="shareProduct()">
+                            id="shareButton">
                         <span class="btn-icon">📤</span>
                         共有
                     </button>
@@ -174,13 +178,13 @@
     <div class="product-details-info">
         <div class="details-tabs">
             <div class="tab-navigation">
-                <button class="tab-button active" onclick="showTab('specifications')" data-tab="specifications">
+                <button class="tab-button active" data-tab="specifications">
                     商品仕様
                 </button>
-                <button class="tab-button" onclick="showTab('metadata')" data-tab="metadata">
+                <button class="tab-button" data-tab="metadata">
                     管理情報
                 </button>
-                <button class="tab-button" onclick="showTab('history')" data-tab="history">
+                <button class="tab-button" data-tab="history">
                     変更履歴
                 </button>
             </div>
@@ -201,7 +205,7 @@
                                 <code class="jan-code">@Model.JanCode</code>
                                 <button type="button" 
                                         class="copy-button" 
-                                        onclick="copyToClipboard('@Model.JanCode')"
+                                        data-copy-text="@Model.JanCode"
                                         title="クリップボードにコピー">
                                     📋
                                 </button>
@@ -289,12 +293,12 @@
 </div>
 
 <!-- 画像拡大モーダル -->
-<div id="imageModal" class="modal-overlay image-modal" style="display: none;" onclick="closeImageModal()">
+<div id="imageModal" class="modal-overlay image-modal" style="display: none;">
     <div class="modal-dialog modal-large">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title" id="imageModalTitle">商品画像</h3>
-                <button type="button" class="modal-close" onclick="closeImageModal()">
+                <button type="button" class="modal-close" id="closeImageModalButton">
                     <span>×</span>
                 </button>
             </div>

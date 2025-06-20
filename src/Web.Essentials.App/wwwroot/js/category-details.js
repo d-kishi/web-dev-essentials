@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeCategoryDetails() {
     // タブ機能の初期化
     setupTabs();
+    
+    // ボタンイベントハンドラーの設定
+    setupButtonEventHandlers();
 }
 
 /**
@@ -139,7 +142,63 @@ async function duplicateCategory(categoryId) {
     }
 }
 
-// グローバル関数として公開
+/**
+ * ボタンイベントハンドラーの設定
+ */
+function setupButtonEventHandlers() {
+    // 削除ボタン（IDとdata属性ベース）
+    const deleteButton = document.getElementById('deleteButton');
+    if (deleteButton) {
+        deleteButton.addEventListener('click', () => {
+            const categoryId = deleteButton.dataset.categoryId;
+            const categoryName = deleteButton.dataset.categoryName;
+            const productCount = deleteButton.dataset.productCount;
+            const hasChildren = deleteButton.dataset.hasChildren;
+            
+            confirmDeleteCategory(
+                parseInt(categoryId), 
+                categoryName, 
+                parseInt(productCount), 
+                hasChildren === 'true'
+            );
+        });
+    }
+    
+    // 複製ボタン（IDとdata属性ベース）
+    const duplicateButton = document.getElementById('duplicateButton');
+    if (duplicateButton) {
+        duplicateButton.addEventListener('click', () => {
+            const categoryId = duplicateButton.dataset.categoryId;
+            duplicateCategory(parseInt(categoryId));
+        });
+    }
+    
+    // タブボタン（クラスとdata属性ベース）
+    const tabButtons = document.querySelectorAll('.tab-button');
+    tabButtons.forEach(button => {
+        const tabName = button.dataset.tab;
+        if (tabName) {
+            button.addEventListener('click', () => showTab(tabName));
+        }
+    });
+}
+
+/**
+ * タブ機能の初期化
+ */
+function setupTabs() {
+    // 初期タブを表示
+    const activeTab = document.querySelector('.tab-button.active');
+    if (activeTab) {
+        const tabName = activeTab.getAttribute('data-tab');
+        if (tabName) {
+            showTab(tabName);
+        }
+    }
+}
+
+// 互換性のためのグローバル関数公開（段階的に削除予定）
+// 新しいID/class/data属性アプローチに移行済み
 window.showTab = showTab;
 window.confirmDeleteCategory = confirmDeleteCategory;
 window.deleteCategory = deleteCategory;

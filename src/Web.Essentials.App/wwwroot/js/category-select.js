@@ -62,6 +62,9 @@ function initializeCategorySelect() {
     if (window.initialCategorySelection) {
         setInitialSelection(window.initialCategorySelection);
     }
+    
+    // クリア選択ボタンのイベントリスナーを設定
+    setupClearSelectionButtons();
 }
 
 /**
@@ -258,7 +261,7 @@ function updateSelectedCategoryDisplay(categoryId, categoryName, fullPath) {
                 <div class="selected-category">
                     <span class="category-name">${categoryName}</span>
                     <span class="category-path">${fullPath || ''}</span>
-                    <button type="button" class="clear-selection" onclick="clearCategorySelection()">×</button>
+                    <button type="button" class="clear-selection">×</button>
                 </div>
             `;
             displayElement.style.display = 'block';
@@ -266,6 +269,18 @@ function updateSelectedCategoryDisplay(categoryId, categoryName, fullPath) {
             displayElement.style.display = 'none';
         }
     }
+}
+
+/**
+ * クリア選択ボタンのイベントリスナー設定
+ */
+function setupClearSelectionButtons() {
+    // 既存のクリア選択ボタンにイベントリスナーを設定（委譲）
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('clear-selection')) {
+            clearCategorySelection();
+        }
+    });
 }
 
 /**

@@ -35,6 +35,9 @@ function initializeProductEditForm() {
     
     // フォーム送信イベントの設定
     setupFormSubmitHandler();
+    
+    // ボタンイベントハンドラーの設定
+    setupButtonEventHandlers();
 }
 
 /**
@@ -460,4 +463,51 @@ function setupFormValidation() {
 function setupImageUpload() {
     // 実装予定：画像アップロード機能の設定
     console.log('Image upload setup');
+}
+
+/**
+ * ボタンイベントハンドラーの設定
+ */
+function setupButtonEventHandlers() {
+    // 別商品として保存ボタン（IDベース）
+    const saveAsNewButton = document.getElementById('saveAsNewButton');
+    if (saveAsNewButton) {
+        saveAsNewButton.addEventListener('click', showSaveAsNewModal);
+    }
+    
+    // プレビューボタン（IDベース）
+    const previewButton = document.getElementById('previewButton');
+    if (previewButton) {
+        previewButton.addEventListener('click', previewProduct);
+    }
+    
+    // リセットボタン（IDベース）
+    const resetButton = document.getElementById('resetButton');
+    if (resetButton) {
+        resetButton.addEventListener('click', resetForm);
+    }
+    
+    // 別商品として保存モーダルの閉じるボタン（クラスベース）
+    const closeSaveAsNewButtons = document.querySelectorAll('.close-save-as-new-modal');
+    closeSaveAsNewButtons.forEach(button => {
+        button.addEventListener('click', closeSaveAsNewModal);
+    });
+    
+    // 別商品として保存実行ボタン（IDベース）
+    const saveAsNewSubmitButton = document.getElementById('saveAsNewSubmitButton');
+    if (saveAsNewSubmitButton) {
+        saveAsNewSubmitButton.addEventListener('click', saveAsNewProduct);
+    }
+    
+    // プレビューモーダルの閉じるボタン（クラスベース）
+    const closePreviewButtons = document.querySelectorAll('.close-preview-modal');
+    closePreviewButtons.forEach(button => {
+        button.addEventListener('click', closePreviewModal);
+    });
+    
+    // プレビューからの送信ボタン（IDベース）
+    const submitFromPreviewButton = document.getElementById('submitFromPreviewButton');
+    if (submitFromPreviewButton) {
+        submitFromPreviewButton.addEventListener('click', submitFromPreview);
+    }
 }

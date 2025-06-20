@@ -16,7 +16,11 @@
         </a>
         <button type="button" 
                 class="btn btn-danger" 
-                onclick="confirmDeleteCategory(@Model.Id, '@Model.Name', @Model.ProductCount, @(Model.ChildCategories?.Any() == true ? "true" : "false"))"
+                id="deleteButton"
+                data-category-id="@Model.Id"
+                data-category-name="@Model.Name"
+                data-product-count="@Model.ProductCount"
+                data-has-children="@(Model.ChildCategories?.Any() == true ? "true" : "false")"
                 @(Model.ProductCount > 0 || Model.ChildCategories?.Any() == true ? "disabled title='関連商品または子カテゴリが存在するため削除できません'" : "")>
             <span class="btn-icon">🗑</span>
             削除
@@ -165,7 +169,8 @@
                     </a>
                     <button type="button" 
                             class="btn btn-light btn-large" 
-                            onclick="duplicateCategory(@Model.Id)">
+                            id="duplicateButton"
+                            data-category-id="@Model.Id">
                         <span class="btn-icon">📋</span>
                         複製
                     </button>
@@ -178,19 +183,19 @@
     <div class="category-details-info">
         <div class="details-tabs">
             <div class="tab-navigation">
-                <button class="tab-button active" onclick="showTab('products')" data-tab="products">
+                <button class="tab-button active" data-tab="products">
                     関連商品 (@Model.ProductCount)
                 </button>
                 @if (Model.ChildCategories?.Any() == true)
                 {
-                    <button class="tab-button" onclick="showTab('children')" data-tab="children">
+                    <button class="tab-button" data-tab="children">
                         子カテゴリ (@Model.ChildCategories.Count())
                     </button>
                 }
-                <button class="tab-button" onclick="showTab('hierarchy')" data-tab="hierarchy">
+                <button class="tab-button" data-tab="hierarchy">
                     階層情報
                 </button>
-                <button class="tab-button" onclick="showTab('metadata')" data-tab="metadata">
+                <button class="tab-button" data-tab="metadata">
                     管理情報
                 </button>
             </div>

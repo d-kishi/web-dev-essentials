@@ -215,6 +215,16 @@ const SearchComponent = {
             }
         });
         
+        // 検索候補選択のイベントリスナー（委譲パターン）
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('suggestion-item')) {
+                const suggestion = e.target.getAttribute('data-suggestion');
+                if (suggestion) {
+                    this.selectSuggestion(suggestion);
+                }
+            }
+        });
+        
         // 高度な検索オプション切り替え
         const toggleBtn = Utils.$('.toggle-btn');
         if (toggleBtn) {
@@ -288,7 +298,7 @@ const SearchComponent = {
         }
         
         const html = suggestions.map(suggestion => 
-            `<div class="suggestion-item" onclick="SearchComponent.selectSuggestion('${Utils.escapeHtml(suggestion)}')">${Utils.escapeHtml(suggestion)}</div>`
+            `<div class="suggestion-item" data-suggestion="${Utils.escapeHtml(suggestion)}">${Utils.escapeHtml(suggestion)}</div>`
         ).join('');
         
         Utils.html(container, html);
@@ -629,6 +639,16 @@ const ImageUpload = {
         Utils.onAll('input[type="file"][accept*="image"]', 'change', (e) => {
             this.handleFileSelect(e.target);
         });
+        
+        // プレビュー削除ボタンのイベントリスナー（委譲パターン）
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('preview-action-btn')) {
+                const previewItem = e.target.closest('.image-preview-item');
+                if (previewItem) {
+                    previewItem.remove();
+                }
+            }
+        });
     },
     
     /**
@@ -699,7 +719,7 @@ const ImageUpload = {
                     <div class="preview-size">${this.formatFileSize(file.size)}</div>
                 </div>
                 <div class="preview-actions">
-                    <button type="button" class="preview-action-btn" onclick="this.closest('.image-preview-item').remove()" title="削除">
+                    <button type="button" class="preview-action-btn" title="削除">
                         ×
                     </button>
                 </div>

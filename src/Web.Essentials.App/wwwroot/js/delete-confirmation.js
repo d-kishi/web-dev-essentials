@@ -26,6 +26,9 @@ function initializeDeleteConfirmation() {
     
     // ESCキーでキャンセル
     setupEscapeKeyHandler();
+    
+    // ボタンイベントリスナーの設定
+    setupButtonEventListeners();
 }
 
 /**
@@ -194,7 +197,7 @@ function showSuccessModal(title, message, callback) {
                     <p class="success-message">${message}</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" onclick="this.closest('.modal-overlay').remove(); if(window.deleteSuccessCallback) window.deleteSuccessCallback();">
+                    <button type="button" class="btn btn-primary">
                         確認
                     </button>
                 </div>
@@ -222,7 +225,7 @@ function showError(message) {
             <strong>エラー</strong>
             <p>${message}</p>
         </div>
-        <button type="button" class="alert-close" onclick="this.parentElement.remove()">×</button>
+        <button type="button" class="alert-close">×</button>
     `;
     
     // ページ上部に挿入
@@ -239,4 +242,34 @@ function showError(message) {
             errorContainer.remove();
         }
     }, 10000);
+}
+
+/**
+ * ボタンイベントリスナーの設定
+ */
+function setupButtonEventListeners() {
+    // モーダル確認ボタン（委譲パターン）
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('btn') && 
+            e.target.classList.contains('btn-primary') && 
+            e.target.closest('.modal-overlay')) {
+            const modal = e.target.closest('.modal-overlay');
+            if (modal) {
+                modal.remove();
+                if (window.deleteSuccessCallback) {
+                    window.deleteSuccessCallback();
+                }
+            }
+        }
+    });
+    
+    // アラート閉じるボタン（委譲パターン）
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('alert-close')) {
+            const alertElement = e.target.closest('.alert');
+            if (alertElement) {
+                alertElement.remove();
+            }
+        }
+    });
 }

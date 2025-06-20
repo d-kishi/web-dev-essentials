@@ -53,15 +53,15 @@
                     <span class="btn-icon">💾</span>
                     商品を登録
                 </button>
-                <button type="button" class="btn btn-secondary btn-large" onclick="showSaveAsDraftModal()">
+                <button type="button" class="btn btn-secondary btn-large" id="saveAsDraftButton">
                     <span class="btn-icon">📋</span>
                     下書き保存
                 </button>
-                <button type="button" class="btn btn-outline btn-large" onclick="previewProduct()">
+                <button type="button" class="btn btn-outline btn-large" id="previewButton">
                     <span class="btn-icon">👁</span>
                     プレビュー
                 </button>
-                <button type="button" class="btn btn-light btn-large" onclick="resetForm()">
+                <button type="button" class="btn btn-light btn-large" id="resetButton">
                     <span class="btn-icon">↻</span>
                     リセット
                 </button>
@@ -94,7 +94,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">商品プレビュー</h3>
-                <button type="button" class="modal-close" onclick="closePreviewModal()">
+                <button type="button" class="modal-close" id="closePreviewModalX">
                     <span>×</span>
                 </button>
             </div>
@@ -104,10 +104,10 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closePreviewModal()">
+                <button type="button" class="btn btn-secondary" id="closePreviewModalButton">
                     閉じる
                 </button>
-                <button type="button" class="btn btn-primary" onclick="submitFromPreview()">
+                <button type="button" class="btn btn-primary" id="submitFromPreviewButton">
                     このまま登録する
                 </button>
             </div>
@@ -121,7 +121,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">下書き保存</h3>
-                <button type="button" class="modal-close" onclick="closeSaveAsDraftModal()">
+                <button type="button" class="modal-close" id="closeSaveAsDraftModalX">
                     <span>×</span>
                 </button>
             </div>
@@ -137,10 +137,10 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeSaveAsDraftModal()">
+                <button type="button" class="btn btn-secondary" id="closeSaveAsDraftModalButton">
                     キャンセル
                 </button>
-                <button type="button" class="btn btn-primary" onclick="saveAsDraft()">
+                <button type="button" class="btn btn-primary" id="saveAsDraftExecuteButton">
                     下書き保存
                 </button>
             </div>

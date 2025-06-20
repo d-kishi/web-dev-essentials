@@ -9,6 +9,7 @@
 function initializeCategoryHierarchy() {
     setupTreeInteractions();
     setupKeyboardNavigation();
+    setupTreeNodeEventHandlers();
 }
 
 /**
@@ -316,7 +317,69 @@ async function deleteCategory(categoryId) {
     }
 }
 
+/**
+ * ツリーノードのイベントハンドラーを設定
+ */
+function setupTreeNodeEventHandlers() {
+    // ツリーノード展開/縮小ボタン（クラスとdata属性ベース）
+    const toggleButtons = document.querySelectorAll('.tree-toggle');
+    toggleButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const nodeId = button.dataset.nodeId;
+            if (nodeId) {
+                toggleTreeNode(nodeId);
+            }
+        });
+    });
+
+    // カテゴリ選択ボタン（クラスとdata属性ベース）
+    const selectButtons = document.querySelectorAll('.category-select-button');
+    selectButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const categoryId = button.dataset.categoryId;
+            const categoryName = button.dataset.categoryName;
+            const categoryPath = button.dataset.categoryPath;
+            
+            if (categoryId) {
+                selectCategory(parseInt(categoryId), categoryName || '', categoryPath || '');
+            }
+        });
+    });
+
+    // 説明表示切り替えボタン（クラスとdata属性ベース）
+    const descToggleButtons = document.querySelectorAll('.description-toggle');
+    descToggleButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const categoryId = button.dataset.categoryId;
+            if (categoryId) {
+                toggleDescription(categoryId);
+            }
+        });
+    });
+
+    // カテゴリ削除ボタン（クラスとdata属性ベース）
+    const deleteButtons = document.querySelectorAll('.category-delete-button');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const categoryId = button.dataset.categoryId;
+            const categoryName = button.dataset.categoryName;
+            const productCount = button.dataset.productCount;
+            const hasChildren = button.dataset.hasChildren;
+            
+            if (categoryId) {
+                confirmDeleteCategory(
+                    parseInt(categoryId), 
+                    categoryName || '', 
+                    parseInt(productCount) || 0, 
+                    hasChildren === 'true'
+                );
+            }
+        });
+    });
+}
+
 // 初期化（ページ読み込み時に呼び出し）
+// 新しいID/class/data属性アプローチに移行済み
 document.addEventListener('DOMContentLoaded', function() {
     initializeCategoryHierarchy();
 });

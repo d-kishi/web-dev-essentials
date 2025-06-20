@@ -58,6 +58,13 @@ function initializeProductForm() {
             }
         });
     });
+    
+    // プレビュー削除ボタンのイベントリスナー（委譲パターン）
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('preview-remove-btn')) {
+            removeImagePreview(e.target);
+        }
+    });
 }
 
 /**
@@ -187,7 +194,7 @@ function createImagePreview(file, index, container) {
         previewItem.innerHTML = `
             <div class="preview-image-container">
                 <img src="${e.target.result}" alt="プレビュー" class="preview-image" />
-                <button type="button" class="preview-remove-btn" onclick="removeImagePreview(this)">
+                <button type="button" class="preview-remove-btn">
                     ×
                 </button>
             </div>

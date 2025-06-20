@@ -24,7 +24,7 @@
         {
             <button type="button" 
                     class="tree-toggle" 
-                    onclick="toggleTreeNode('@nodeId')"
+                    data-node-id="@nodeId"
                     title="@(expandAll ? "縮小" : "展開")">
                 @(expandAll ? "▼" : "▶")
             </button>
@@ -55,8 +55,10 @@
             @if (isSelectable)
             {
                 <button type="button" 
-                        class="tree-label selectable @(isSelected ? "selected" : "")"
-                        onclick="selectCategory(@Model.Id, '@Model.Name', '@Model.FullPath')"
+                        class="category-select-button @(isSelected ? "selected" : "")"
+                        data-category-id="@Model.Id"
+                        data-category-name="@Model.Name"
+                        data-category-path="@Model.FullPath"
                         title="このカテゴリを選択">
                     <span class="category-name">@Model.Name</span>
                 </button>
@@ -98,7 +100,7 @@
                 </div>
                 <button type="button" 
                         class="description-toggle" 
-                        onclick="toggleDescription('@Model.Id')"
+                        data-category-id="@Model.Id"
                         title="説明を表示/非表示">
                     💬
                 </button>
@@ -124,8 +126,11 @@
                         ➕
                     </a>
                     <button type="button" 
-                            class="tree-action-btn delete-btn" 
-                            onclick="confirmDeleteCategory(@Model.Id, '@Model.Name', @(Model.ProductCount ?? 0), '@(hasChildren ? "true" : "false")')"
+                            class="category-delete-button" 
+                            data-category-id="@Model.Id"
+                            data-category-name="@Model.Name"
+                            data-product-count="@(Model.ProductCount ?? 0)"
+                            data-has-children="@(hasChildren ? "true" : "false")"
                             title="削除"
                             disabled="@((Model.ProductCount ?? 0) > 0 || hasChildren)">
                         🗑️
