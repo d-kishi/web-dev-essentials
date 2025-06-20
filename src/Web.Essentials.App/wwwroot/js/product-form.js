@@ -75,10 +75,10 @@ function formatPrice(input) {
     let value = input.value.replace(/[^\d]/g, '');
     
     if (value) {
-        // 数値に変換してフォーマット
+        // 数値に変換（カンマなしで設定）
         const numValue = parseInt(value);
         if (!isNaN(numValue)) {
-            input.value = numValue.toLocaleString();
+            input.value = numValue.toString();
         }
     }
 }

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Web.Essentials.App.ViewModels;
 using Web.Essentials.Domain.Repositories;
 using Web.Essentials.Domain.Entities;
+using Web.Essentials.App.Interfaces;
 
 namespace Web.Essentials.App.Controllers.Mvc;
 
@@ -14,25 +15,29 @@ public class ProductsController : Controller
     private readonly IProductRepository _productRepository;
     private readonly ICategoryRepository _categoryRepository;
     private readonly IProductImageRepository _productImageRepository;
+    private readonly IProductService _productService;
     private readonly ILogger<ProductsController> _logger;
 
     /// <summary>
     /// コンストラクタ
-    /// 依存性注入によりリポジトリとロガーを受け取る
+    /// 依存性注入によりリポジトリとサービス、ロガーを受け取る
     /// </summary>
     /// <param name="productRepository">商品リポジトリ</param>
     /// <param name="categoryRepository">カテゴリリポジトリ</param>
     /// <param name="productImageRepository">商品画像リポジトリ</param>
+    /// <param name="productService">商品サービス</param>
     /// <param name="logger">ロガー</param>
     public ProductsController(
         IProductRepository productRepository,
         ICategoryRepository categoryRepository,
         IProductImageRepository productImageRepository,
+        IProductService productService,
         ILogger<ProductsController> logger)
     {
         _productRepository = productRepository;
         _categoryRepository = categoryRepository;
         _productImageRepository = productImageRepository;
+        _productService = productService;
         _logger = logger;
     }
 
@@ -195,20 +200,8 @@ public class ProductsController : Controller
     {
         try
         {
-            // カテゴリ一覧を取得してSelectListを作成
-            var categories = await _categoryRepository.GetAllAsync();
-            
-            var viewModel = new ProductCreateViewModel
-            {
-                Categories = categories.Select(c => new CategorySelectItem
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    FullPath = c.Name, // Simple path for now
-                    Level = 0 // Default level for now
-                }).ToList()
-            };
-
+            // ProductService を使用してカテゴリを取得（最下位カテゴリのみ、階層構造ラベル付き）
+            var viewModel = await _productService.GetProductForCreateAsync();
             return View(viewModel);
         }
         catch (Exception ex)
@@ -290,15 +283,9 @@ public class ProductsController : Controller
             _logger.LogError(ex, "商品登録中にエラーが発生しました");
             ModelState.AddModelError("", "商品登録中にエラーが発生しました");
             
-            // エラー時もカテゴリ一覧を再取得
-            var categories = await _categoryRepository.GetAllAsync();
-            viewModel.Categories = categories.Select(c => new CategorySelectItem
-            {
-                Id = c.Id,
-                Name = c.Name,
-                FullPath = c.Name,
-                Level = 0
-            }).ToList();
+            // エラー時もカテゴリ一覧を再取得（ProductServiceを使用）
+            var createViewModel = await _productService.GetProductForCreateAsync();
+            viewModel.Categories = createViewModel.Categories;
             
             return View(viewModel);
         }
@@ -314,41 +301,12 @@ public class ProductsController : Controller
     {
         try
         {
-            var product = await _productRepository.GetByIdAsync(id);
-            if (product == null)
+            // ProductService を使用してEditViewModel を取得（最下位カテゴリのみ、階層構造ラベル付き）
+            var viewModel = await _productService.GetProductForEditAsync(id);
+            if (viewModel == null)
             {
                 return NotFound($"商品ID {id} が見つかりません");
             }
-
-            // カテゴリ一覧と商品画像を取得
-            var categories = await _categoryRepository.GetAllAsync();
-            var productImages = await _productImageRepository.GetByProductIdAsync(id);
-
-            var viewModel = new ProductEditViewModel
-            {
-                Id = product.Id,
-                Name = product.Name,
-                Description = product.Description,
-                Price = (uint)product.Price,
-                Status = product.Status,
-                JanCode = product.JanCode,
-                SelectedCategoryIds = product.ProductCategories.Select(pc => pc.CategoryId).ToList(),
-                Categories = categories.Select(c => new CategorySelectItem
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    FullPath = c.Name,
-                    Level = 0
-                }).ToList(),
-                ExistingImages = productImages.Select(img => new ProductImageViewModel
-                {
-                    Id = img.Id,
-                    ProductId = img.ProductId,
-                    ImagePath = img.ImagePath,
-                    DisplayOrder = img.DisplayOrder,
-                    CreatedAt = img.CreatedAt
-                }).ToList()
-            };
 
             return View(viewModel);
         }
@@ -596,16 +554,14 @@ public class ProductsController : Controller
     /// <param name="viewModel">編集ViewModel</param>
     private async Task ReloadEditViewModelDataAsync(ProductEditViewModel viewModel)
     {
-        var categories = await _categoryRepository.GetAllAsync();
-        var productImages = await _productImageRepository.GetByProductIdAsync(viewModel.Id);
-
-        viewModel.Categories = categories.Select(c => new CategorySelectItem
+        // ProductServiceを使用してカテゴリを取得（最下位のみ、階層構造ラベル付き）
+        var editViewModel = await _productService.GetProductForEditAsync(viewModel.Id);
+        if (editViewModel != null)
         {
-            Id = c.Id,
-            Name = c.Name,
-            FullPath = c.Name, // Simple path for now
-            Level = 0 // Default level for now
-        }).ToList();
+            viewModel.Categories = editViewModel.Categories;
+        }
+
+        var productImages = await _productImageRepository.GetByProductIdAsync(viewModel.Id);
 
         viewModel.ExistingImages = productImages.Select(img => new ProductImageViewModel
         {

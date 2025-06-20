@@ -41,23 +41,24 @@
                 </div>
             </div>
             
-            <!-- カテゴリ（多対多対応） -->
+            <!-- カテゴリ（最下位のみ表示、階層ラベル） -->
             <div class="form-group">
                 <label asp-for="SelectedCategoryIds" class="form-label required">カテゴリ</label>
-                <div class="category-checkbox-group">
+                <div class="category-checkbox-list">
                     @if (Model?.Categories != null)
                     {
                         @foreach (var category in Model.Categories)
                         {
+                            var isSelected = Model.SelectedCategoryIds?.Contains(category.Id) == true;
                             <div class="category-checkbox-item">
                                 <input type="checkbox" 
                                        id="category_@category.Id" 
                                        name="SelectedCategoryIds" 
                                        value="@category.Id" 
-                                       @(Model.SelectedCategoryIds?.Contains(category.Id) == true ? "checked" : "")
-                                       class="category-checkbox" />
+                                       @(isSelected ? "checked" : "")
+                                       class="category-checkbox leaf-checkbox" />
                                 <label for="category_@category.Id" class="category-checkbox-label">
-                                    @category.DisplayName
+                                    <span class="category-path">@category.FullPath</span>
                                 </label>
                             </div>
                         }
@@ -65,7 +66,7 @@
                 </div>
                 <span asp-validation-for="SelectedCategoryIds" class="validation-error"></span>
                 <div class="field-help">
-                    <small>商品が属するカテゴリを選択してください（複数選択可）</small>
+                    <small>最下位のカテゴリのみ表示されています（複数選択可）</small>
                 </div>
             </div>
             

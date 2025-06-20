@@ -1,0 +1,92 @@
+@model Web.Essentials.App.ViewModels.CategorySelectItem
+@{
+    var selectedIds = ViewBag.SelectedCategoryIds as List<int> ?? new List<int>();
+    var hasChildren = Model.ChildCategories.Any();
+    var isLeafNode = !hasChildren;
+    var isSelected = selectedIds.Contains(Model.Id);
+}
+
+<div class="category-tree-item @(isLeafNode ? "leaf-node" : "parent-node")" 
+     data-category-id="@Model.Id" 
+     data-level="@Model.Level"
+     data-is-leaf="@isLeafNode.ToString().ToLower()">
+    
+    <div class="category-tree-node">
+        <!-- インデント -->
+        <div class="tree-indent">
+            @for (int i = 0; i < Model.Level; i++)
+            {
+                <span class="indent-spacer"></span>
+            }
+        </div>
+        
+        <!-- 展開/縮小ボタン -->
+        @if (hasChildren)
+        {
+            <button type="button" class="tree-toggle" data-toggle="collapse">
+                <span class="toggle-icon">▶</span>
+            </button>
+        }
+        else
+        {
+            <span class="tree-spacer"></span>
+        }
+        
+        <!-- カテゴリアイコン -->
+        <span class="category-icon">
+            @if (Model.Level == 0)
+            {
+                <span class="icon-root">📁</span>
+            }
+            else if (hasChildren)
+            {
+                <span class="icon-branch">📂</span>
+            }
+            else
+            {
+                <span class="icon-leaf">🏷️</span>
+            }
+        </span>
+        
+        <!-- チェックボックス（最下位カテゴリのみ） -->
+        @if (isLeafNode)
+        {
+            <div class="category-checkbox-wrapper">
+                <input type="checkbox" 
+                       id="category_@Model.Id" 
+                       name="SelectedCategoryIds" 
+                       value="@Model.Id" 
+                       @(isSelected ? "checked" : "")
+                       class="category-checkbox leaf-checkbox" />
+                <label for="category_@Model.Id" class="category-checkbox-label">
+                    <span class="category-name">@Model.Name</span>
+                    <span class="category-path">@Model.FullPath</span>
+                </label>
+            </div>
+        }
+        else
+        {
+            <div class="category-display">
+                <span class="category-name disabled">@Model.Name</span>
+                <span class="category-note">（選択不可 - 子カテゴリを選択してください）</span>
+            </div>
+        }
+        
+        <!-- 商品数表示 -->
+        @if (Model.ProductCount.HasValue && Model.ProductCount > 0)
+        {
+            <span class="product-count-badge">@Model.ProductCount 件</span>
+        }
+    </div>
+    
+    <!-- 子カテゴリ -->
+    @if (hasChildren)
+    {
+        <div class="category-children collapsed">
+            @foreach (var child in Model.ChildCategories)
+            {
+                <partial name="_ProductCategoryTreeSelector" model="child" />
+            }
+        </div>
+    }
+</div>

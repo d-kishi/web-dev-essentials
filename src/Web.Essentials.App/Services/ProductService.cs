@@ -157,7 +157,7 @@ public class ProductService : IProductService
             _logger.LogInformation("商品登録用ViewModel準備サービス実行");
 
             var categories = await _categoryRepository.GetAllAsync();
-            var categorySelectItems = await ConvertToCategorySelectItemsAsync(categories);
+            var categorySelectItems = ConvertToCategorySelectItems(categories);
 
             return new ProductCreateViewModel
             {
@@ -188,7 +188,7 @@ public class ProductService : IProductService
             // カテゴリ一覧と商品画像を取得
             var categories = await _categoryRepository.GetAllAsync();
             var productImages = await _productImageRepository.GetByProductIdAsync(id);
-            var categorySelectItems = await ConvertToCategorySelectItemsAsync(categories);
+            var categorySelectItems = ConvertToCategorySelectItems(categories);
 
             return new ProductEditViewModel
             {
@@ -563,35 +563,38 @@ public class ProductService : IProductService
     #region Private Helper Methods
 
     /// <summary>
-    /// カテゴリエンティティのコレクションを階層構造を持つCategorySelectItemsに変換
+    /// 商品用カテゴリ選択項目を取得（最下位カテゴリのみ表示、ラベルで階層構造を表現）
     /// </summary>
     /// <param name="categories">カテゴリエンティティのコレクション</param>
-    /// <returns>階層構造を持つCategorySelectItemsのコレクション</returns>
-    private async Task<IEnumerable<CategorySelectItem>> ConvertToCategorySelectItemsAsync(IEnumerable<Category> categories)
+    /// <returns>最下位カテゴリのみのCategorySelectItemsのコレクション（フラットリスト）</returns>
+    private IEnumerable<CategorySelectItem> ConvertToCategorySelectItems(IEnumerable<Category> categories)
     {
-        // カテゴリごとの商品数を取得
-        var categoryProductCounts = new Dictionary<int, int>();
-        foreach (var category in categories)
-        {
-            var productCount = await GetProductCountByCategoryAsync(category.Id);
-            categoryProductCounts[category.Id] = productCount;
-        }
-
         // 親子関係をディクショナリで構築
         var categoryDict = categories.ToDictionary(c => c.Id);
-        var rootCategories = categories.Where(c => c.ParentCategoryId == null).ToList();
+        
+        // 最下位カテゴリ（子を持たないカテゴリ）のみを取得
+        var leafCategories = categories.Where(c => !categories.Any(child => child.ParentCategoryId == c.Id)).ToList();
 
-        return rootCategories.Select(root => ConvertToCategorySelectItem(root, categoryDict, categoryProductCounts));
+        return leafCategories.Select(leaf => new CategorySelectItem
+        {
+            Id = leaf.Id,
+            Name = leaf.Name,
+            Description = leaf.Description,
+            FullPath = BuildCategoryFullPath(leaf, categoryDict),
+            Level = leaf.Level,
+            ProductCount = null, // 商品数は表示しないため null
+            ChildCategories = new List<CategorySelectItem>() // 最下位なので子カテゴリはなし
+        }).OrderBy(c => c.FullPath);
     }
 
     /// <summary>
-    /// カテゴリエンティティをCategorySelectItemに変換（再帰的に子カテゴリも含む）
+    /// カテゴリエンティティを商品用CategorySelectItemに変換（最下位のみ選択可能）
     /// </summary>
     /// <param name="category">変換対象のカテゴリ</param>
     /// <param name="categoryDict">カテゴリIDでインデックス化されたカテゴリ辞書</param>
     /// <param name="productCounts">カテゴリごとの商品数</param>
     /// <returns>変換されたCategorySelectItem</returns>
-    private CategorySelectItem ConvertToCategorySelectItem(
+    private CategorySelectItem ConvertToCategorySelectItemForProduct(
         Category category, 
         Dictionary<int, Category> categoryDict,
         Dictionary<int, int> productCounts)
@@ -599,8 +602,11 @@ public class ProductService : IProductService
         var fullPath = BuildCategoryFullPath(category, categoryDict);
         var childCategories = categoryDict.Values
             .Where(c => c.ParentCategoryId == category.Id)
-            .Select(child => ConvertToCategorySelectItem(child, categoryDict, productCounts))
+            .Select(child => ConvertToCategorySelectItemForProduct(child, categoryDict, productCounts))
             .ToList();
+
+        // 子カテゴリを持たない場合のみ選択可能として扱う
+        var hasChildren = childCategories.Any();
 
         return new CategorySelectItem
         {
@@ -613,6 +619,7 @@ public class ProductService : IProductService
             ChildCategories = childCategories
         };
     }
+
 
     /// <summary>
     /// カテゴリの完全パスを構築

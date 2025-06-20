@@ -53,10 +53,6 @@
                     <span class="btn-icon">💾</span>
                     商品を登録
                 </button>
-                <button type="button" class="btn btn-secondary btn-large" id="saveAsDraftButton">
-                    <span class="btn-icon">📋</span>
-                    下書き保存
-                </button>
                 <button type="button" class="btn btn-outline btn-large" id="previewButton">
                     <span class="btn-icon">👁</span>
                     プレビュー
@@ -74,13 +70,6 @@
                         <input type="checkbox" id="saveAndContinue" class="checkbox-input">
                         <span class="checkbox-custom"></span>
                         保存後、続けて新しい商品を登録する
-                    </label>
-                </div>
-                <div class="checkbox-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="validateBeforeSave" class="checkbox-input" checked>
-                        <span class="checkbox-custom"></span>
-                        保存前にバリデーションを実行する
                     </label>
                 </div>
             </div>
@@ -115,38 +104,6 @@
     </div>
 </div>
 
-<!-- 下書き保存モーダル -->
-<div id="saveAsDraftModal" class="modal-overlay" style="display: none;">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">下書き保存</h3>
-                <button type="button" class="modal-close" id="closeSaveAsDraftModalX">
-                    <span>×</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p>入力中の商品情報を下書きとして保存しますか？</p>
-                <div class="form-group">
-                    <label for="draftName" class="form-label">下書き名</label>
-                    <input type="text" 
-                           id="draftName" 
-                           class="form-input" 
-                           placeholder="下書きの名前を入力してください"
-                           maxlength="50" />
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="closeSaveAsDraftModalButton">
-                    キャンセル
-                </button>
-                <button type="button" class="btn btn-primary" id="saveAsDraftExecuteButton">
-                    下書き保存
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
 @section Scripts {
     <script src="~/js/product-form.js" asp-append-version="true" defer></script>
