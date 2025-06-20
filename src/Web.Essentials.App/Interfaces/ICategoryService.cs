@@ -42,6 +42,12 @@ public interface ICategoryService
     /// <returns>選択用カテゴリDTO一覧</returns>
     Task<IEnumerable<CategorySelectDto>> GetCategoriesForSelectAsync();
 
+    /// <summary>
+    /// 階層構造を持つ選択用カテゴリ一覧取得
+    /// </summary>
+    /// <returns>階層構造を持つCategorySelectItem一覧</returns>
+    Task<IEnumerable<CategorySelectItem>> GetCategorySelectItemsAsync();
+
     #endregion
 
     #region 詳細・存在確認

@@ -378,18 +378,94 @@ public class CategoryService : ICategoryService
     public async Task<CategoryCreateViewModel> GetCategoryForCreateAsync()
     {
         var allCategories = await _categoryRepository.GetAllAsync();
-        var parentCategories = allCategories.Select(c => new CategorySelectItem
-        {
-            Id = c.Id,
-            Name = c.Name,
-            FullPath = c.Name,
-            Level = 0
-        });
+        var parentCategories = await ConvertToCategorySelectItemsAsync(allCategories);
 
         return new CategoryCreateViewModel
         {
             ParentCategories = parentCategories
         };
+    }
+
+    /// <summary>
+    /// カテゴリエンティティのコレクションを階層構造を持つCategorySelectItemsに変換
+    /// </summary>
+    /// <param name="categories">カテゴリエンティティのコレクション</param>
+    /// <returns>階層構造を持つCategorySelectItemsのコレクション</returns>
+    private async Task<IEnumerable<CategorySelectItem>> ConvertToCategorySelectItemsAsync(IEnumerable<Category> categories)
+    {
+        // カテゴリごとの商品数を取得（簡略化：後でオプションとして使用）
+        var categoryProductCounts = new Dictionary<int, int>();
+        var allProducts = await _productRepository.GetAllAsync();
+        foreach (var category in categories)
+        {
+            var productCount = allProducts.Item1.Count(p => p.ProductCategories.Any(pc => pc.CategoryId == category.Id));
+            categoryProductCounts[category.Id] = productCount;
+        }
+
+        // 親子関係をディクショナリで構築
+        var categoryDict = categories.ToDictionary(c => c.Id);
+        var rootCategories = categories.Where(c => c.ParentCategoryId == null).ToList();
+
+        return rootCategories.Select(root => ConvertToCategorySelectItem(root, categoryDict, categoryProductCounts));
+    }
+
+    /// <summary>
+    /// カテゴリエンティティをCategorySelectItemに変換（再帰的に子カテゴリも含む）
+    /// </summary>
+    /// <param name="category">変換対象のカテゴリ</param>
+    /// <param name="categoryDict">カテゴリIDでインデックス化されたカテゴリ辞書</param>
+    /// <param name="productCounts">カテゴリごとの商品数</param>
+    /// <returns>変換されたCategorySelectItem</returns>
+    private CategorySelectItem ConvertToCategorySelectItem(
+        Category category, 
+        Dictionary<int, Category> categoryDict,
+        Dictionary<int, int> productCounts)
+    {
+        var fullPath = BuildCategoryFullPath(category, categoryDict);
+        var childCategories = categoryDict.Values
+            .Where(c => c.ParentCategoryId == category.Id)
+            .Select(child => ConvertToCategorySelectItem(child, categoryDict, productCounts))
+            .ToList();
+
+        return new CategorySelectItem
+        {
+            Id = category.Id,
+            Name = category.Name,
+            Description = category.Description,
+            FullPath = fullPath,
+            Level = category.Level,
+            ProductCount = productCounts.GetValueOrDefault(category.Id, 0),
+            ChildCategories = childCategories
+        };
+    }
+
+    /// <summary>
+    /// カテゴリの完全パスを構築
+    /// </summary>
+    /// <param name="category">対象カテゴリ</param>
+    /// <param name="categoryDict">カテゴリ辞書</param>
+    /// <returns>完全パス</returns>
+    private string BuildCategoryFullPath(Category category, Dictionary<int, Category> categoryDict)
+    {
+        var pathParts = new List<string>();
+        var current = category;
+
+        while (current != null)
+        {
+            pathParts.Insert(0, current.Name);
+            current = current.ParentCategoryId.HasValue && categoryDict.ContainsKey(current.ParentCategoryId.Value)
+                ? categoryDict[current.ParentCategoryId.Value]
+                : null;
+        }
+
+        return string.Join(" > ", pathParts);
+    }
+
+    /// <inheritdoc />
+    public async Task<IEnumerable<CategorySelectItem>> GetCategorySelectItemsAsync()
+    {
+        var allCategories = await _categoryRepository.GetAllAsync();
+        return await ConvertToCategorySelectItemsAsync(allCategories);
     }
 
     /// <inheritdoc />

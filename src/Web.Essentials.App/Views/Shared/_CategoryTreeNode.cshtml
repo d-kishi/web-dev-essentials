@@ -1,4 +1,4 @@
-@model dynamic
+@model Web.Essentials.App.ViewModels.CategoryTreeNodeViewModel
 @{
     var showActions = ViewBag.ShowActions as bool? ?? true;
     var isSelectable = ViewBag.IsSelectable as bool? ?? false;
@@ -6,9 +6,7 @@
     var showProductCount = ViewBag.ShowProductCount as bool? ?? true;
     var expandAll = ViewBag.ExpandAll as bool? ?? false;
     
-    // dynamic型ではAny()メソッドを直接呼び出せないため、カウントでチェック
-    var childCategories = Model.ChildCategories as IEnumerable<object>;
-    var hasChildren = childCategories != null && childCategories.Count() > 0;
+    var hasChildren = Model.ChildCategories.Any();
     var isSelected = isSelectable && selectedId == Model.Id;
     var nodeId = $"tree-node-{Model.Id}";
 }
@@ -87,7 +85,7 @@
                 @if (hasChildren)
                 {
                     <span class="children-count" title="子カテゴリ数">
-                        🏷️ @(childCategories?.Count() ?? 0)
+                        🏷️ @Model.ChildCategories.Count()
                     </span>
                 }
             </div>
@@ -144,12 +142,9 @@
     @if (hasChildren)
     {
         <div class="tree-children" style="display: @(expandAll ? "block" : "none");">
-            @if (childCategories != null)
+            @foreach (var child in Model.ChildCategories)
             {
-                @foreach (var child in childCategories)
-                {
-                    <partial name="_CategoryTreeNode" model="child" />
-                }
+                <partial name="_CategoryTreeNode" model="child" />
             }
         </div>
     }

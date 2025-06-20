@@ -1,18 +1,17 @@
-@model IEnumerable<dynamic>
+@model IEnumerable<Web.Essentials.App.ViewModels.CategoryTreeNodeViewModel>
 <!-- カテゴリ階層表示部分ビュー -->
 <!-- ツリー構造での階層表示 -->
 <!-- Index/Details画面で共通利用 -->
 
 @{
-    var categories = Model ?? new List<dynamic>();
+    var categories = Model ?? new List<Web.Essentials.App.ViewModels.CategoryTreeNodeViewModel>();
     var showActions = ViewBag.ShowActions as bool? ?? true;
     var isSelectable = ViewBag.IsSelectable as bool? ?? false;
     var selectedId = ViewBag.SelectedId as int?;
     var showProductCount = ViewBag.ShowProductCount as bool? ?? true;
     var expandAll = ViewBag.ExpandAll as bool? ?? false;
     
-    // dynamic型でAny()メソッドを直接呼び出せないため、Countで判定
-    var hasCategories = categories != null && categories.Count() > 0;
+    var hasCategories = categories.Any();
 }
 
 <div class="category-hierarchy-container">

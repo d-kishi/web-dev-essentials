@@ -157,16 +157,11 @@ public class ProductService : IProductService
             _logger.LogInformation("商品登録用ViewModel準備サービス実行");
 
             var categories = await _categoryRepository.GetAllAsync();
+            var categorySelectItems = await ConvertToCategorySelectItemsAsync(categories);
 
             return new ProductCreateViewModel
             {
-                Categories = categories.Select(c => new CategorySelectItem
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    FullPath = c.Name, // Simple path for now
-                    Level = 0 // Default level for now
-                }).OrderBy(c => c.Name).ToList()
+                Categories = categorySelectItems.OrderBy(c => c.FullPath).ToList()
             };
         }
         catch (Exception ex)
@@ -193,6 +188,7 @@ public class ProductService : IProductService
             // カテゴリ一覧と商品画像を取得
             var categories = await _categoryRepository.GetAllAsync();
             var productImages = await _productImageRepository.GetByProductIdAsync(id);
+            var categorySelectItems = await ConvertToCategorySelectItemsAsync(categories);
 
             return new ProductEditViewModel
             {
@@ -203,13 +199,7 @@ public class ProductService : IProductService
                 Status = product.Status,
                 JanCode = product.JanCode,
                 SelectedCategoryIds = product.ProductCategories.Select(pc => pc.CategoryId).ToList(),
-                Categories = categories.Select(c => new CategorySelectItem
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    FullPath = c.Name, // Simple path for now
-                    Level = 0 // Default level for now
-                }).OrderBy(c => c.Name).ToList(),
+                Categories = categorySelectItems.OrderBy(c => c.FullPath).ToList(),
                 ExistingImages = productImages.Select(img => new ProductImageViewModel
                 {
                     Id = img.Id,
@@ -566,6 +556,84 @@ public class ProductService : IProductService
             _logger.LogError(ex, "カテゴリ別商品数取得サービス実行中にエラーが発生しました。カテゴリID: {CategoryId}", categoryId);
             throw;
         }
+    }
+
+    #endregion
+
+    #region Private Helper Methods
+
+    /// <summary>
+    /// カテゴリエンティティのコレクションを階層構造を持つCategorySelectItemsに変換
+    /// </summary>
+    /// <param name="categories">カテゴリエンティティのコレクション</param>
+    /// <returns>階層構造を持つCategorySelectItemsのコレクション</returns>
+    private async Task<IEnumerable<CategorySelectItem>> ConvertToCategorySelectItemsAsync(IEnumerable<Category> categories)
+    {
+        // カテゴリごとの商品数を取得
+        var categoryProductCounts = new Dictionary<int, int>();
+        foreach (var category in categories)
+        {
+            var productCount = await GetProductCountByCategoryAsync(category.Id);
+            categoryProductCounts[category.Id] = productCount;
+        }
+
+        // 親子関係をディクショナリで構築
+        var categoryDict = categories.ToDictionary(c => c.Id);
+        var rootCategories = categories.Where(c => c.ParentCategoryId == null).ToList();
+
+        return rootCategories.Select(root => ConvertToCategorySelectItem(root, categoryDict, categoryProductCounts));
+    }
+
+    /// <summary>
+    /// カテゴリエンティティをCategorySelectItemに変換（再帰的に子カテゴリも含む）
+    /// </summary>
+    /// <param name="category">変換対象のカテゴリ</param>
+    /// <param name="categoryDict">カテゴリIDでインデックス化されたカテゴリ辞書</param>
+    /// <param name="productCounts">カテゴリごとの商品数</param>
+    /// <returns>変換されたCategorySelectItem</returns>
+    private CategorySelectItem ConvertToCategorySelectItem(
+        Category category, 
+        Dictionary<int, Category> categoryDict,
+        Dictionary<int, int> productCounts)
+    {
+        var fullPath = BuildCategoryFullPath(category, categoryDict);
+        var childCategories = categoryDict.Values
+            .Where(c => c.ParentCategoryId == category.Id)
+            .Select(child => ConvertToCategorySelectItem(child, categoryDict, productCounts))
+            .ToList();
+
+        return new CategorySelectItem
+        {
+            Id = category.Id,
+            Name = category.Name,
+            Description = category.Description,
+            FullPath = fullPath,
+            Level = category.Level,
+            ProductCount = productCounts.GetValueOrDefault(category.Id, 0),
+            ChildCategories = childCategories
+        };
+    }
+
+    /// <summary>
+    /// カテゴリの完全パスを構築
+    /// </summary>
+    /// <param name="category">対象カテゴリ</param>
+    /// <param name="categoryDict">カテゴリ辞書</param>
+    /// <returns>完全パス</returns>
+    private string BuildCategoryFullPath(Category category, Dictionary<int, Category> categoryDict)
+    {
+        var pathParts = new List<string>();
+        var current = category;
+
+        while (current != null)
+        {
+            pathParts.Insert(0, current.Name);
+            current = current.ParentCategoryId.HasValue && categoryDict.ContainsKey(current.ParentCategoryId.Value)
+                ? categoryDict[current.ParentCategoryId.Value]
+                : null;
+        }
+
+        return string.Join(" > ", pathParts);
     }
 
     #endregion

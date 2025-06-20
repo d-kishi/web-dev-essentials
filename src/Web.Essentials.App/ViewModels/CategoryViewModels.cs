@@ -528,6 +528,50 @@ public class CategoryTreeViewModel
 }
 
 /// <summary>
+/// カテゴリツリーノード用ビューモデル
+/// </summary>
+/// <remarks>
+/// _CategoryTreeNode.cshtml の強く型付けされたモデル
+/// </remarks>
+public class CategoryTreeNodeViewModel
+{
+    /// <summary>
+    /// カテゴリID
+    /// </summary>
+    public int Id { get; set; }
+
+    /// <summary>
+    /// カテゴリ名
+    /// </summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// カテゴリ説明
+    /// </summary>
+    public string? Description { get; set; }
+
+    /// <summary>
+    /// 階層レベル
+    /// </summary>
+    public int Level { get; set; }
+
+    /// <summary>
+    /// 完全パス
+    /// </summary>
+    public string FullPath { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 関連商品数
+    /// </summary>
+    public int? ProductCount { get; set; }
+
+    /// <summary>
+    /// 子カテゴリ一覧
+    /// </summary>
+    public IEnumerable<CategoryTreeNodeViewModel> ChildCategories { get; set; } = new List<CategoryTreeNodeViewModel>();
+}
+
+/// <summary>
 /// カテゴリ削除用ビューモデル
 /// </summary>
 /// <remarks>

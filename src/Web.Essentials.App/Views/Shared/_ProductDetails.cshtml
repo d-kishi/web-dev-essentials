@@ -1,27 +1,27 @@
-@model dynamic
+@model Web.Essentials.App.ViewModels.ProductDetailsDisplayViewModel
+@using Web.Essentials.Domain.Entities
 <!-- 商品詳細表示部分ビュー -->
 <!-- 商品情報の読み取り専用表示 -->
 <!-- Details/Delete確認画面で共通利用 -->
 
 @{
-    var product = Model;
     var showActions = ViewBag.ShowActions as bool? ?? true;
     var isDeleteMode = ViewBag.IsDeleteMode as bool? ?? false;
     var showFullDetails = ViewBag.ShowFullDetails as bool? ?? true;
 }
 
-<div class="product-details-display">
+<div class="Model-details-display">
     <!-- 商品概要カード -->
-    <div class="product-overview-card">
-        <div class="product-overview-content">
+    <div class="Model-overview-card">
+        <div class="Model-overview-content">
             <!-- 商品画像セクション -->
-            <div class="product-images-section">
-                @if (product.Images?.Any() == true)
+            <div class="Model-images-section">
+                @if (Model.Images?.Any() == true)
                 {
-                    <div class="product-images-gallery">
+                    <div class="Model-images-gallery">
                         @{
-                            var mainImage = product.Images.FirstOrDefault();
-                            foreach (var img in product.Images)
+                            var mainImage = Model.Images.FirstOrDefault();
+                            foreach (var img in Model.Images)
                             {
                                 if (img.IsMain)
                                 {
@@ -34,7 +34,7 @@
                         <div class="main-image-container">
                             <img src="@mainImage.ImagePath" 
                                  alt="@mainImage.AltText" 
-                                 class="main-product-image" 
+                                 class="main-Model-image" 
                                  data-action="open-image-viewer" 
                                  data-image-path="@mainImage.ImagePath" 
                                  data-alt-text="@mainImage.AltText" />
@@ -44,10 +44,10 @@
                         </div>
                         
                         <!-- サムネイル画像 -->
-                        @if (product.Images.Count > 1)
+                        @if (Model.Images.Count() > 1)
                         {
                             <div class="thumbnail-images">
-                                @foreach (var image in product.Images)
+                                @foreach (var image in Model.Images)
                                 {
                                     <div class="thumbnail-item @(image.IsMain ? "main" : "")"
                                          data-action="switch-main-image" 
@@ -76,20 +76,20 @@
             </div>
             
             <!-- 商品基本情報セクション -->
-            <div class="product-basic-section">
+            <div class="Model-basic-section">
                 <!-- 商品名とステータス -->
-                <div class="product-header-info">
-                    <h2 class="product-display-name">@product.Name</h2>
-                    <div class="product-status-info">
-                        @switch (product.Status)
+                <div class="Model-header-info">
+                    <h2 class="Model-display-name">@Model.Name</h2>
+                    <div class="Model-status-info">
+                        @switch (Model.Status)
                         {
-                            case 0:
+                            case ProductStatus.PreSale:
                                 <span class="status-badge status-pending">販売開始前</span>
                                 break;
-                            case 1:
+                            case ProductStatus.OnSale:
                                 <span class="status-badge status-active">販売中</span>
                                 break;
-                            case 2:
+                            case ProductStatus.Discontinued:
                                 <span class="status-badge status-discontinued">取扱終了</span>
                                 break;
                         }
@@ -97,32 +97,32 @@
                 </div>
                 
                 <!-- 価格表示 -->
-                <div class="product-price-info">
+                <div class="Model-price-info">
                     <div class="price-display">
                         <span class="price-currency">¥</span>
-                        <span class="price-amount">@product.Price.ToString("N0")</span>
+                        <span class="price-amount">@Model.Price.ToString("N0")</span>
                         <span class="price-note">（税込）</span>
                     </div>
                 </div>
                 
                 <!-- 商品説明 -->
-                @if (!string.IsNullOrEmpty(product.Description))
+                @if (!string.IsNullOrEmpty(Model.Description))
                 {
-                    <div class="product-description-section">
+                    <div class="Model-description-section">
                         <h3 class="description-title">商品説明</h3>
                         <div class="description-content">
-                            @Html.Raw(product.Description.Replace("\n", "<br />"))
+                            @Html.Raw(Model.Description.Replace("\n", "<br />"))
                         </div>
                     </div>
                 }
                 
                 <!-- カテゴリ情報 -->
-                @if (product.Categories?.Any() == true)
+                @if (Model.Categories?.Any() == true)
                 {
-                    <div class="product-categories-section">
+                    <div class="Model-categories-section">
                         <h3 class="categories-title">カテゴリ</h3>
                         <div class="categories-display">
-                            @foreach (var category in product.Categories)
+                            @foreach (var category in Model.Categories)
                             {
                                 <div class="category-tag">
                                     <span class="category-icon">🏷️</span>
@@ -146,25 +146,25 @@
         <!-- アクションボタン（表示モードに応じて） -->
         @if (showActions && !isDeleteMode)
         {
-            <div class="product-actions-section">
+            <div class="Model-actions-section">
                 <div class="action-buttons">
-                    <a asp-action="Edit" asp-controller="Products" asp-route-id="@product.Id" 
+                    <a asp-action="Edit" asp-controller="Products" asp-route-id="@Model.Id" 
                        class="btn btn-primary">
                         <span class="btn-icon">✏️</span>
                         編集
                     </a>
                     <button type="button" 
                             class="btn btn-outline" 
-                            data-action="share-product" 
-                            data-product-id="@product.Id" 
-                            data-product-name="@product.Name">
+                            data-action="share-Model" 
+                            data-Model-id="@Model.Id" 
+                            data-Model-name="@Model.Name">
                         <span class="btn-icon">📤</span>
                         共有
                     </button>
                     <button type="button" 
                             class="btn btn-light" 
-                            data-action="duplicate-product" 
-                            data-product-id="@product.Id">
+                            data-action="duplicate-Model" 
+                            data-Model-id="@Model.Id">
                         <span class="btn-icon">📋</span>
                         複製
                     </button>
@@ -176,28 +176,28 @@
     <!-- 詳細情報（フル表示モードの場合） -->
     @if (showFullDetails)
     {
-        <div class="product-detailed-info">
+        <div class="Model-detailed-info">
             <!-- 商品仕様情報 -->
             <div class="specifications-section">
                 <h3 class="section-title">商品仕様</h3>
                 <div class="specifications-grid">
                     <div class="spec-row">
                         <div class="spec-label">商品ID</div>
-                        <div class="spec-value">@product.Id</div>
+                        <div class="spec-value">@Model.Id</div>
                     </div>
                     
-                    @if (!string.IsNullOrEmpty(product.JanCode))
+                    @if (!string.IsNullOrEmpty(Model.JanCode))
                     {
                         <div class="spec-row">
                             <div class="spec-label">JANコード</div>
                             <div class="spec-value">
-                                <code class="jan-code-display">@product.JanCode</code>
+                                <code class="jan-code-display">@Model.JanCode</code>
                                 @if (showActions)
                                 {
                                     <button type="button" 
                                             class="copy-button" 
                                             data-action="copy-to-clipboard" 
-                                            data-copy-text="@product.JanCode"
+                                            data-copy-text="@Model.JanCode"
                                             title="クリップボードにコピー">
                                         📋
                                     </button>
@@ -209,34 +209,34 @@
                     <div class="spec-row">
                         <div class="spec-label">商品ステータス</div>
                         <div class="spec-value">
-                            @switch (product.Status)
+                            @switch (Model.Status)
                             {
-                                case 0:
+                                case ProductStatus.PreSale:
                                     <span class="status-text">販売開始前</span>
                                     break;
-                                case 1:
+                                case ProductStatus.OnSale:
                                     <span class="status-text">販売中</span>
                                     break;
-                                case 2:
+                                case ProductStatus.Discontinued:
                                     <span class="status-text">取扱終了</span>
                                     break;
                             }
                         </div>
                     </div>
                     
-                    @if (product.Images?.Any() == true)
+                    @if (Model.Images?.Any() == true)
                     {
                         <div class="spec-row">
                             <div class="spec-label">登録画像数</div>
-                            <div class="spec-value">@product.Images.Count 枚</div>
+                            <div class="spec-value">@Model.Images.Count() 枚</div>
                         </div>
                     }
                     
-                    @if (product.Categories?.Any() == true)
+                    @if (Model.Categories?.Any() == true)
                     {
                         <div class="spec-row">
                             <div class="spec-label">関連カテゴリ数</div>
-                            <div class="spec-value">@product.Categories.Count 個</div>
+                            <div class="spec-value">@Model.Categories.Count() 個</div>
                         </div>
                     }
                 </div>
@@ -249,8 +249,8 @@
                     <div class="management-row">
                         <div class="management-label">作成日時</div>
                         <div class="management-value">
-                            <time datetime="@product.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss")">
-                                @product.CreatedAt.ToString("yyyy年MM月dd日 HH:mm:ss")
+                            <time datetime="@Model.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss")">
+                                @Model.CreatedAt.ToString("yyyy年MM月dd日 HH:mm:ss")
                             </time>
                         </div>
                     </div>
@@ -258,19 +258,19 @@
                     <div class="management-row">
                         <div class="management-label">最終更新日時</div>
                         <div class="management-value">
-                            <time datetime="@product.UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ss")">
-                                @product.UpdatedAt.ToString("yyyy年MM月dd日 HH:mm:ss")
+                            <time datetime="@Model.UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ss")">
+                                @Model.UpdatedAt.ToString("yyyy年MM月dd日 HH:mm:ss")
                             </time>
                         </div>
                     </div>
                     
-                    @if (product.CreatedAt != product.UpdatedAt)
+                    @if (Model.CreatedAt != Model.UpdatedAt)
                     {
                         <div class="management-row">
                             <div class="management-label">最終更新からの経過時間</div>
                             <div class="management-value">
                                 @{
-                                    var timeDiff = DateTime.Now - product.UpdatedAt;
+                                    var timeDiff = DateTime.Now - Model.UpdatedAt;
                                     var timeDiffText = timeDiff.Days > 0 ? $"{timeDiff.Days}日前" :
                                                       timeDiff.Hours > 0 ? $"{timeDiff.Hours}時間前" :
                                                       timeDiff.Minutes > 0 ? $"{timeDiff.Minutes}分前" : "1分以内";
@@ -305,9 +305,9 @@
 </div>
 
 @section Scripts {
-    <script src="~/js/product-details.js" asp-append-version="true" defer></script>
+    <script src="~/js/Model-details.js" asp-append-version="true" defer></script>
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/product-details.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/Model-details.css" asp-append-version="true" />
 }

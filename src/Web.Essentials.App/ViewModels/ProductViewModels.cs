@@ -667,7 +667,7 @@ public class ProductEditViewModel : IProductFormViewModel
 /// カテゴリ選択項目
 /// </summary>
 /// <remarks>
-/// カテゴリ選択ドロップダウンで使用
+/// カテゴリ選択ドロップダウンとツリー表示で使用
 /// </remarks>
 public class CategorySelectItem
 {
@@ -682,6 +682,11 @@ public class CategorySelectItem
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
+    /// カテゴリ説明
+    /// </summary>
+    public string? Description { get; set; }
+
+    /// <summary>
     /// 完全パス（階層構造を含む）
     /// </summary>
     public string FullPath { get; set; } = string.Empty;
@@ -692,9 +697,24 @@ public class CategorySelectItem
     public int Level { get; set; }
 
     /// <summary>
+    /// 関連商品数
+    /// </summary>
+    public int? ProductCount { get; set; }
+
+    /// <summary>
+    /// 子カテゴリ一覧（ツリー表示用）
+    /// </summary>
+    public IEnumerable<CategorySelectItem> ChildCategories { get; set; } = new List<CategorySelectItem>();
+
+    /// <summary>
     /// インデント付きの表示名
     /// </summary>
     public string DisplayName => new string('　', Level) + Name;
+
+    /// <summary>
+    /// 子カテゴリを持つかどうか
+    /// </summary>
+    public bool HasChildren => ChildCategories.Any();
 }
 
 /// <summary>
@@ -719,6 +739,94 @@ public class CategoryDisplayItem
     /// 完全パス
     /// </summary>
     public string FullPath { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// 商品詳細ビュー用ビューモデル
+/// </summary>
+/// <remarks>
+/// _ProductDetails.cshtml の強く型付けされたモデル
+/// </remarks>
+public class ProductDetailsDisplayViewModel
+{
+    /// <summary>
+    /// 商品ID
+    /// </summary>
+    public int Id { get; set; }
+
+    /// <summary>
+    /// 商品名
+    /// </summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 商品説明
+    /// </summary>
+    public string? Description { get; set; }
+
+    /// <summary>
+    /// 価格
+    /// </summary>
+    public uint Price { get; set; }
+
+    /// <summary>
+    /// JANコード
+    /// </summary>
+    public string? JanCode { get; set; }
+
+    /// <summary>
+    /// ステータス
+    /// </summary>
+    public ProductStatus Status { get; set; }
+
+    /// <summary>
+    /// カテゴリ一覧
+    /// </summary>
+    public IEnumerable<CategoryDisplayItem> Categories { get; set; } = new List<CategoryDisplayItem>();
+
+    /// <summary>
+    /// 画像一覧
+    /// </summary>
+    public IEnumerable<ProductImageDisplayItem> Images { get; set; } = new List<ProductImageDisplayItem>();
+
+    /// <summary>
+    /// 作成日時
+    /// </summary>
+    public DateTime CreatedAt { get; set; }
+
+    /// <summary>
+    /// 更新日時
+    /// </summary>
+    public DateTime UpdatedAt { get; set; }
+}
+
+/// <summary>
+/// 商品画像アップロード用ビューモデル
+/// </summary>
+/// <remarks>
+/// _ProductImageUpload.cshtml の強く型付けされたモデル
+/// </remarks>
+public class ProductImageUploadViewModel
+{
+    /// <summary>
+    /// 商品ID
+    /// </summary>
+    public int? ProductId { get; set; }
+
+    /// <summary>
+    /// 既存画像一覧
+    /// </summary>
+    public IEnumerable<ProductImageDisplayItem> ExistingImages { get; set; } = new List<ProductImageDisplayItem>();
+
+    /// <summary>
+    /// 最大アップロード数
+    /// </summary>
+    public int MaxImageCount { get; set; } = 5;
+
+    /// <summary>
+    /// 対応ファイル形式
+    /// </summary>
+    public string AcceptedFormats { get; set; } = "image/jpeg,image/png,image/gif";
 }
 
 /// <summary>

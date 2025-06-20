@@ -375,7 +375,36 @@
                     <div class="hierarchy-section">
                         <h3 class="hierarchy-title">階層構造</h3>
                         <div class="hierarchy-tree">
-                            <partial name="_CategoryHierarchy" model="new List<dynamic> { Model }" />
+                            <partial name="_CategoryHierarchy" model="new List<Web.Essentials.App.ViewModels.CategoryTreeNodeViewModel> 
+                            { 
+                                new Web.Essentials.App.ViewModels.CategoryTreeNodeViewModel 
+                                { 
+                                    Id = Model.Id, 
+                                    Name = Model.Name, 
+                                    Description = Model.Description, 
+                                    Level = Model.Level, 
+                                    FullPath = Model.FullPath, 
+                                    ProductCount = Model.ProductCount,
+                                    ChildCategories = Model.ChildCategories?.Select(c => new Web.Essentials.App.ViewModels.CategoryTreeNodeViewModel
+                                    {
+                                        Id = c.Id,
+                                        Name = c.Name,
+                                        Description = c.Description,
+                                        Level = c.Level,
+                                        FullPath = c.FullPath,
+                                        ProductCount = c.ProductCount,
+                                        ChildCategories = c.ChildCategories?.Select(child => new Web.Essentials.App.ViewModels.CategoryTreeNodeViewModel
+                                        {
+                                            Id = child.Id,
+                                            Name = child.Name,
+                                            Description = child.Description,
+                                            Level = child.Level,
+                                            FullPath = child.FullPath,
+                                            ProductCount = child.ProductCount
+                                        }) ?? Enumerable.Empty<Web.Essentials.App.ViewModels.CategoryTreeNodeViewModel>()
+                                    }) ?? Enumerable.Empty<Web.Essentials.App.ViewModels.CategoryTreeNodeViewModel>()
+                                } 
+                            }" />
                         </div>
                     </div>
                     

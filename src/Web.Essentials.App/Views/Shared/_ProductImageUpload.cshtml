@@ -1,4 +1,4 @@
-@model dynamic
+@model Web.Essentials.App.ViewModels.ProductImageUploadViewModel
 <!-- 商品画像管理部分ビュー -->
 <!-- 画像アップロード、プレビュー、削除機能 -->
 <!-- Create/Edit画面で共通利用 -->
@@ -31,7 +31,7 @@
                     <small>
                         • 対応形式: JPEG, PNG, GIF<br>
                         • 最大ファイルサイズ: 5MB<br>
-                        • 最大5枚まで登録可能
+                        • 最大@Model.MaxImageCount枚まで登録可能
                     </small>
                 </div>
             </div>
