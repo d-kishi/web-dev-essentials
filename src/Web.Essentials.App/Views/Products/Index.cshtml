@@ -82,7 +82,14 @@
                             <tr class="product-row" data-product-id="@product.Id">
                                 <td class="col-thumbnail">
                                     <div class="thumbnail-container">
-                                        <img src="/images/no-image.png" alt="商品画像" class="product-thumbnail" />
+                                        @if (!string.IsNullOrEmpty(product.MainImagePath))
+                                        {
+                                            <img src="@product.MainImagePath" alt="@product.Name" class="product-thumbnail" />
+                                        }
+                                        else
+                                        {
+                                            <img src="/images/no-image.png" alt="商品画像" class="product-thumbnail" />
+                                        }
                                     </div>
                                 </td>
                                 <td class="col-name">

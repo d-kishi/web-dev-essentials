@@ -197,10 +197,17 @@ function createProductRow(product) {
     row.className = 'product-row';
     row.setAttribute('data-product-id', product.id);
     
+    // メイン画像の取得
+    const mainImage = product.images && product.images.length > 0 
+        ? product.images.find(img => img.isMain) || product.images[0]
+        : null;
+    const imageSrc = mainImage ? mainImage.imagePath : '/images/no-image.png';
+    const imageAlt = mainImage ? (mainImage.altText || product.name) : '商品画像';
+
     row.innerHTML = `
         <td class="col-thumbnail">
             <div class="thumbnail-container">
-                <img src="/images/no-image.png" alt="商品画像" class="product-thumbnail" />
+                <img src="${imageSrc}" alt="${imageAlt}" class="product-thumbnail" />
             </div>
         </td>
         <td class="col-name">

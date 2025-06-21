@@ -106,6 +106,14 @@ public class ProductApiController : ControllerBase
                     FullPath = pc.Category.Name,
                     Level = 1
                 }).ToList(),
+                Images = p.ProductImages.Select(pi => new ProductImageDto
+                {
+                    Id = pi.Id,
+                    ImagePath = pi.ImagePath,
+                    DisplayOrder = pi.DisplayOrder,
+                    AltText = pi.AltText,
+                    IsMain = pi.IsMain
+                }).ToList(),
                 CreatedAt = p.CreatedAt,
                 UpdatedAt = p.UpdatedAt
             }).ToList();
@@ -198,6 +206,14 @@ public class ProductApiController : ControllerBase
                     Name = pc.Category.Name,
                     FullPath = pc.Category.Name,
                     Level = 1
+                }).ToList(),
+                Images = product.ProductImages.Select(pi => new ProductImageDto
+                {
+                    Id = pi.Id,
+                    ImagePath = pi.ImagePath,
+                    DisplayOrder = pi.DisplayOrder,
+                    AltText = pi.AltText,
+                    IsMain = pi.IsMain
                 }).ToList(),
                 CreatedAt = product.CreatedAt,
                 UpdatedAt = product.UpdatedAt

@@ -69,6 +69,7 @@ public class ProductsController : Controller
                     Price = (uint)p.Price,
                     JanCode = p.JanCode,
                     Status = p.Status,
+                    MainImagePath = p.ProductImages.FirstOrDefault(img => img.IsMain)?.ImagePath ?? p.ProductImages.FirstOrDefault()?.ImagePath,
                     CategoryNames = p.ProductCategories.Select(pc => pc.Category.Name).ToList(),
                     CategoryName = p.ProductCategories.FirstOrDefault()?.Category.Name ?? "未分類",
                     CreatedAt = p.CreatedAt,
