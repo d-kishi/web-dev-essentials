@@ -10,6 +10,10 @@
     ViewBag.StatusSelectItems = Model?.StatusSelectItems ?? new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
 }
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/product-list.css" />
+}
+
 <!-- 商品一覧画面 -->
 <div class="page-header">
     <div class="page-title-section">
