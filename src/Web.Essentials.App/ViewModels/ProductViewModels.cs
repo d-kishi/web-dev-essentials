@@ -534,6 +534,12 @@ public class ProductCreateViewModel : IProductFormViewModel
     public List<string>? ImageAltTexts { get; set; }
 
     /// <summary>
+    /// メイン画像フラグのリスト
+    /// </summary>
+    [Display(Name = "メイン画像フラグ")]
+    public List<bool>? ImageIsMainFlags { get; set; }
+
+    /// <summary>
     /// メイン画像のインデックス（0から開始）
     /// </summary>
     [Display(Name = "メイン画像")]
@@ -625,6 +631,12 @@ public class ProductEditViewModel : IProductFormViewModel
     /// </summary>
     [Display(Name = "画像の説明")]
     public List<string>? NewImageAltTexts { get; set; }
+
+    /// <summary>
+    /// 新規画像のメイン画像フラグのリスト
+    /// </summary>
+    [Display(Name = "新規画像メイン画像フラグ")]
+    public List<bool>? NewImageIsMainFlags { get; set; }
 
     /// <summary>
     /// 削除対象の画像IDリスト

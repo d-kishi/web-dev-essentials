@@ -228,3 +228,58 @@
         </div>
     </div>
 }
+
+<!-- 画像編集モーダル -->
+<div id="imageEditModal" class="modal-overlay image-edit-modal" style="display: none;">
+    <div class="modal-dialog modal-medium">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">画像編集</h3>
+                <button type="button" class="modal-close" onclick="closeImageEditModal()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="image-edit-container">
+                    <div class="image-edit-preview">
+                        <img id="editPreviewImage" src="" alt="編集対象画像" class="edit-preview-img" />
+                    </div>
+                    <div class="image-edit-form">
+                        <div class="form-group">
+                            <label for="imageAltText" class="form-label">代替テキスト</label>
+                            <input type="text" 
+                                   id="imageAltText" 
+                                   class="form-input" 
+                                   placeholder="画像の説明を入力してください"
+                                   maxlength="200" />
+                            <div class="field-help">
+                                <small>アクセシビリティ向上のため、画像の内容を説明してください（最大200文字）</small>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="imageIsMain" class="checkbox-input">
+                                    <span class="checkbox-custom"></span>
+                                    メイン画像として設定
+                                </label>
+                            </div>
+                            <div class="field-help">
+                                <small>商品一覧や詳細画面で最初に表示される画像です</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeImageEditModal()">
+                    キャンセル
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveImageSettings()">
+                    設定を保存
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
