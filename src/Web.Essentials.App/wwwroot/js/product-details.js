@@ -74,15 +74,6 @@ function setupEventListeners() {
         }
     });
     
-    // 画像ビューアーモーダル外クリックで閉じる
-    const modal = document.getElementById('imageViewerModal');
-    if (modal) {
-        modal.addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeImageViewer();
-            }
-        });
-    }
 }
 
 /**
@@ -144,32 +135,44 @@ function switchMainImage(imagePath, altText, thumbnailElement) {
 }
 
 /**
- * 画像ビューアーを開く
+ * 画像ビューアーを開く（登録・編集画面と同じスタイル）
  * @param {string} imagePath - 画像パス
  * @param {string} altText - 代替テキスト
  */
 function openImageViewer(imagePath, altText) {
-    const modal = document.getElementById('imageViewerModal');
-    const viewerImage = document.getElementById('viewerImage');
-    const viewerTitle = document.getElementById('imageViewerTitle');
+    // シンプルなモーダル表示
+    const modal = document.createElement('div');
+    modal.className = 'image-view-modal';
+    modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(0,0,0,0.8); z-index: 1000;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+    `;
     
-    if (viewerImage) viewerImage.src = imagePath;
-    if (viewerImage) viewerImage.alt = altText;
-    if (viewerTitle) viewerTitle.textContent = altText || '商品画像';
+    modal.innerHTML = `
+        <div style="max-width: 90%; max-height: 90%; position: relative;">
+            <img src="${imagePath}" alt="${altText}" style="max-width: 100%; max-height: 100%; border-radius: 8px;">
+            <div style="position: absolute; top: -40px; right: 0; color: white; font-size: 24px; cursor: pointer;">&times;</div>
+        </div>
+    `;
     
-    if (modal) {
-        modal.style.display = 'block';
-        document.body.style.overflow = 'hidden';
-    }
+    modal.addEventListener('click', function() {
+        document.body.removeChild(modal);
+        document.body.style.overflow = 'auto';
+    });
+    
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
 }
 
 /**
- * 画像ビューアーを閉じる
+ * 画像ビューアーを閉じる（互換性のため残す）
  */
 function closeImageViewer() {
-    const modal = document.getElementById('imageViewerModal');
+    const modal = document.querySelector('.image-view-modal');
     if (modal) {
-        modal.style.display = 'none';
+        document.body.removeChild(modal);
         document.body.style.overflow = 'auto';
     }
 }

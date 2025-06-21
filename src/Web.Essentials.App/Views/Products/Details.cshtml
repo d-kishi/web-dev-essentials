@@ -64,7 +64,10 @@
                             {
                                 <div class="main-badge">メイン</div>
                             }
-                            <div class="image-zoom-overlay" data-image-path="@image.ImagePath" data-image-alt="@image.AltText">
+                            <div class="image-zoom-overlay" 
+                                 data-action="open-image-viewer"
+                                 data-image-path="@image.ImagePath" 
+                                 data-image-alt="@image.AltText">
                                 <span class="zoom-icon">🔍</span>
                             </div>
                         </div>
@@ -279,24 +282,6 @@
     </div>
 </div>
 
-<!-- 画像拡大モーダル -->
-<div id="imageModal" class="modal-overlay image-modal" style="display: none;">
-    <div class="modal-dialog modal-large">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title" id="imageModalTitle">商品画像</h3>
-                <button type="button" class="modal-close" id="closeImageModalButton">
-                    <span>×</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="image-modal-container">
-                    <img id="modalImage" src="" alt="" class="modal-image" />
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 @section Styles {
     <link rel="stylesheet" href="~/css/product-details.css" asp-append-version="true" />

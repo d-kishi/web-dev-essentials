@@ -386,8 +386,8 @@
 .image-item {
     position: relative;
     flex: 0 1 calc(33.333% - 0.67rem); /* 最大3列 */
-    max-width: 200px;
-    min-width: 150px;
+    max-width: 300px;
+    min-width: 200px;
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -406,7 +406,7 @@
 
 .product-image {
     width: 100%;
-    height: 200px;
+    height: 250px;
     object-fit: cover;
     transition: transform 0.3s ease;
 }
@@ -462,4 +462,19 @@
     .image-item {
         flex: 0 1 100%; /* スマートフォン: 1列 */
     }
+}
+
+/* 画像ビューアモーダル（登録・編集画面と同じスタイル） */
+.image-view-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.8);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
 }
