@@ -1,8 +1,10 @@
 @{
     var searchKeyword = ViewBag.SearchKeyword as string ?? "";
     var categoryId = ViewBag.CategoryId as int?;
+    var status = ViewBag.Status as Web.Essentials.Domain.Entities.ProductStatus?;
     var showCategoryFilter = ViewBag.ShowCategoryFilter as bool? ?? false;
     var categories = ViewBag.Categories as IEnumerable<Web.Essentials.App.ViewModels.CategorySelectItem> ?? new List<Web.Essentials.App.ViewModels.CategorySelectItem>();
+    var statusSelectItems = ViewBag.StatusSelectItems as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
 }
 
 <!-- 検索フォーム部分ビュー -->
@@ -34,6 +36,17 @@
                     <label for="categoryFilter" class="search-label">カテゴリ</label>
                     <select id="categoryFilter" name="categoryId" class="search-select" asp-items="@(ViewBag.CategorySelectList ?? new SelectList(categories, "Id", "FullPath", categoryId))">
                         <option value="">すべてのカテゴリ</option>
+                    </select>
+                </div>
+            }
+            
+            <!-- ステータス絞り込み（商品検索時のみ） -->
+            @if (showCategoryFilter)
+            {
+                <div class="search-field">
+                    <label for="statusFilter" class="search-label">ステータス</label>
+                    <select id="statusFilter" name="status" class="search-select" asp-items="@statusSelectItems" asp-for="@status">
+                        <option value="">すべてのステータス</option>
                     </select>
                 </div>
             }

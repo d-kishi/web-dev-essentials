@@ -381,4 +381,9 @@ public class ProductListDto
     /// </summary>
     public int? CategoryId { get; set; }
 
+    /// <summary>
+    /// フィルタ用ステータス
+    /// </summary>
+    public int? Status { get; set; }
+
 }

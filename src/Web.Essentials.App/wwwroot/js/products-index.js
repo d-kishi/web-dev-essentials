@@ -7,6 +7,7 @@
 let currentSearchParams = {
     searchKeyword: '',
     categoryId: null,
+    status: null,
     page: 1,
     pageSize: 10,
     sortBy: 'updatedat_desc'
@@ -44,9 +45,11 @@ function initializeProductList() {
 function performSearch() {
     const searchKeyword = document.getElementById('searchKeyword').value;
     const categoryId = document.getElementById('categoryFilter').value;
+    const status = document.getElementById('statusFilter').value;
     
     currentSearchParams.searchKeyword = searchKeyword;
     currentSearchParams.categoryId = categoryId || null;
+    currentSearchParams.status = status || null;
     currentSearchParams.page = 1; // 検索時は1ページ目に戻る
     
     loadProductList();
@@ -61,6 +64,7 @@ function resetSearch() {
     currentSearchParams = {
         searchKeyword: '',
         categoryId: null,
+        status: null,
         page: 1,
         pageSize: currentSearchParams.pageSize,
         sortBy: 'updatedat_desc'
@@ -112,6 +116,9 @@ async function loadProductList() {
         if (currentSearchParams.categoryId) {
             params.append('categoryId', currentSearchParams.categoryId);
         }
+        if (currentSearchParams.status) {
+            params.append('status', currentSearchParams.status);
+        }
         params.append('page', currentSearchParams.page);
         params.append('pageSize', currentSearchParams.pageSize);
         params.append('sortBy', currentSearchParams.sortBy);
@@ -153,7 +160,7 @@ function updateProductList(data) {
             const noDataRow = document.createElement('tr');
             noDataRow.className = 'no-data-row';
             noDataRow.innerHTML = `
-                <td colspan="7" class="no-data-cell">
+                <td colspan="8" class="no-data-cell">
                     <div class="no-data-message">
                         <div class="no-data-icon">📦</div>
                         <h3>商品が見つかりません</h3>
@@ -209,6 +216,9 @@ function createProductRow(product) {
         </td>
         <td class="col-price">
             <span class="price-value">¥${product.price.toLocaleString()}</span>
+        </td>
+        <td class="col-status">
+            <span class="status-badge status-${product.status}">${product.statusName}</span>
         </td>
         <td class="col-jan">
             ${product.janCode ? `<code class="jan-code">${product.janCode}</code>` : '<span class="no-data">-</span>'}

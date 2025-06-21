@@ -4,8 +4,10 @@
     // 検索フォーム用のViewBagデータ設定
     ViewBag.SearchKeyword = Model?.SearchKeyword ?? "";
     ViewBag.CategoryId = Model?.CategoryId;
+    ViewBag.Status = Model?.Status;
     ViewBag.ShowCategoryFilter = true;
     ViewBag.Categories = Model?.Categories ?? new List<Web.Essentials.App.ViewModels.CategorySelectItem>();
+    ViewBag.StatusSelectItems = Model?.StatusSelectItems ?? new List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
 }
 
 <!-- 商品一覧画面 -->
@@ -56,6 +58,10 @@
                             価格
                             <span class="sort-indicator" data-column="price">↕</span>
                         </th>
+                        <th class="col-status sortable" data-column="status" style="cursor: pointer;">
+                            ステータス
+                            <span class="sort-indicator" data-column="status">↕</span>
+                        </th>
                         <th class="col-jan">JANコード</th>
                         <th class="col-updated sortable" data-column="updatedat" style="cursor: pointer;">
                             更新日時
@@ -93,6 +99,9 @@
                                 </td>
                                 <td class="col-price">
                                     <span class="price-value">¥@product.Price.ToString("N0")</span>
+                                </td>
+                                <td class="col-status">
+                                    <span class="status-badge status-@(product.Status.ToString().ToLower())">@product.StatusName</span>
                                 </td>
                                 <td class="col-jan">
                                     @if (!string.IsNullOrEmpty(product.JanCode))
@@ -135,7 +144,7 @@
                     else
                     {
                         <tr class="no-data-row">
-                            <td colspan="7" class="no-data-cell">
+                            <td colspan="8" class="no-data-cell">
                                 <div class="no-data-message">
                                     <div class="no-data-icon">📦</div>
                                     <h3>商品が見つかりません</h3>
@@ -170,6 +179,7 @@
             setInitialSearchParams({
                 searchKeyword: '@Model?.SearchKeyword',
                 categoryId: @(Model?.CategoryId?.ToString() ?? "null"),
+                status: @(Model?.Status?.ToString() ?? "null"),
                 page: @(Model?.CurrentPage ?? 1),
                 pageSize: @(Model?.PageSize ?? 10),
                 sortBy: 'updatedat_desc'

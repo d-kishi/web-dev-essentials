@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Web.Essentials.App.DTOs;
+using Web.Essentials.App.Extensions;
+using Web.Essentials.Domain.Entities;
 using Web.Essentials.Domain.Repositories;
 
 namespace Web.Essentials.App.Controllers.Api;
@@ -47,14 +49,15 @@ public class ProductApiController : ControllerBase
     public async Task<ActionResult<ApiResponse<ProductListDto>>> GetProducts(
         [FromQuery] string? searchKeyword = null,
         [FromQuery] int? categoryId = null,
+        [FromQuery] int? status = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] string sortBy = "updatedat_desc")
     {
         try
         {
-            _logger.LogInformation("商品一覧取得API呼び出し。検索キーワード: {SearchKeyword}, カテゴリID: {CategoryId}, ページ: {Page}, ページサイズ: {PageSize}, ソート: {SortBy}",
-                searchKeyword, categoryId, page, pageSize, sortBy);
+            _logger.LogInformation("商品一覧取得API呼び出し。検索キーワード: {SearchKeyword}, カテゴリID: {CategoryId}, ステータス: {Status}, ページ: {Page}, ページサイズ: {PageSize}, ソート: {SortBy}",
+                searchKeyword, categoryId, status, page, pageSize, sortBy);
 
             // 入力値バリデーション
             if (page < 1) page = 1;
@@ -63,12 +66,19 @@ public class ProductApiController : ControllerBase
             // ソートパラメーターの解析
             var (repositorySortBy, repositorySortOrder) = ParseSortParameter(sortBy);
 
+            // ステータス変換（int? -> ProductStatus?）
+            ProductStatus? productStatus = null;
+            if (status.HasValue && Enum.IsDefined(typeof(ProductStatus), status.Value))
+            {
+                productStatus = (ProductStatus)status.Value;
+            }
+
             // 商品一覧を取得（検索・フィルタリング・ページング対応）
             var (allProducts, totalCount) = await _productRepository.GetAllAsync(
                 nameTerm: searchKeyword,
                 janCodeTerm: null,
                 categoryId: categoryId,
-                status: null,
+                status: productStatus,
                 minPrice: null,
                 maxPrice: null,
                 sortBy: repositorySortBy,
@@ -88,7 +98,7 @@ public class ProductApiController : ControllerBase
                 Price = p.Price,
                 JanCode = p.JanCode,
                 Status = (int)p.Status,
-                StatusName = p.Status.ToString(),
+                StatusName = p.Status.GetDisplayName(),
                 Categories = p.ProductCategories.Select(pc => new ProductCategoryDto
                 {
                     Id = pc.Category.Id,
@@ -120,7 +130,8 @@ public class ProductApiController : ControllerBase
                     Products = productDTOs,
                     Paging = paging,
                     SearchKeyword = searchKeyword,
-                    CategoryId = categoryId
+                    CategoryId = categoryId,
+                    Status = status
                 },
                 Message = "商品一覧を正常に取得しました"
             };

@@ -270,6 +270,11 @@ public class ProductIndexViewModel
     /// 現在のページ番号（ページング用）
     /// </summary>
     public int CurrentPage { get; set; } = 1;
+
+    /// <summary>
+    /// ステータス選択用リスト
+    /// </summary>
+    public List<SelectListItem> StatusSelectItems => EnumExtensions.ToSelectListItems<ProductStatus>(Status);
 }
 
 /// <summary>
