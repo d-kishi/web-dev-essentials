@@ -51,35 +51,22 @@
         <div class="product-images">
             @if (Model.Images?.Any() == true)
             {
-                <div class="image-gallery">
-                    <!-- メイン画像 -->
-                    <div class="main-image-container">
-                        @{
-                            var mainImage = Model.Images.FirstOrDefault(img => img.IsMain) ?? Model.Images.First();
-                        }
-                        <img id="mainProductImage" 
-                             src="@mainImage.ImagePath" 
-                             alt="@mainImage.AltText" 
-                             class="main-product-image" />
-                        <div class="image-zoom-overlay" data-image-path="@mainImage.ImagePath" data-image-alt="@mainImage.AltText">
-                            <span class="zoom-icon">🔍</span>
-                        </div>
-                    </div>
-                    
-                    <!-- 画像サムネイル -->
-                    @if (Model.Images.Count() > 1)
+                <div class="image-gallery-flex">
+                    @foreach (var image in Model.Images.OrderBy(img => img.DisplayOrder))
                     {
-                        <div class="image-thumbnails">
-                            @foreach (var image in Model.Images.OrderBy(img => img.DisplayOrder))
+                        <div class="image-item @(image.IsMain ? "main-image" : "")" 
+                             data-image-path="@image.ImagePath" 
+                             data-image-alt="@image.AltText">
+                            <img src="@image.ImagePath" 
+                                 alt="@image.AltText" 
+                                 class="product-image" />
+                            @if (image.IsMain)
                             {
-                                <div class="thumbnail-item @(image.IsMain ? "active" : "")"
-                                     data-image-path="@image.ImagePath" 
-                                     data-image-alt="@image.AltText">
-                                    <img src="@image.ImagePath" 
-                                         alt="@image.AltText" 
-                                         class="thumbnail-image" />
-                                </div>
+                                <div class="main-badge">メイン</div>
                             }
+                            <div class="image-zoom-overlay" data-image-path="@image.ImagePath" data-image-alt="@image.AltText">
+                                <span class="zoom-icon">🔍</span>
+                            </div>
                         </div>
                     }
                 </div>
@@ -310,6 +297,10 @@
         </div>
     </div>
 </div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/product-details.css" asp-append-version="true" />
+}
 
 @section Scripts {
     <script src="~/js/product-details.js" asp-append-version="true" defer></script>
