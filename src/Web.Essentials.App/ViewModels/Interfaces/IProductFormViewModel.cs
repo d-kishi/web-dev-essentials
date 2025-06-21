@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Web.Essentials.App.ViewModels;
 using Web.Essentials.Domain.Entities;
 
@@ -44,5 +45,10 @@ namespace Web.Essentials.App.ViewModels.Interfaces
         /// 利用可能なカテゴリ一覧
         /// </summary>
         IEnumerable<CategorySelectItem> Categories { get; set; }
+
+        /// <summary>
+        /// ステータス選択用リスト
+        /// </summary>
+        List<SelectListItem> StatusSelectItems { get; }
     }
 }

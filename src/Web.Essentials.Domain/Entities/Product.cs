@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Web.Essentials.Domain.Entities;
 
 /// <summary>
@@ -113,21 +115,25 @@ public class Product
 /// <remarks>
 /// 商品の販売状態を表現する列挙型
 /// データベースでは整数値として保存される
+/// DisplayAttributeでUI表示用のテキストを定義
 /// </remarks>
 public enum ProductStatus
 {
     /// <summary>
     /// 販売開始前 - まだ販売が開始されていない商品
     /// </summary>
+    [Display(Name = "販売開始前")]
     PreSale = 0,
 
     /// <summary>
     /// 販売中 - 現在販売中の商品
     /// </summary>
+    [Display(Name = "販売中")]
     OnSale = 1,
 
     /// <summary>
     /// 取扱終了 - 販売を終了した商品
     /// </summary>
+    [Display(Name = "取扱終了")]
     Discontinued = 2
 }

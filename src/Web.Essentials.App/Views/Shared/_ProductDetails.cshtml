@@ -1,5 +1,6 @@
 @model Web.Essentials.App.ViewModels.ProductDetailsDisplayViewModel
 @using Web.Essentials.Domain.Entities
+@using Web.Essentials.App.Extensions
 <!-- 商品詳細表示部分ビュー -->
 <!-- 商品情報の読み取り専用表示 -->
 <!-- Details/Delete確認画面で共通利用 -->
@@ -84,13 +85,13 @@
                         @switch (Model.Status)
                         {
                             case ProductStatus.PreSale:
-                                <span class="status-badge status-pending">販売開始前</span>
+                                <span class="status-badge status-pending">@Model.Status.GetDisplayName()</span>
                                 break;
                             case ProductStatus.OnSale:
-                                <span class="status-badge status-active">販売中</span>
+                                <span class="status-badge status-active">@Model.Status.GetDisplayName()</span>
                                 break;
                             case ProductStatus.Discontinued:
-                                <span class="status-badge status-discontinued">取扱終了</span>
+                                <span class="status-badge status-discontinued">@Model.Status.GetDisplayName()</span>
                                 break;
                         }
                     </div>
@@ -209,18 +210,7 @@
                     <div class="spec-row">
                         <div class="spec-label">商品ステータス</div>
                         <div class="spec-value">
-                            @switch (Model.Status)
-                            {
-                                case ProductStatus.PreSale:
-                                    <span class="status-text">販売開始前</span>
-                                    break;
-                                case ProductStatus.OnSale:
-                                    <span class="status-text">販売中</span>
-                                    break;
-                                case ProductStatus.Discontinued:
-                                    <span class="status-text">取扱終了</span>
-                                    break;
-                            }
+                            <span class="status-text">@Model.Status.GetDisplayName()</span>
                         </div>
                     </div>
                     

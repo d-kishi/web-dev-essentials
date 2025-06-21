@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Web.Essentials.Domain.Entities;
 using Web.Essentials.App.Validation;
 using Web.Essentials.App.ViewModels.Interfaces;
+using Web.Essentials.App.Extensions;
 
 namespace Web.Essentials.App.ViewModels;
 
@@ -131,13 +133,7 @@ public class ProductDeleteViewModel
     /// <summary>
     /// ステータス表示名
     /// </summary>
-    public string StatusName => Status switch
-    {
-        ProductStatus.PreSale => "販売開始前",
-        ProductStatus.OnSale => "販売中",
-        ProductStatus.Discontinued => "取扱終了",
-        _ => "不明"
-    };
+    public string StatusName => Status.GetDisplayName();
 
     /// <summary>
     /// カテゴリ一覧
@@ -328,13 +324,7 @@ public class ProductListItemViewModel
     /// <summary>
     /// ステータス表示名
     /// </summary>
-    public string StatusName => Status switch
-    {
-        ProductStatus.PreSale => "販売開始前",
-        ProductStatus.OnSale => "販売中",
-        ProductStatus.Discontinued => "取扱終了",
-        _ => "不明"
-    };
+    public string StatusName => Status.GetDisplayName();
 
     /// <summary>
     /// メイン画像パス
@@ -419,13 +409,7 @@ public class ProductDetailsViewModel
     /// <summary>
     /// ステータス表示名
     /// </summary>
-    public string StatusName => Status switch
-    {
-        ProductStatus.PreSale => "販売開始前",
-        ProductStatus.OnSale => "販売中",
-        ProductStatus.Discontinued => "取扱終了",
-        _ => "不明"
-    };
+    public string StatusName => Status.GetDisplayName();
 
     /// <summary>
     /// カテゴリ一覧
@@ -549,6 +533,11 @@ public class ProductCreateViewModel : IProductFormViewModel
     /// カテゴリ選択用リスト
     /// </summary>
     public IEnumerable<CategorySelectItem> Categories { get; set; } = new List<CategorySelectItem>();
+
+    /// <summary>
+    /// ステータス選択用リスト
+    /// </summary>
+    public List<SelectListItem> StatusSelectItems => EnumExtensions.ToSelectListItems<ProductStatus>(Status);
 }
 
 /// <summary>
@@ -673,6 +662,11 @@ public class ProductEditViewModel : IProductFormViewModel
     /// 作成日時
     /// </summary>
     public DateTime CreatedAt { get; set; }
+
+    /// <summary>
+    /// ステータス選択用リスト
+    /// </summary>
+    public List<SelectListItem> StatusSelectItems => EnumExtensions.ToSelectListItems<ProductStatus>(Status);
 }
 
 /// <summary>

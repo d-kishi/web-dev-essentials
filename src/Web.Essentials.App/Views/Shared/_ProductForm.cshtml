@@ -73,10 +73,7 @@
             <!-- 商品ステータス -->
             <div class="form-group">
                 <label asp-for="Status" class="form-label required">商品ステータス</label>
-                <select asp-for="Status" class="form-select">
-                    <option value="0">販売開始前</option>
-                    <option value="1">販売中</option>
-                    <option value="2">取扱終了</option>
+                <select asp-for="Status" asp-items="Model?.StatusSelectItems" class="form-select">
                 </select>
                 <span asp-validation-for="Status" class="validation-error"></span>
                 <div class="field-help">
