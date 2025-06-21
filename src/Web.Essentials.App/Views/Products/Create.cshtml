@@ -53,10 +53,6 @@
                     <span class="btn-icon">💾</span>
                     商品を登録
                 </button>
-                <button type="button" class="btn btn-outline btn-large" id="previewButton">
-                    <span class="btn-icon">👁</span>
-                    プレビュー
-                </button>
                 <button type="button" class="btn btn-light btn-large" id="resetButton">
                     <span class="btn-icon">↻</span>
                     リセット
@@ -77,35 +73,14 @@
     </form>
 </div>
 
-<!-- プレビューモーダル -->
-<div id="productPreviewModal" class="modal-overlay preview-modal" style="display: none;">
-    <div class="modal-dialog modal-large">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">商品プレビュー</h3>
-                <button type="button" class="modal-close" id="closePreviewModalX">
-                    <span>×</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div id="productPreviewContent" class="preview-content">
-                    <!-- プレビュー内容がここに表示される -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="closePreviewModalButton">
-                    閉じる
-                </button>
-                <button type="button" class="btn btn-primary" id="submitFromPreviewButton">
-                    このまま登録する
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/simple-image-upload.css" asp-append-version="true" />
+}
 
 @section Scripts {
     <script src="~/js/product-form.js" asp-append-version="true" defer></script>
+    <script src="~/js/image-upload-with-preview.js" asp-append-version="true" defer></script>
     <script src="~/js/products-create.js" asp-append-version="true" defer></script>
 }

@@ -1,0 +1,286 @@
+/* 画像アップロード・プレビューのスタイル */
+
+.image-upload-zone {
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    transition: border-color 0.3s ease;
+    background-color: #fafafa;
+    cursor: pointer;
+}
+
+.image-upload-zone:hover {
+    border-color: #007bff;
+    background-color: #f8f9fa;
+}
+
+.image-upload-zone.drag-over {
+    border-color: #007bff;
+    background-color: #e3f2fd;
+}
+
+.upload-content {
+    margin-bottom: 1rem;
+}
+
+.upload-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #666;
+}
+
+.upload-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.upload-description {
+    margin: 0 0 1.5rem 0;
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.upload-constraints {
+    font-size: 0.85rem;
+    color: #888;
+    border-top: 1px solid #eee;
+    padding-top: 1rem;
+    margin-top: 1rem;
+}
+
+/* 選択されたファイル一覧 */
+.selected-files-area {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    background-color: #f9f9f9;
+}
+
+.files-title {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.selected-files-list {
+    margin-bottom: 1rem;
+}
+
+.selected-file-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.selected-file-item:last-child {
+    margin-bottom: 0;
+}
+
+.file-icon {
+    font-size: 1.5rem;
+    margin-right: 1rem;
+    color: #28a745;
+}
+
+.file-info {
+    flex: 1;
+}
+
+.file-name {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 0.25rem;
+}
+
+.file-details {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.file-size,
+.file-type {
+    margin-right: 1rem;
+}
+
+.file-status .status-valid {
+    color: #28a745;
+    font-size: 1.2rem;
+}
+
+.btn-outline.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 0.25rem;
+    border: 1px solid #6c757d;
+    color: #6c757d;
+    background-color: transparent;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.btn-outline.btn-sm:hover {
+    color: #fff;
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+/* 画像プレビューエリア */
+.image-preview-area {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    background-color: #f9f9f9;
+}
+
+.preview-title {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.image-preview-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.image-preview-item {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.image-preview-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.preview-image-container {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+}
+
+.preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.2s ease;
+}
+
+.preview-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.image-preview-item:hover .preview-overlay {
+    opacity: 1;
+}
+
+.overlay-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.overlay-btn:hover {
+    background-color: rgba(255,255,255,0.2);
+}
+
+.main-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background-color: #28a745;
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+.preview-info {
+    padding: 0.75rem;
+}
+
+.preview-name {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 0.25rem;
+    font-size: 0.85rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.preview-details {
+    font-size: 0.75rem;
+    color: #666;
+    display: flex;
+    justify-content: space-between;
+}
+
+.preview-actions {
+    display: flex;
+    justify-content: center;
+}
+
+/* 画像拡大表示モーダル */
+.image-view-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.8);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* 商品ステータス選択のスタイル */
+.form-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    background-color: #fff;
+    cursor: pointer;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}

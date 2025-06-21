@@ -70,6 +70,20 @@
                 </div>
             </div>
             
+            <!-- 商品ステータス -->
+            <div class="form-group">
+                <label asp-for="Status" class="form-label required">商品ステータス</label>
+                <select asp-for="Status" class="form-select">
+                    <option value="0">販売開始前</option>
+                    <option value="1">販売中</option>
+                    <option value="2">取扱終了</option>
+                </select>
+                <span asp-validation-for="Status" class="validation-error"></span>
+                <div class="field-help">
+                    <small>商品の販売状況を選択してください</small>
+                </div>
+            </div>
+            
             <!-- JANコード -->
             <div class="form-group">
                 <label asp-for="JanCode" class="form-label">JANコード</label>
@@ -115,31 +129,45 @@
         <h3 class="section-title">商品画像</h3>
         <div class="form-group">
             <label for="imageFiles" class="form-label">画像ファイル</label>
-            <div class="image-upload-area">
-                <input type="file" 
-                       id="imageFiles" 
-                       name="ImageFiles" 
-                       class="image-input" 
-                       accept="image/*" 
-                       multiple
-                       />
-                <label for="imageFiles" class="image-upload-label">
-                    <div class="upload-icon">📁</div>
-                    <div class="upload-text">
-                        <strong>画像ファイルを選択</strong><br>
-                        <small>または、ここにドラッグ&ドロップ</small>
-                    </div>
-                </label>
-            </div>
-            <div class="field-help">
-                <small>JPEG、PNG、GIF形式の画像ファイルを複数選択可能です（最大5MB/ファイル）</small>
+            
+            <!-- ファイル選択エリア -->
+            <div class="image-upload-zone" id="imageUploadZone">
+                <div class="upload-content">
+                    <div class="upload-icon">📷</div>
+                    <h4 class="upload-title">画像をアップロード</h4>
+                    <p class="upload-description">
+                        ファイルをドラッグ&ドロップするか、クリックして選択してください
+                    </p>
+                    <button type="button" class="btn btn-outline" onclick="document.getElementById('imageFiles').click()">
+                        ファイルを選択
+                    </button>
+                    <input type="file" 
+                           id="imageFiles" 
+                           name="ImageFiles" 
+                           accept="image/jpeg,image/png,image/gif" 
+                           multiple 
+                           style="display: none;"
+                           />
+                </div>
+                <div class="upload-constraints">
+                    <small>
+                        • 対応形式: JPEG, PNG, GIF<br>
+                        • 最大ファイルサイズ: 5MB<br>
+                        • 最大5枚まで登録可能
+                    </small>
+                </div>
             </div>
             
             <!-- 画像プレビューエリア -->
             <div id="imagePreviewArea" class="image-preview-area" style="display: none;">
                 <h4 class="preview-title">選択された画像</h4>
-                <div id="imagePreviewList" class="image-preview-list">
-                    <!-- プレビュー画像がここに表示される -->
+                <div id="imagePreviewContainer" class="image-preview-container">
+                    <!-- 画像プレビューがここに表示される -->
+                </div>
+                <div class="preview-actions">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="clearAllImages()">
+                        すべてクリア
+                    </button>
                 </div>
             </div>
         </div>
@@ -157,24 +185,28 @@
 <!-- 既存画像表示用（編集時のみ） -->
 @{
     var hasExistingImages = false;
-    object existingImages = null;
+    IEnumerable<Web.Essentials.App.ViewModels.ProductImageViewModel>? existingImages = null;
     try 
     {
-        var existingImagesProperty = Model.GetType().GetProperty("ExistingImages");
-        existingImages = existingImagesProperty?.GetValue(Model);
-        hasExistingImages = existingImages != null && ((IEnumerable<object>)existingImages).Any();
+        var existingImagesProperty = Model?.GetType().GetProperty("ExistingImages");
+        var existingImagesValue = existingImagesProperty?.GetValue(Model);
+        if (existingImagesValue is IEnumerable<Web.Essentials.App.ViewModels.ProductImageViewModel> images)
+        {
+            existingImages = images;
+            hasExistingImages = existingImages.Any();
+        }
     }
     catch
     {
         hasExistingImages = false;
     }
 }
-@if (hasExistingImages)
+@if (hasExistingImages && existingImages != null)
 {
     <div class="form-section">
         <h3 class="section-title">現在の商品画像</h3>
         <div class="existing-images-area">
-            @foreach (var image in ((IEnumerable<Web.Essentials.App.ViewModels.ProductImageViewModel>)existingImages).OrderBy(img => img.DisplayOrder))
+            @foreach (var image in existingImages.OrderBy(img => img.DisplayOrder))
             {
                 <div class="existing-image-item" data-image-id="@image.Id">
                     <div class="image-container">

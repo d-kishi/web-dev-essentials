@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Web.Essentials.App.ViewModels;
+using Web.Essentials.Domain.Entities;
 
 namespace Web.Essentials.App.ViewModels.Interfaces
 {
@@ -28,6 +29,11 @@ namespace Web.Essentials.App.ViewModels.Interfaces
         /// JANコード
         /// </summary>
         string? JanCode { get; set; }
+
+        /// <summary>
+        /// 商品ステータス
+        /// </summary>
+        ProductStatus Status { get; set; }
 
         /// <summary>
         /// 選択されたカテゴリID一覧（多対多対応）

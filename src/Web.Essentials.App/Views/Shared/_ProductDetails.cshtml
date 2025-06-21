@@ -32,12 +32,12 @@
                         }
                         <!-- メイン画像 -->
                         <div class="main-image-container">
-                            <img src="@mainImage.ImagePath" 
-                                 alt="@mainImage.AltText" 
+                            <img src="@(mainImage?.ImagePath ?? "")" 
+                                 alt="@(mainImage?.AltText ?? "")" 
                                  class="main-Model-image" 
                                  data-action="open-image-viewer" 
-                                 data-image-path="@mainImage.ImagePath" 
-                                 data-alt-text="@mainImage.AltText" />
+                                 data-image-path="@(mainImage?.ImagePath ?? "")" 
+                                 data-alt-text="@(mainImage?.AltText ?? "")" />
                             <div class="image-overlay">
                                 <span class="zoom-hint">クリックで拡大</span>
                             </div>
