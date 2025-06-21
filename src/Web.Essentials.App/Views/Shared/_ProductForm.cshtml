@@ -6,7 +6,7 @@
     <!-- 基本情報セクション -->
     <div class="form-section">
         <h3 class="section-title">基本情報</h3>
-        <div class="form-grid">
+        <div class="form-column">
             <!-- 商品名 -->
             <div class="form-group">
                 <label asp-for="Name" class="form-label required">商品名</label>
@@ -56,7 +56,7 @@
                                        name="SelectedCategoryIds" 
                                        value="@category.Id" 
                                        @(isSelected ? "checked" : "")
-                                       class="category-checkbox leaf-checkbox" />
+                                       class="category-checkbox" />
                                 <label for="category_@category.Id" class="category-checkbox-label">
                                     <span class="category-path">@category.FullPath</span>
                                 </label>
