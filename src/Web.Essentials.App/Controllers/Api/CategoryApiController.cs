@@ -45,8 +45,8 @@ public class CategoryApiController : ControllerBase
             _logger.LogInformation("カテゴリ一覧取得API呼び出し。検索キーワード: {SearchKeyword}",
                 searchKeyword);
 
-            // 全カテゴリを取得
-            var allCategories = await _categoryRepository.GetAllAsync();
+            // 全カテゴリを取得（商品数も含む）
+            var allCategories = await _categoryRepository.GetAllAsync(includeProductCount: true);
             
             List<CategoryDto> resultCategories;
 
@@ -184,7 +184,7 @@ public class CategoryApiController : ControllerBase
             }
 
             // DTOに変換
-            var allCategories = await _categoryRepository.GetAllAsync();
+            var allCategories = await _categoryRepository.GetAllAsync(includeProductCount: true);
             var categoryDTO = new CategoryDto
             {
                 Id = category.Id,
@@ -237,7 +237,7 @@ public class CategoryApiController : ControllerBase
         {
             _logger.LogInformation("全カテゴリ一覧取得API呼び出し");
 
-            var allCategories = await _categoryRepository.GetAllAsync();
+            var allCategories = await _categoryRepository.GetAllAsync(includeProductCount: true);
 
             // DTOに変換
             var categoryDTOs = allCategories
