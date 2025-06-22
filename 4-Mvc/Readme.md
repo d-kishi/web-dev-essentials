@@ -194,72 +194,268 @@ Views/
 
 Razorは、C#コードとHTMLをシームレスに組み合わせて記述できるテンプレートエンジンです。  
 `.cshtml`ファイル内で、`@`記号を使ってC#コードを埋め込むことができます。  
-これにより、動的なWebページを簡単に作成できます。
+Web.Essentials.Appの実装例を交えて、.NET Core/.NET 5+での現代的な書き方を解説します。
+
+### .NET Framework 4.8との主な違い
+
+**.NET Framework 4.8時代**：
+```cshtml
+@using (Html.BeginForm("Create", "Categories")) {
+    @Html.LabelFor(m => m.Name)
+    @Html.TextBoxFor(m => m.Name)
+    @Html.ValidationMessageFor(m => m.Name)
+}
+```
+
+**.NET Core/.NET 5+（現代）**：
+```cshtml
+<form asp-controller="Categories" asp-action="Create">
+    <label asp-for="Name"></label>
+    <input asp-for="Name" />
+    <span asp-validation-for="Name"></span>
+</form>
+```
+
+**なぜ変わったのか**：
+- **直感性**: HTMLらしい記述
+- **IntelliSense**: より良い補完サポート  
+- **保守性**: HTMLとC#の役割分離
 
 ### 基本的な構文
 
 - **C#コードの埋め込み**
 
   ```cshtml
-  <p>@DateTime.Now</p>
+  <!-- Web.Essentials.App/Views/Categories/Index.cshtml -->
+  <p>最終更新: @DateTime.Now.ToString("yyyy/MM/dd HH:mm")</p>
+  <p>カテゴリ数: @Model.Categories.Count()個</p>
   ```
-
-  → 現在日時を表示
 
 - **変数の宣言と使用**
 
   ```cshtml
   @{
-      var message = "Hello, Razor!";
+      var pageTitle = $"カテゴリ編集 - {Model.Name}";
+      var isRootCategory = Model.ParentCategoryId == null;
+      var hasChildren = Model.ChildCategories?.Any() == true;
   }
-  <p>@message</p>
+  
+  <title>@pageTitle</title>
+  <div class="category-info @(isRootCategory ? "root-category" : "child-category")">
+      <!-- コンテンツ -->
+  </div>
   ```
 
-- **条件分岐**
+- **条件分岐（実装例）**
 
   ```cshtml
-  @if (User.Identity.IsAuthenticated)
+  <!-- Web.Essentials.App/Views/Categories/Edit.cshtml -->
+  @if (Model.ChildCategories?.Any() == true)
   {
-      <p>ログイン中</p>
+      <div class="warning-message">
+          <div class="warning-icon">⚠️</div>
+          <div class="warning-content">
+              <strong>階層変更の制限</strong>
+              <p>このカテゴリには子カテゴリが存在するため、親カテゴリの変更はできません。</p>
+          </div>
+      </div>
   }
   else
   {
-      <p>ゲストユーザー</p>
+      <div class="field-help">
+          <small>親カテゴリを変更すると、階層構造が変更されます。</small>
+      </div>
   }
   ```
 
-- **ループ処理**
+- **ループ処理（実装例）**
 
   ```cshtml
-  @for (int i = 0; i < 3; i++)
+  <!-- Web.Essentials.App/Views/Categories/Edit.cshtml -->
+  @if (Model.ChildCategories?.Any() == true)
   {
-      <li>Item @i</li>
+      <div class="child-categories-list">
+          @foreach (var child in Model.ChildCategories)
+          {
+              <div class="child-category-item">
+                  <span class="child-category-name">@child.Name</span>
+                  <span class="child-category-path">(@child.FullPath)</span>
+                  <a asp-action="Edit" asp-route-id="@child.Id" class="btn btn-sm btn-outline">編集</a>
+              </div>
+          }
+      </div>
+  }
+  
+  <!-- forループでの配列インデックス活用 -->
+  @for (int i = 0; i < Model.MaxLevel; i++)
+  {
+      <div class="level-indicator level-@i">
+          <span class="level-badge">レベル @(i + 1)</span>
+      </div>
   }
   ```
 
-- **モデルの利用**
+- **モデルの利用（型安全性）**
 
   ```cshtml
-  @model UserModel
-  <p>ユーザー名: @Model.UserName</p>
+  <!-- Web.Essentials.App/Views/Categories/Index.cshtml -->
+  @model Web.Essentials.App.ViewModels.CategoryIndexViewModel
+  
+  <h1>@ViewData["Title"]</h1>
+  <p>検索キーワード: @Model.SearchKeyword</p>
+  <p>現在のページ: @Model.CurrentPage / @Model.TotalPages</p>
+  
+  <!-- .NET Framework 4.8との違い: null条件演算子が使用可能 -->
+  <p>商品数: @(Model.ProductCount?.ToString() ?? "不明")</p>
   ```
 
-  後述のTagHelperを使用せず、リテラルとしてHTML上に値を出力したい場合はRazor構文を使用します。  
-  例えば上記のような`<p>`タグは`asp-for`に対応していませんので、pタグのInnterTextを出力したい場合は上記のように記述します。
+### .NET Core/.NET 5+の新機能
 
-- **HTMLエスケープ**
-  - `@`で出力した値は自動的にHTMLエスケープされます。
-  - 生のHTMLを出力したい場合は`@Html.Raw()`を使います。
-
-- **セクションの定義**
+- **null条件演算子とnull合体演算子**
 
   ```cshtml
+  <!-- .NET Framework 4.8では使用不可、.NET Core/.NET 5+で使用可能 -->
+  <p>説明: @(Model.Description ?? "説明なし")</p>
+  <p>更新日: @Model.UpdatedAt?.ToString("yyyy/MM/dd")</p>
+  <p>子カテゴリ数: @Model.ChildCategories?.Count()</p>
+  ```
+
+- **文字列補間（String Interpolation）**
+
+  ```cshtml
+  @{
+      var categoryInfo = $"カテゴリ「{Model.Name}」（レベル{Model.Level}）";
+      var statusClass = $"status-{(Model.IsActive ? "active" : "inactive")}";
+  }
+  
+  <div class="@statusClass">
+      <h2>@categoryInfo</h2>
+  </div>
+  ```
+
+- **パターンマッチング（C# 7.0+）**
+
+  ```cshtml
+  @{
+      var displayClass = Model.ProductCount switch
+      {
+          0 => "empty-category",
+          > 0 and <= 10 => "small-category", 
+          > 10 and <= 100 => "medium-category",
+          > 100 => "large-category",
+          _ => "unknown-category"
+      };
+  }
+  
+  <div class="category-item @displayClass">
+      <!-- カテゴリ表示 -->
+  </div>
+  ```
+
+### 実用的な応用例
+
+- **HTMLエスケープと生HTML**
+
+  ```cshtml
+  <!-- 自動エスケープ（安全） -->
+  <p>カテゴリ名: @Model.Name</p>
+  
+  <!-- 生HTML出力（注意して使用） -->
+  @if (!string.IsNullOrEmpty(Model.RichDescription))
+  {
+      <div class="rich-content">
+          @Html.Raw(Model.RichDescription)
+      </div>
+  }
+  
+  <!-- .NET Core/.NET 5+でのHTMLエンコード -->
+  <div data-category-name="@Html.Encode(Model.Name)">
+      <!-- JavaScriptで安全に使用可能 -->
+  </div>
+  ```
+
+- **セクションの定義（現代的な書き方）**
+
+  ```cshtml
+  <!-- Web.Essentials.App/Views/Categories/Index.cshtml -->
   @section Styles {
-      <link rel="stylesheet" href="custom.css" />
+      <link rel="stylesheet" href="~/css/category-hierarchy.css" asp-append-version="true" />
+      <style>
+          .category-tree {
+              /* ページ固有スタイル */
+          }
+      </style>
+  }
+  
+  @section Scripts {
+      <script src="~/js/categories-index.js" asp-append-version="true" defer></script>
+      <script>
+          // ページ固有のJavaScript初期化
+          document.addEventListener('DOMContentLoaded', function() {
+              setInitialSearchParams({
+                  searchKeyword: '@Model.SearchKeyword',
+                  page: @Model.CurrentPage
+              });
+          });
+      </script>
   }
   ```
 
-Razor構文を使うことで、C#のロジックとHTMLを直感的に組み合わせて記述できます。
+- **パーシャルビューの活用**
+
+  ```cshtml
+  <!-- Web.Essentials.App/Views/Categories/Index.cshtml -->
+  <!-- .NET Framework 4.8: @Html.Partial("_SearchForm", Model) -->
+  <!-- .NET Core/.NET 5+: -->
+  <partial name="_SearchForm" model="Model.SearchParams" />
+  
+  <!-- 条件付きパーシャルビュー -->
+  @if (Model.Categories?.Any() == true)
+  {
+      <partial name="_CategoryList" model="Model.Categories" />
+  }
+  else
+  {
+      <partial name="_NoDataMessage" />
+  }
+  ```
+
+### ViewDataとViewBagの使い分け
+
+```cshtml
+<!-- Controller側 -->
+ViewData["Title"] = "カテゴリ一覧";
+ViewBag.Categories = categoryList;
+
+<!-- View側 -->
+<title>@ViewData["Title"]</title>
+
+<!-- .NET Framework 4.8とほぼ同じだが、型安全性の観点でViewModelを推奨 -->
+@model CategoryIndexViewModel  <!-- 推奨 -->
+@* ViewBag.Categories の使用は最小限に *@
+```
+
+### 重要なポイント
+
+**なぜこれらの機能が重要なのか**：
+- **型安全性**: コンパイル時エラー検出
+- **null安全性**: null条件演算子によるランタイムエラー回避  
+- **保守性**: IntelliSenseサポートとリファクタリング安全性
+- **パフォーマンス**: 文字列補間による効率的な文字列操作
+
+**.NET Framework 4.8からの移行時の注意点**：
+- `@Html.ActionLink`より`<a asp-action>`を推奨
+- `@Html.BeginForm`より`<form asp-action>`を推奨
+- `ViewBag`より強く型付けされたViewModelを推奨
+- null条件演算子（`?.`）とnull合体演算子（`??`）の積極活用
+
+**実装時のベストプラクティス**：
+- TagHelperを使用せずにリテラル出力する場合のみRazor構文を使用
+- 複雑なロジックはControllerまたはViewModelに移動
+- セキュリティを考慮したHTMLエスケープの適切な使用
+- パーシャルビューによるコードの再利用と可読性向上
+
+この現代的なRazor構文により、.NET Framework時代より安全で保守しやすいViewを作成できます。
 
 ### 注意点
 
