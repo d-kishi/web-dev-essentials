@@ -12,6 +12,7 @@
 - [Viewの構成](#viewの構成)
   - [ディレクトリ構造](#ディレクトリ構造)
   - [読み込み順序と役割](#読み込み順序と役割)
+- [FormとModel](#formとmodel)
 - [Razor構文](#razor構文)
   - [基本的な構文](#基本的な構文)
   - [注意点](#注意点)
@@ -21,7 +22,6 @@
     - [リンク関連](#リンク関連)
     - [選択系](#選択系)
   - [TagHelperの利点](#taghelperの利点)
-- [FormとModel](#formとmodel)
 - [実践的なMVCアプリケーション開発](#実践的なmvcアプリケーション開発)
   - [MVCパターンの実装例](#mvcパターンの実装例)
   - [フロントエンド連携](#フロントエンド連携)
@@ -189,6 +189,218 @@ Views/
    - レイアウトの `@RenderBody()` 部分に挿入される
 
 この順序により、共通設定→レイアウト→個別コンテンツの階層構造が構築されます。
+
+## FormとModel
+
+MVCにおけるFormとModelの連携は、フォームデータとC#オブジェクトの自動的なバインディングを実現します。Web.Essentials.Appのカテゴリ管理機能を例に実装パターンを解説します。
+
+### ViewModelとEntityの違い
+
+**Entity（ドメインオブジェクト）**：
+```csharp
+// Web.Essentials.Domain/Entities/Category.cs
+public class Category
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string? Description { get; set; }
+    public int? ParentCategoryId { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}
+```
+
+**ViewModel（View専用データ）**：
+```csharp
+// Web.Essentials.App/ViewModels/CategoryCreateViewModel.cs
+public class CategoryCreateViewModel
+{
+    [Required(ErrorMessage = "カテゴリ名は必須です")]
+    [StringLength(50, ErrorMessage = "カテゴリ名は50文字以内で入力してください")]
+    [Display(Name = "カテゴリ名")]
+    public string Name { get; set; } = string.Empty;
+
+    [StringLength(500, ErrorMessage = "説明は500文字以内で入力してください")]
+    [Display(Name = "説明")]
+    public string? Description { get; set; }
+
+    [Display(Name = "親カテゴリ")]
+    public int? ParentCategoryId { get; set; }
+
+    // View専用のプロパティ
+    public IEnumerable<CategorySelectItem> ParentCategories { get; set; } = new List<CategorySelectItem>();
+}
+```
+
+**なぜViewModelが必要なのか**：
+- **セキュリティ**: 内部IDやタイムスタンプなど、ユーザーが変更すべきでないデータを除外
+- **バリデーション**: 画面固有の検証ルール
+- **表示制御**: View専用のデータ（選択肢リストなど）
+
+### フォームとモデルバインディング
+
+**Controllerの実装**：
+```csharp
+// Web.Essentials.App/Controllers/Mvc/CategoriesController.cs
+public class CategoriesController : Controller
+{
+    // 登録画面表示
+    public async Task<IActionResult> Create()
+    {
+        var viewModel = await _categoryService.GetCategoryForCreateAsync();
+        return View(viewModel);
+    }
+
+    // 登録処理（モデルバインディング）
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(CategoryCreateViewModel viewModel)
+    {
+        if (!ModelState.IsValid)
+        {
+            // バリデーションエラー時の処理
+            var errorViewModel = await _categoryService.GetCategoryForCreateAsync();
+            errorViewModel.Name = viewModel.Name;
+            errorViewModel.Description = viewModel.Description;
+            return View(errorViewModel);
+        }
+
+        var categoryId = await _categoryService.CreateCategoryAsync(viewModel);
+        return RedirectToAction(nameof(Index));
+    }
+}
+```
+
+**Viewの実装**：
+```cshtml
+<!-- Web.Essentials.App/Views/Categories/Create.cshtml -->
+@model Web.Essentials.App.ViewModels.CategoryCreateViewModel
+
+<form asp-controller="Categories" asp-action="Create" method="post">
+    <div class="form-group">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-input" />
+        <span asp-validation-for="Name" class="validation-error"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-textarea" rows="3"></textarea>
+        <span asp-validation-for="Description" class="validation-error"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="ParentCategoryId" class="form-label"></label>
+        <select asp-for="ParentCategoryId" 
+                asp-items="@(new SelectList(Model.ParentCategories, "Id", "FullPath"))"
+                class="form-select">
+            <option value="">ルートカテゴリとして作成</option>
+        </select>
+        <span asp-validation-for="ParentCategoryId" class="validation-error"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">登録</button>
+</form>
+```
+
+### モデルバインディングの仕組み
+
+1. **フォーム送信時**：
+   - `<input asp-for="Name" />` → `viewModel.Name`
+   - `<select asp-for="ParentCategoryId" />` → `viewModel.ParentCategoryId`
+
+2. **自動バインディング**：
+   - HTMLフォームのname属性とViewModelプロパティ名が一致
+   - ASP.NET Coreが自動的にオブジェクトを構築
+
+3. **バリデーション実行**：
+   - `[Required]`, `[StringLength]`等の属性に基づく検証
+   - `ModelState.IsValid`で結果確認
+
+### バリデーション属性の実装例
+
+```csharp
+public class CategoryEditViewModel : ICategoryFormViewModel
+{
+    public int Id { get; set; }
+
+    [Required(ErrorMessage = "カテゴリ名は必須です")]
+    [StringLength(50, ErrorMessage = "カテゴリ名は50文字以内で入力してください")]
+    [Display(Name = "カテゴリ名")]
+    public string Name { get; set; } = string.Empty;
+
+    [StringLength(500, ErrorMessage = "説明は500文字以内で入力してください")]
+    [Display(Name = "説明")]
+    public string? Description { get; set; }
+
+    [Display(Name = "親カテゴリ")]
+    public int? ParentCategoryId { get; set; }
+
+    // 編集時に必要な追加情報
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public int ProductCount { get; set; }
+    public IEnumerable<CategorySelectItem> ChildCategories { get; set; } = new List<CategorySelectItem>();
+}
+```
+
+### 複雑なフォームの例（商品登録）
+
+```cshtml
+@model Web.Essentials.App.ViewModels.ProductCreateViewModel
+
+<form asp-controller="Products" asp-action="Create" method="post" enctype="multipart/form-data">
+    <!-- 基本情報 -->
+    <input asp-for="Name" class="form-input" />
+    <textarea asp-for="Description" class="form-textarea"></textarea>
+    <input asp-for="Price" type="number" step="0.01" class="form-input" />
+
+    <!-- カテゴリ選択（複数選択） -->
+    <select asp-for="SelectedCategoryIds" asp-items="ViewBag.Categories" multiple class="form-select">
+    </select>
+
+    <!-- ファイルアップロード -->
+    <input type="file" name="ImageFiles" multiple accept="image/*" class="form-file" />
+
+    <button type="submit" class="btn btn-primary">登録</button>
+</form>
+```
+
+**対応するViewModel**：
+```csharp
+public class ProductCreateViewModel
+{
+    [Required]
+    public string Name { get; set; } = string.Empty;
+    
+    public string? Description { get; set; }
+    
+    [Required]
+    [Range(0.01, double.MaxValue, ErrorMessage = "価格は0より大きい値を入力してください")]
+    public decimal Price { get; set; }
+
+    public List<int> SelectedCategoryIds { get; set; } = new();
+    
+    // ファイルアップロード用
+    public List<IFormFile> ImageFiles { get; set; } = new();
+}
+```
+
+### 重要なポイント
+
+**なぜこの設計なのか**：
+- **自動バインディング**: フォームデータとオブジェクトの手動マッピングが不要
+- **型安全性**: コンパイル時のプロパティ名検証
+- **バリデーション統合**: 属性ベースの検証ルール
+- **セキュリティ**: ViewModelによる入力データ制限
+
+**実装時の注意点**：
+- ViewModelには画面で入力可能なプロパティのみ定義
+- 内部ID、作成日時などはControllerで設定
+- ファイルアップロードは `enctype="multipart/form-data"` が必須
+- CSRF対策は `[ValidateAntiForgeryToken]` で自動化
+
+この仕組みにより、HTMLフォームとC#オブジェクトが緊密に連携し、保守性の高いWebアプリケーションを構築できます。
 
 ## Razor構文
 
@@ -746,218 +958,6 @@ ViewBag.AllCategories = new SelectList(categories, "Id", "FullPath");
 - 動的なフォーム要素はJavaScriptとの連携が必要
 
 この方法により、HTMLの可読性を保ちながら、MVCフレームワークの強力な機能を最大限活用できます。
-
-## FormとModel
-
-MVCにおけるFormとModelの連携は、フォームデータとC#オブジェクトの自動的なバインディングを実現します。Web.Essentials.Appのカテゴリ管理機能を例に実装パターンを解説します。
-
-### ViewModelとEntityの違い
-
-**Entity（ドメインオブジェクト）**：
-```csharp
-// Web.Essentials.Domain/Entities/Category.cs
-public class Category
-{
-    public int Id { get; set; }
-    public string Name { get; set; }
-    public string? Description { get; set; }
-    public int? ParentCategoryId { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
-}
-```
-
-**ViewModel（View専用データ）**：
-```csharp
-// Web.Essentials.App/ViewModels/CategoryCreateViewModel.cs
-public class CategoryCreateViewModel
-{
-    [Required(ErrorMessage = "カテゴリ名は必須です")]
-    [StringLength(50, ErrorMessage = "カテゴリ名は50文字以内で入力してください")]
-    [Display(Name = "カテゴリ名")]
-    public string Name { get; set; } = string.Empty;
-
-    [StringLength(500, ErrorMessage = "説明は500文字以内で入力してください")]
-    [Display(Name = "説明")]
-    public string? Description { get; set; }
-
-    [Display(Name = "親カテゴリ")]
-    public int? ParentCategoryId { get; set; }
-
-    // View専用のプロパティ
-    public IEnumerable<CategorySelectItem> ParentCategories { get; set; } = new List<CategorySelectItem>();
-}
-```
-
-**なぜViewModelが必要なのか**：
-- **セキュリティ**: 内部IDやタイムスタンプなど、ユーザーが変更すべきでないデータを除外
-- **バリデーション**: 画面固有の検証ルール
-- **表示制御**: View専用のデータ（選択肢リストなど）
-
-### フォームとモデルバインディング
-
-**Controllerの実装**：
-```csharp
-// Web.Essentials.App/Controllers/Mvc/CategoriesController.cs
-public class CategoriesController : Controller
-{
-    // 登録画面表示
-    public async Task<IActionResult> Create()
-    {
-        var viewModel = await _categoryService.GetCategoryForCreateAsync();
-        return View(viewModel);
-    }
-
-    // 登録処理（モデルバインディング）
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(CategoryCreateViewModel viewModel)
-    {
-        if (!ModelState.IsValid)
-        {
-            // バリデーションエラー時の処理
-            var errorViewModel = await _categoryService.GetCategoryForCreateAsync();
-            errorViewModel.Name = viewModel.Name;
-            errorViewModel.Description = viewModel.Description;
-            return View(errorViewModel);
-        }
-
-        var categoryId = await _categoryService.CreateCategoryAsync(viewModel);
-        return RedirectToAction(nameof(Index));
-    }
-}
-```
-
-**Viewの実装**：
-```cshtml
-<!-- Web.Essentials.App/Views/Categories/Create.cshtml -->
-@model Web.Essentials.App.ViewModels.CategoryCreateViewModel
-
-<form asp-controller="Categories" asp-action="Create" method="post">
-    <div class="form-group">
-        <label asp-for="Name" class="form-label"></label>
-        <input asp-for="Name" class="form-input" />
-        <span asp-validation-for="Name" class="validation-error"></span>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="Description" class="form-label"></label>
-        <textarea asp-for="Description" class="form-textarea" rows="3"></textarea>
-        <span asp-validation-for="Description" class="validation-error"></span>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="ParentCategoryId" class="form-label"></label>
-        <select asp-for="ParentCategoryId" 
-                asp-items="@(new SelectList(Model.ParentCategories, "Id", "FullPath"))"
-                class="form-select">
-            <option value="">ルートカテゴリとして作成</option>
-        </select>
-        <span asp-validation-for="ParentCategoryId" class="validation-error"></span>
-    </div>
-
-    <button type="submit" class="btn btn-primary">登録</button>
-</form>
-```
-
-### モデルバインディングの仕組み
-
-1. **フォーム送信時**：
-   - `<input asp-for="Name" />` → `viewModel.Name`
-   - `<select asp-for="ParentCategoryId" />` → `viewModel.ParentCategoryId`
-
-2. **自動バインディング**：
-   - HTMLフォームのname属性とViewModelプロパティ名が一致
-   - ASP.NET Coreが自動的にオブジェクトを構築
-
-3. **バリデーション実行**：
-   - `[Required]`, `[StringLength]`等の属性に基づく検証
-   - `ModelState.IsValid`で結果確認
-
-### バリデーション属性の実装例
-
-```csharp
-public class CategoryEditViewModel : ICategoryFormViewModel
-{
-    public int Id { get; set; }
-
-    [Required(ErrorMessage = "カテゴリ名は必須です")]
-    [StringLength(50, ErrorMessage = "カテゴリ名は50文字以内で入力してください")]
-    [Display(Name = "カテゴリ名")]
-    public string Name { get; set; } = string.Empty;
-
-    [StringLength(500, ErrorMessage = "説明は500文字以内で入力してください")]
-    [Display(Name = "説明")]
-    public string? Description { get; set; }
-
-    [Display(Name = "親カテゴリ")]
-    public int? ParentCategoryId { get; set; }
-
-    // 編集時に必要な追加情報
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
-    public int ProductCount { get; set; }
-    public IEnumerable<CategorySelectItem> ChildCategories { get; set; } = new List<CategorySelectItem>();
-}
-```
-
-### 複雑なフォームの例（商品登録）
-
-```cshtml
-@model Web.Essentials.App.ViewModels.ProductCreateViewModel
-
-<form asp-controller="Products" asp-action="Create" method="post" enctype="multipart/form-data">
-    <!-- 基本情報 -->
-    <input asp-for="Name" class="form-input" />
-    <textarea asp-for="Description" class="form-textarea"></textarea>
-    <input asp-for="Price" type="number" step="0.01" class="form-input" />
-
-    <!-- カテゴリ選択（複数選択） -->
-    <select asp-for="SelectedCategoryIds" asp-items="ViewBag.Categories" multiple class="form-select">
-    </select>
-
-    <!-- ファイルアップロード -->
-    <input type="file" name="ImageFiles" multiple accept="image/*" class="form-file" />
-
-    <button type="submit" class="btn btn-primary">登録</button>
-</form>
-```
-
-**対応するViewModel**：
-```csharp
-public class ProductCreateViewModel
-{
-    [Required]
-    public string Name { get; set; } = string.Empty;
-    
-    public string? Description { get; set; }
-    
-    [Required]
-    [Range(0.01, double.MaxValue, ErrorMessage = "価格は0より大きい値を入力してください")]
-    public decimal Price { get; set; }
-
-    public List<int> SelectedCategoryIds { get; set; } = new();
-    
-    // ファイルアップロード用
-    public List<IFormFile> ImageFiles { get; set; } = new();
-}
-```
-
-### 重要なポイント
-
-**なぜこの設計なのか**：
-- **自動バインディング**: フォームデータとオブジェクトの手動マッピングが不要
-- **型安全性**: コンパイル時のプロパティ名検証
-- **バリデーション統合**: 属性ベースの検証ルール
-- **セキュリティ**: ViewModelによる入力データ制限
-
-**実装時の注意点**：
-- ViewModelには画面で入力可能なプロパティのみ定義
-- 内部ID、作成日時などはControllerで設定
-- ファイルアップロードは `enctype="multipart/form-data"` が必須
-- CSRF対策は `[ValidateAntiForgeryToken]` で自動化
-
-この仕組みにより、HTMLフォームとC#オブジェクトが緊密に連携し、保守性の高いWebアプリケーションを構築できます。
 
 ---
 
