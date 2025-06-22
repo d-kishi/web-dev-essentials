@@ -47,14 +47,11 @@ function setupFormSubmitHandler() {
     const form = document.getElementById('categoryEditForm');
     if (form) {
         form.addEventListener('submit', function(event) {
-            const validateBeforeSave = document.getElementById('validateBeforeSave');
+            // Always validate before submitting
+            event.preventDefault();
             
-            if (validateBeforeSave && validateBeforeSave.checked) {
-                event.preventDefault();
-                
-                if (validateCategoryForm()) {
-                    submitCategoryForm();
-                }
+            if (validateCategoryForm()) {
+                submitCategoryForm();
             }
         });
     }
@@ -252,15 +249,21 @@ async function submitCategoryForm() {
         
         const response = await fetch(actionUrl, {
             method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
             body: formData
         });
         
         hideLoadingModal();
         
-        if (response.ok) {
+        const result = await response.json();
+        
+        if (result.success) {
             const keepEditing = document.getElementById('keepEditingAfterSave');
             
-            showSuccess('カテゴリが正常に更新されました');
+            showSuccess(result.message || 'カテゴリが正常に更新されました');
             
             if (keepEditing && keepEditing.checked) {
                 // 初期値を更新
@@ -274,8 +277,14 @@ async function submitCategoryForm() {
                 }, 1500);
             }
         } else {
-            const errorText = await response.text();
-            showError('カテゴリの更新に失敗しました: ' + errorText);
+            showError(result.message || 'カテゴリの更新に失敗しました');
+            
+            // バリデーションエラーの場合、個別エラーを表示
+            if (result.errors && result.errors.length > 0) {
+                result.errors.forEach(error => {
+                    console.error(`${error.Field}: ${error.Message}`);
+                });
+            }
         }
     } catch (error) {
         hideLoadingModal();
@@ -284,42 +293,6 @@ async function submitCategoryForm() {
     }
 }
 
-/**
- * プレビュー表示
- */
-function previewCategory() {
-    const formData = collectFormData();
-    const previewContent = generatePreviewContent(formData);
-    
-    const previewElement = document.getElementById('categoryPreviewContent');
-    const modalElement = document.getElementById('categoryPreviewModal');
-    
-    if (previewElement && modalElement) {
-        previewElement.innerHTML = previewContent;
-        modalElement.style.display = 'block';
-    }
-}
-
-/**
- * プレビューから保存
- */
-function submitFromPreview() {
-    closePreviewModal();
-    
-    if (validateCategoryForm()) {
-        submitCategoryForm();
-    }
-}
-
-/**
- * プレビューモーダルを閉じる
- */
-function closePreviewModal() {
-    const modalElement = document.getElementById('categoryPreviewModal');
-    if (modalElement) {
-        modalElement.style.display = 'none';
-    }
-}
 
 /**
  * 別カテゴリとして保存モーダル表示
@@ -442,48 +415,6 @@ function collectFormData() {
     return data;
 }
 
-/**
- * プレビューコンテンツ生成
- * @param {Object} data - フォームデータ
- * @returns {string} プレビューHTML
- */
-function generatePreviewContent(data) {
-    const parentSelect = document.getElementById('parentCategorySelect');
-    if (!parentSelect) return '<p>エラー: 親カテゴリ選択が見つかりません</p>';
-    
-    const selectedOption = parentSelect.options[parentSelect.selectedIndex];
-    const parentPath = selectedOption.value ? selectedOption.textContent : '';
-    const fullPath = parentPath ? `${parentPath} > ${data.Name || '[カテゴリ名]'}` : (data.Name || '[カテゴリ名]');
-    const level = selectedOption.value ? (parseInt(selectedOption.dataset.level) + 1) : 0;
-    
-    return `
-        <div class="category-preview">
-            <div class="preview-header">
-                <h2>${data.Name || 'カテゴリ名未入力'}</h2>
-                <span class="level-badge level-${level}">レベル ${level}</span>
-            </div>
-            <div class="preview-body">
-                <div class="preview-section">
-                    <h3>階層パス</h3>
-                    <p class="hierarchy-path">${fullPath}</p>
-                </div>
-                <div class="preview-section">
-                    <h3>カテゴリ説明</h3>
-                    <p>${data.Description || '説明なし'}</p>
-                </div>
-                <div class="preview-section">
-                    <h3>階層情報</h3>
-                    <dl class="preview-details">
-                        <dt>階層レベル</dt>
-                        <dd>${level} ${level === 0 ? '（ルートカテゴリ）' : '（子カテゴリ）'}</dd>
-                        <dt>親カテゴリ</dt>
-                        <dd>${parentPath || 'なし（ルートカテゴリ）'}</dd>
-                    </dl>
-                </div>
-            </div>
-        </div>
-    `;
-}
 
 /**
  * ボタンイベントハンドラーの設定
@@ -495,11 +426,6 @@ function setupButtonEventHandlers() {
         saveAsNewButton.addEventListener('click', showSaveAsNewModal);
     }
     
-    // プレビューボタン（IDベース）
-    const previewButton = document.getElementById('previewButton');
-    if (previewButton) {
-        previewButton.addEventListener('click', previewCategory);
-    }
     
     // リセットボタン（IDベース）
     const resetButton = document.getElementById('resetButton');
@@ -519,25 +445,11 @@ function setupButtonEventHandlers() {
         saveAsNewCategoryButton.addEventListener('click', saveAsNewCategory);
     }
     
-    // プレビューモーダルの閉じるボタン（クラスベース）
-    const closePreviewButtons = document.querySelectorAll('.close-preview-modal');
-    closePreviewButtons.forEach(button => {
-        button.addEventListener('click', closePreviewModal);
-    });
-    
-    // プレビューからの送信ボタン（IDベース）
-    const submitFromPreviewButton = document.getElementById('submitFromPreviewButton');
-    if (submitFromPreviewButton) {
-        submitFromPreviewButton.addEventListener('click', submitFromPreview);
-    }
 }
 
 // 互換性のためのグローバル関数公開（段階的に削除予定）
 // 新しいID/class/data属性アプローチに移行済み
 window.updateCategoryLevel = updateCategoryLevel;
-window.previewCategory = previewCategory;
-window.submitFromPreview = submitFromPreview;
-window.closePreviewModal = closePreviewModal;
 window.showSaveAsNewModal = showSaveAsNewModal;
 window.closeSaveAsNewModal = closeSaveAsNewModal;
 window.saveAsNewCategory = saveAsNewCategory;

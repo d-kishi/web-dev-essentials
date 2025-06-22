@@ -41,14 +41,11 @@ function setupFormSubmitHandler() {
     const form = document.getElementById('categoryCreateForm');
     if (form) {
         form.addEventListener('submit', function(event) {
-            const validateBeforeSave = document.getElementById('validateBeforeSave');
+            // Always validate before submitting
+            event.preventDefault();
             
-            if (validateBeforeSave && validateBeforeSave.checked) {
-                event.preventDefault();
-                
-                if (validateCategoryForm()) {
-                    submitCategoryForm();
-                }
+            if (validateCategoryForm()) {
+                submitCategoryForm();
             }
         });
     }
@@ -161,17 +158,22 @@ async function submitCategoryForm() {
         
         const response = await fetch('/Categories/Create', {
             method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
             body: formData
         });
         
         hideLoadingModal();
         
-        if (response.ok) {
-            const result = await response.json();
+        const result = await response.json();
+        
+        if (result.success) {
             const saveAndContinue = document.getElementById('saveAndContinue');
             const createAsChild = document.getElementById('createAsChild');
             
-            showSuccess('カテゴリが正常に登録されました');
+            showSuccess(result.message || 'カテゴリが正常に登録されました');
             
             if (createAsChild && createAsChild.checked && result.categoryId) {
                 // 子カテゴリ作成画面に移動
@@ -188,8 +190,14 @@ async function submitCategoryForm() {
                 }, 1500);
             }
         } else {
-            const errorText = await response.text();
-            showError('カテゴリの登録に失敗しました: ' + errorText);
+            showError(result.message || 'カテゴリの登録に失敗しました');
+            
+            // バリデーションエラーの場合、個別エラーを表示
+            if (result.errors && result.errors.length > 0) {
+                result.errors.forEach(error => {
+                    console.error(`${error.Field}: ${error.Message}`);
+                });
+            }
         }
     } catch (error) {
         hideLoadingModal();
@@ -198,42 +206,6 @@ async function submitCategoryForm() {
     }
 }
 
-/**
- * プレビュー表示
- */
-function previewCategory() {
-    const formData = collectFormData();
-    const previewContent = generatePreviewContent(formData);
-    
-    const previewElement = document.getElementById('categoryPreviewContent');
-    const modalElement = document.getElementById('categoryPreviewModal');
-    
-    if (previewElement && modalElement) {
-        previewElement.innerHTML = previewContent;
-        modalElement.style.display = 'block';
-    }
-}
-
-/**
- * プレビューから登録
- */
-function submitFromPreview() {
-    closePreviewModal();
-    
-    if (validateCategoryForm()) {
-        submitCategoryForm();
-    }
-}
-
-/**
- * プレビューモーダルを閉じる
- */
-function closePreviewModal() {
-    const modalElement = document.getElementById('categoryPreviewModal');
-    if (modalElement) {
-        modalElement.style.display = 'none';
-    }
-}
 
 /**
  * フォームリセット
@@ -267,48 +239,6 @@ function collectFormData() {
     return data;
 }
 
-/**
- * プレビューコンテンツ生成
- * @param {Object} data - フォームデータ
- * @returns {string} プレビューHTML
- */
-function generatePreviewContent(data) {
-    const parentSelect = document.getElementById('parentCategorySelect');
-    if (!parentSelect) return '<p>エラー: 親カテゴリ選択が見つかりません</p>';
-    
-    const selectedOption = parentSelect.options[parentSelect.selectedIndex];
-    const parentPath = selectedOption.value ? selectedOption.textContent : '';
-    const fullPath = parentPath ? `${parentPath} > ${data.Name || '[カテゴリ名]'}` : (data.Name || '[カテゴリ名]');
-    const level = selectedOption.value ? (parseInt(selectedOption.dataset.level) + 1) : 0;
-    
-    return `
-        <div class="category-preview">
-            <div class="preview-header">
-                <h2>${data.Name || 'カテゴリ名未入力'}</h2>
-                <span class="level-badge level-${level}">レベル ${level}</span>
-            </div>
-            <div class="preview-body">
-                <div class="preview-section">
-                    <h3>階層パス</h3>
-                    <p class="hierarchy-path">${fullPath}</p>
-                </div>
-                <div class="preview-section">
-                    <h3>カテゴリ説明</h3>
-                    <p>${data.Description || '説明なし'}</p>
-                </div>
-                <div class="preview-section">
-                    <h3>階層情報</h3>
-                    <dl class="preview-details">
-                        <dt>階層レベル</dt>
-                        <dd>${level} ${level === 0 ? '（ルートカテゴリ）' : '（子カテゴリ）'}</dd>
-                        <dt>親カテゴリ</dt>
-                        <dd>${parentPath || 'なし（ルートカテゴリ）'}</dd>
-                    </dl>
-                </div>
-            </div>
-        </div>
-    `;
-}
 
 /**
  * フォームバリデーションの設定（プレースホルダー）
@@ -330,40 +260,13 @@ function setupFormChangeDetection() {
  * ボタンイベントハンドラーの設定
  */
 function setupButtonEventHandlers() {
-    // プレビューボタン
-    const previewButton = document.getElementById('previewButton');
-    if (previewButton) {
-        previewButton.addEventListener('click', previewCategory);
-    }
-    
     // リセットボタン
     const resetButton = document.getElementById('resetButton');
     if (resetButton) {
         resetButton.addEventListener('click', resetForm);
     }
-    
-    // プレビューモーダルの閉じるボタン（X）
-    const closePreviewModalX = document.getElementById('closePreviewModalX');
-    if (closePreviewModalX) {
-        closePreviewModalX.addEventListener('click', closePreviewModal);
-    }
-    
-    // プレビューモーダルの閉じるボタン
-    const closePreviewModalButton = document.getElementById('closePreviewModalButton');
-    if (closePreviewModalButton) {
-        closePreviewModalButton.addEventListener('click', closePreviewModal);
-    }
-    
-    // プレビューからの送信ボタン
-    const submitFromPreviewButton = document.getElementById('submitFromPreviewButton');
-    if (submitFromPreviewButton) {
-        submitFromPreviewButton.addEventListener('click', submitFromPreview);
-    }
 }
 
 // HTMLのonchange属性から呼び出されるグローバル関数（段階的に削除予定）
 window.updateCategoryLevel = updateCategoryLevel;
-window.previewCategory = previewCategory;
-window.submitFromPreview = submitFromPreview;
-window.closePreviewModal = closePreviewModal;
 window.resetForm = resetForm;

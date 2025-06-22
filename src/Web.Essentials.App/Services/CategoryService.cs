@@ -111,11 +111,22 @@ public class CategoryService : ICategoryService
                 return null;
             }
 
+            // 親カテゴリ選択用リストを取得（自分自身は除外）
+            var allCategories = await _categoryRepository.GetAllAsync();
+            var parentCategories = await ConvertToCategorySelectItemsAsync(
+                allCategories.Where(c => c.Id != id));  // 自分自身を除外
+
             return new CategoryEditViewModel
             {
                 Id = category.Id,
                 Name = category.Name,
-                Description = category.Description
+                Description = category.Description,
+                ParentCategoryId = category.ParentCategoryId,
+                CurrentLevel = category.Level,
+                SortOrder = category.SortOrder,
+                CreatedAt = category.CreatedAt,
+                UpdatedAt = category.UpdatedAt,
+                ParentCategories = parentCategories
             };
         }
         catch (Exception ex)
@@ -398,20 +409,27 @@ public class CategoryService : ICategoryService
     /// <returns>階層構造と完全パスを持つCategorySelectItemsのコレクション</returns>
     private async Task<IEnumerable<CategorySelectItem>> ConvertToCategorySelectItemsAsync(IEnumerable<Category> categories)
     {
-        // カテゴリごとの商品数を取得（簡略化：後でオプションとして使用）
-        var categoryProductCounts = new Dictionary<int, int>();
-        var allProducts = await _productRepository.GetAllAsync();
+        var result = new List<CategorySelectItem>();
+        var categoryDict = categories.ToDictionary(c => c.Id);
+
         foreach (var category in categories)
         {
-            var productCount = allProducts.Item1.Count(p => p.ProductCategories.Any(pc => pc.CategoryId == category.Id));
-            categoryProductCounts[category.Id] = productCount;
+            var fullPath = BuildCategoryFullPath(category, categoryDict);
+            
+            result.Add(new CategorySelectItem
+            {
+                Id = category.Id,
+                Name = category.Name,
+                Description = category.Description,
+                FullPath = fullPath,
+                Level = category.Level,
+                ProductCount = 0, // 簡略化
+                ChildCategories = new List<CategorySelectItem>() // フラットリストなので空
+            });
         }
 
-        // 親子関係をディクショナリで構築
-        var categoryDict = categories.ToDictionary(c => c.Id);
-        var rootCategories = categories.Where(c => c.ParentCategoryId == null).ToList();
-
-        return rootCategories.Select(root => ConvertToCategorySelectItem(root, categoryDict, categoryProductCounts));
+        // FullPathの昇順でソート（「ルートカテゴリとして作成」が先頭に来るように）
+        return result.OrderBy(c => c.FullPath);
     }
 
     /// <summary>
@@ -480,10 +498,24 @@ public class CategoryService : ICategoryService
     {
         try
         {
+            // 親カテゴリが設定されている場合、レベルを計算
+            var level = 0;
+            if (createModel.ParentCategoryId.HasValue)
+            {
+                var parentCategory = await _categoryRepository.GetByIdAsync(createModel.ParentCategoryId.Value);
+                if (parentCategory != null)
+                {
+                    level = parentCategory.Level + 1;
+                }
+            }
+
             var category = new Category
             {
                 Name = createModel.Name,
                 Description = createModel.Description,
+                ParentCategoryId = createModel.ParentCategoryId,
+                Level = level,
+                SortOrder = createModel.SortOrder,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -512,8 +544,22 @@ public class CategoryService : ICategoryService
                 return false;
             }
 
+            // 親カテゴリが変更された場合、レベルを再計算
+            var level = 0;
+            if (editModel.ParentCategoryId.HasValue)
+            {
+                var parentCategory = await _categoryRepository.GetByIdAsync(editModel.ParentCategoryId.Value);
+                if (parentCategory != null)
+                {
+                    level = parentCategory.Level + 1;
+                }
+            }
+
             category.Name = editModel.Name;
             category.Description = editModel.Description;
+            category.ParentCategoryId = editModel.ParentCategoryId;
+            category.Level = level;
+            category.SortOrder = editModel.SortOrder;
             category.UpdatedAt = DateTime.UtcNow;
 
             await _categoryRepository.UpdateAsync(category);

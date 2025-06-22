@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Web.Essentials.App.ViewModels;
+using Web.Essentials.App.Interfaces;
 using Web.Essentials.Domain.Repositories;
 using Web.Essentials.Domain.Entities;
 
@@ -13,19 +14,23 @@ namespace Web.Essentials.App.Controllers.Mvc;
 public class CategoriesController : Controller
 {
     private readonly ICategoryRepository _categoryRepository;
+    private readonly ICategoryService _categoryService;
     private readonly ILogger<CategoriesController> _logger;
 
     /// <summary>
     /// コンストラクタ
-    /// 依存性注入によりリポジトリとロガーを受け取る
+    /// 依存性注入によりリポジトリ、サービス、ロガーを受け取る
     /// </summary>
     /// <param name="categoryRepository">カテゴリリポジトリ</param>
+    /// <param name="categoryService">カテゴリサービス</param>
     /// <param name="logger">ロガー</param>
     public CategoriesController(
         ICategoryRepository categoryRepository,
+        ICategoryService categoryService,
         ILogger<CategoriesController> logger)
     {
         _categoryRepository = categoryRepository;
+        _categoryService = categoryService;
         _logger = logger;
     }
 
@@ -111,10 +116,18 @@ public class CategoriesController : Controller
     /// 新規カテゴリ登録フォームを表示
     /// </summary>
     /// <returns>カテゴリ登録ビュー</returns>
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
-        var viewModel = new CategoryCreateViewModel();
-        return View(viewModel);
+        try
+        {
+            var viewModel = await _categoryService.GetCategoryForCreateAsync();
+            return View(viewModel);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "カテゴリ登録画面表示中にエラーが発生しました");
+            return View("Error");
+        }
     }
 
     /// <summary>
@@ -131,29 +144,58 @@ public class CategoriesController : Controller
         {
             if (!ModelState.IsValid)
             {
-                return View(viewModel);
+                // Ajaxリクエストの場合はJSONエラーレスポンスを返す
+                if (Request.Headers.Accept.ToString().Contains("application/json") || 
+                    Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    var errors = ModelState
+                        .Where(x => x.Value.Errors.Count > 0)
+                        .Select(x => new { Field = x.Key, Message = x.Value.Errors.First().ErrorMessage })
+                        .ToList();
+                    
+                    return Json(new { success = false, errors = errors });
+                }
+
+                // 通常のリクエストの場合はビューを返す
+                var errorViewModel = await _categoryService.GetCategoryForCreateAsync();
+                errorViewModel.Name = viewModel.Name;
+                errorViewModel.Description = viewModel.Description;
+                errorViewModel.ParentCategoryId = viewModel.ParentCategoryId;
+                return View(errorViewModel);
             }
 
-            // エンティティに変換
-            var category = new Category
+            // カテゴリサービス経由で登録
+            var categoryId = await _categoryService.CreateCategoryAsync(viewModel);
+
+            // Ajaxリクエストの場合はJSONレスポンスを返す
+            if (Request.Headers.Accept.ToString().Contains("application/json") || 
+                Request.Headers["X-Requested-With"] == "XMLHttpRequest")
             {
-                Name = viewModel.Name,
-                Description = viewModel.Description,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
-            };
+                return Json(new { success = true, categoryId = categoryId, message = "カテゴリが正常に登録されました" });
+            }
 
-            // カテゴリを登録
-            await _categoryRepository.AddAsync(category);
-
+            // 通常のリクエストの場合はリダイレクト
             TempData["SuccessMessage"] = "カテゴリが正常に登録されました";
             return RedirectToAction(nameof(Index));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "カテゴリ登録中にエラーが発生しました");
+            
+            // Ajaxリクエストの場合はJSONエラーレスポンスを返す
+            if (Request.Headers.Accept.ToString().Contains("application/json") || 
+                Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = false, message = "カテゴリ登録中にエラーが発生しました" });
+            }
+
+            // 通常のリクエストの場合はエラービューを返す
             ModelState.AddModelError("", "カテゴリ登録中にエラーが発生しました");
-            return View(viewModel);
+            var errorViewModel = await _categoryService.GetCategoryForCreateAsync();
+            errorViewModel.Name = viewModel.Name;
+            errorViewModel.Description = viewModel.Description;
+            errorViewModel.ParentCategoryId = viewModel.ParentCategoryId;
+            return View(errorViewModel);
         }
     }
 
@@ -167,18 +209,15 @@ public class CategoriesController : Controller
     {
         try
         {
-            var category = await _categoryRepository.GetByIdAsync(id);
-            if (category == null)
+            var viewModel = await _categoryService.GetCategoryForEditAsync(id);
+            if (viewModel == null)
             {
                 return NotFound($"カテゴリID {id} が見つかりません");
             }
 
-            var viewModel = new CategoryEditViewModel
-            {
-                Id = category.Id,
-                Name = category.Name,
-                Description = category.Description
-            };
+            // 親カテゴリ選択肢を設定
+            var parentCategories = await _categoryService.GetCategorySelectItemsAsync();
+            viewModel.ParentCategories = parentCategories;
 
             return View(viewModel);
         }
@@ -202,6 +241,12 @@ public class CategoriesController : Controller
     {
         if (id != viewModel.Id)
         {
+            // Ajaxリクエストの場合はJSONエラーレスポンスを返す
+            if (Request.Headers.Accept.ToString().Contains("application/json") || 
+                Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = false, message = "カテゴリIDが一致しません" });
+            }
             return BadRequest("カテゴリIDが一致しません");
         }
 
@@ -209,29 +254,63 @@ public class CategoriesController : Controller
         {
             if (!ModelState.IsValid)
             {
+                // Ajaxリクエストの場合はJSONエラーレスポンスを返す
+                if (Request.Headers.Accept.ToString().Contains("application/json") || 
+                    Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    var errors = ModelState
+                        .Where(x => x.Value.Errors.Count > 0)
+                        .Select(x => new { Field = x.Key, Message = x.Value.Errors.First().ErrorMessage })
+                        .ToList();
+                    
+                    return Json(new { success = false, errors = errors });
+                }
+
+                // 通常のリクエストの場合はビューを返す
+                var parentCategories = await _categoryService.GetCategorySelectItemsAsync();
+                viewModel.ParentCategories = parentCategories;
                 return View(viewModel);
             }
 
-            var category = await _categoryRepository.GetByIdAsync(id);
-            if (category == null)
+            // カテゴリサービス経由で更新
+            var success = await _categoryService.UpdateCategoryAsync(viewModel);
+            if (!success)
             {
+                // Ajaxリクエストの場合はJSONエラーレスポンスを返す
+                if (Request.Headers.Accept.ToString().Contains("application/json") || 
+                    Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = false, message = $"カテゴリID {id} が見つかりません" });
+                }
                 return NotFound($"カテゴリID {id} が見つかりません");
             }
 
-            // カテゴリ情報を更新
-            category.Name = viewModel.Name;
-            category.Description = viewModel.Description;
-            category.UpdatedAt = DateTime.Now;
+            // Ajaxリクエストの場合はJSONレスポンスを返す
+            if (Request.Headers.Accept.ToString().Contains("application/json") || 
+                Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = true, categoryId = id, message = "カテゴリが正常に更新されました" });
+            }
 
-            await _categoryRepository.UpdateAsync(category);
-
+            // 通常のリクエストの場合はリダイレクト
             TempData["SuccessMessage"] = "カテゴリが正常に更新されました";
             return RedirectToAction(nameof(Index));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "カテゴリ更新中にエラーが発生しました。カテゴリID: {CategoryId}", id);
+            
+            // Ajaxリクエストの場合はJSONエラーレスポンスを返す
+            if (Request.Headers.Accept.ToString().Contains("application/json") || 
+                Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = false, message = "カテゴリ更新中にエラーが発生しました" });
+            }
+
+            // 通常のリクエストの場合はエラービューを返す
             ModelState.AddModelError("", "カテゴリ更新中にエラーが発生しました");
+            var parentCategories = await _categoryService.GetCategorySelectItemsAsync();
+            viewModel.ParentCategories = parentCategories;
             return View(viewModel);
         }
     }

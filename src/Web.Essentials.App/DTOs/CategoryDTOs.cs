@@ -228,6 +228,16 @@ public class CategorySelectDto
     public int Level { get; set; }
 
     /// <summary>
+    /// 親カテゴリID
+    /// </summary>
+    public int? ParentCategoryId { get; set; }
+
+    /// <summary>
+    /// 表示順序
+    /// </summary>
+    public int SortOrder { get; set; }
+
+    /// <summary>
     /// インデント付きの表示名
     /// </summary>
     public string DisplayName => new string('　', Level) + Name;

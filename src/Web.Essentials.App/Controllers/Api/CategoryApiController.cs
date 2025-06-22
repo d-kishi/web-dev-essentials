@@ -398,4 +398,99 @@ public class CategoryApiController : ControllerBase
             return StatusCode(500, errorResponse);
         }
     }
+
+    /// <summary>
+    /// 親カテゴリ選択用カテゴリ一覧取得
+    /// カテゴリ登録・編集画面の親カテゴリ選択で使用
+    /// </summary>
+    /// <returns>階層構造を含むカテゴリ一覧</returns>
+    [HttpGet("for-parent-selection")]
+    public async Task<ActionResult<ApiResponse<List<CategorySelectDto>>>> GetCategoriesForParentSelection()
+    {
+        try
+        {
+            _logger.LogInformation("親カテゴリ選択用カテゴリ一覧取得API呼び出し");
+
+            var allCategories = await _categoryRepository.GetAllAsync();
+            
+            // 階層構造を構築してフルパス付きのDTOに変換
+            var categorySelectDtos = BuildCategoryHierarchy(allCategories)
+                .OrderBy(c => c.Level)
+                .ThenBy(c => c.SortOrder)
+                .ToList();
+
+            var response = new ApiResponse<List<CategorySelectDto>>
+            {
+                Success = true,
+                Data = categorySelectDtos,
+                Message = $"親カテゴリ選択用データを正常に取得しました（{categorySelectDtos.Count}件）"
+            };
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "親カテゴリ選択用カテゴリ一覧取得API実行中にエラーが発生しました");
+            
+            var errorResponse = new ApiResponse<List<CategorySelectDto>>
+            {
+                Success = false,
+                Data = new List<CategorySelectDto>(),
+                Message = "親カテゴリ選択用データの取得中にエラーが発生しました",
+                Errors = new List<ApiErrorDto> { new ApiErrorDto("サーバー内部エラーが発生しました") }
+            };
+
+            return StatusCode(500, errorResponse);
+        }
+    }
+
+    /// <summary>
+    /// カテゴリ階層構造を構築し、フルパス付きのDTOに変換
+    /// </summary>
+    /// <param name="categories">全カテゴリのコレクション</param>
+    /// <returns>階層構造とフルパスを持つカテゴリ選択用DTOのコレクション</returns>
+    private List<CategorySelectDto> BuildCategoryHierarchy(IEnumerable<Domain.Entities.Category> categories)
+    {
+        var categoryDict = categories.ToDictionary(c => c.Id);
+        var result = new List<CategorySelectDto>();
+
+        foreach (var category in categories)
+        {
+            var fullPath = BuildCategoryFullPath(category, categoryDict);
+            
+            result.Add(new CategorySelectDto
+            {
+                Id = category.Id,
+                Name = category.Name,
+                FullPath = fullPath,
+                Level = category.Level,
+                ParentCategoryId = category.ParentCategoryId,
+                SortOrder = category.SortOrder
+            });
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// カテゴリの完全パスを構築
+    /// </summary>
+    /// <param name="category">対象カテゴリ</param>
+    /// <param name="categoryDict">カテゴリ辞書</param>
+    /// <returns>完全パス（例：スポーツ > サッカー > シューズ）</returns>
+    private string BuildCategoryFullPath(Domain.Entities.Category category, Dictionary<int, Domain.Entities.Category> categoryDict)
+    {
+        var pathParts = new List<string>();
+        var current = category;
+
+        while (current != null)
+        {
+            pathParts.Insert(0, current.Name);
+            current = current.ParentCategoryId.HasValue && categoryDict.ContainsKey(current.ParentCategoryId.Value)
+                ? categoryDict[current.ParentCategoryId.Value]
+                : null;
+        }
+
+        return string.Join(" > ", pathParts);
+    }
 }
