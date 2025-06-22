@@ -258,31 +258,13 @@ const SearchComponent = {
     },
     
     /**
-     * 検索候補表示
+     * 検索候補表示（無効化済み）
+     * 各ページで独自の検索機能が実装されているため、この機能は無効化
      */
     async showSuggestions(term) {
-        if (!term || term.length < 2) {
-            this.hideSuggestions();
-            return;
-        }
-        
-        try {
-            const isProductPage = window.location.pathname.includes('/Product');
-            let suggestions;
-            
-            if (isProductPage) {
-                const result = await API.getProductSuggestions(term, 8);
-                suggestions = result.data || [];
-            } else {
-                const result = await API.getCategorySuggestions(term, 8);
-                suggestions = result.data || [];
-            }
-            
-            this.renderSuggestions(suggestions);
-        } catch (error) {
-            console.error('検索候補取得エラー:', error);
-            this.hideSuggestions();
-        }
+        // 検索候補機能は無効化（各ページで独自実装済み）
+        this.hideSuggestions();
+        return;
     },
     
     /**
