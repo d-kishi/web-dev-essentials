@@ -27,11 +27,8 @@ function initializeProductEditForm() {
     // 画像アップロードの設定
     setupImageUpload();
     
-    // 変更検知の設定
-    setupChangeDetection();
-    
-    // ページ離脱警告の設定
-    setupUnloadWarning();
+    // 画像表示・編集機能の設定
+    setupImageViewerAndEditor();
     
     // フォーム送信イベントの設定
     setupFormSubmitHandler();
@@ -60,97 +57,10 @@ function setupFormSubmitHandler() {
     }
 }
 
-/**
- * 変更検知の設定
- */
-function setupChangeDetection() {
-    const form = document.getElementById('productEditForm');
-    if (!form) return;
-    
-    const inputs = form.querySelectorAll('input, select, textarea');
-    
-    inputs.forEach(input => {
-        input.addEventListener('input', detectChanges);
-        input.addEventListener('change', detectChanges);
-    });
-}
 
-/**
- * 変更検知
- */
-function detectChanges() {
-    const currentData = collectFormData();
-    const changes = compareFormData(originalFormData, currentData);
-    updateChangeHistory(changes);
-}
 
-/**
- * フォームデータ比較
- * @param {Object} original - 元のデータ
- * @param {Object} current - 現在のデータ
- * @returns {Array} 変更内容の配列
- */
-function compareFormData(original, current) {
-    const changes = [];
-    
-    for (let key in current) {
-        if (original[key] !== current[key]) {
-            changes.push({
-                field: key,
-                from: original[key],
-                to: current[key],
-                timestamp: new Date()
-            });
-        }
-    }
-    
-    return changes;
-}
 
-/**
- * 変更履歴更新
- * @param {Array} changes - 変更内容の配列
- */
-function updateChangeHistory(changes) {
-    const historyContainer = document.getElementById('changeHistory');
-    if (!historyContainer) return;
-    
-    if (changes.length === 0) {
-        historyContainer.innerHTML = '<p class="no-changes">変更はありません</p>';
-        return;
-    }
-    
-    const historyHtml = changes.map(change => `
-        <div class="history-item">
-            <div class="history-field">${getFieldDisplayName(change.field)}</div>
-            <div class="history-change">
-                <span class="change-from">${change.from || '(空)'}</span>
-                <span class="change-arrow">→</span>
-                <span class="change-to">${change.to || '(空)'}</span>
-            </div>
-            <div class="history-time">${change.timestamp.toLocaleTimeString()}</div>
-        </div>
-    `).join('');
-    
-    historyContainer.innerHTML = historyHtml;
-}
 
-/**
- * フィールド表示名取得
- * @param {string} fieldName - フィールド名
- * @returns {string} 表示名
- */
-function getFieldDisplayName(fieldName) {
-    const fieldNames = {
-        'Name': '商品名',
-        'Description': '商品説明',
-        'Price': '価格',
-        'CategoryId': 'カテゴリ',
-        'JanCode': 'JANコード'
-    };
-    
-    return fieldNames[fieldName] || fieldName;
-}
 
 /**
  * 商品フォームのバリデーション
@@ -248,72 +158,8 @@ async function submitProductForm() {
     }
 }
 
-/**
- * 別商品として保存モーダル表示
- */
-function showSaveAsNewModal() {
-    const modalElement = document.getElementById('saveAsNewModal');
-    if (modalElement) {
-        modalElement.style.display = 'block';
-    }
-}
 
-/**
- * 別商品として保存モーダルを閉じる
- */
-function closeSaveAsNewModal() {
-    const modalElement = document.getElementById('saveAsNewModal');
-    if (modalElement) {
-        modalElement.style.display = 'none';
-    }
-}
 
-/**
- * 別商品として保存実行
- */
-async function saveAsNewProduct() {
-    try {
-        const newProductNameInput = document.getElementById('newProductName');
-        if (!newProductNameInput) return;
-        
-        const newProductName = newProductNameInput.value;
-        
-        if (!newProductName.trim()) {
-            showError('新しい商品名を入力してください');
-            return;
-        }
-        
-        showLoadingModal('新しい商品として保存しています...');
-        
-        const formData = new FormData(document.getElementById('productEditForm'));
-        formData.set('Name', newProductName); // 商品名を更新
-        formData.delete('Id'); // IDを削除（新規作成）
-        
-        const response = await fetch('/Products/Create', {
-            method: 'POST',
-            body: formData
-        });
-        
-        hideLoadingModal();
-        
-        if (response.ok) {
-            showSuccess(`新しい商品「${newProductName}」として保存されました`);
-            closeSaveAsNewModal();
-            
-            // 商品一覧に戻る
-            setTimeout(() => {
-                window.location.href = '/Products';
-            }, 1500);
-        } else {
-            const errorText = await response.text();
-            showError('新しい商品の保存に失敗しました: ' + errorText);
-        }
-    } catch (error) {
-        hideLoadingModal();
-        console.error('新しい商品保存エラー:', error);
-        showError('新しい商品保存中にエラーが発生しました');
-    }
-}
 
 /**
  * フォームリセット
@@ -333,20 +179,6 @@ function resetForm() {
     }
 }
 
-/**
- * ページ離脱警告の設定
- */
-function setupUnloadWarning() {
-    window.addEventListener('beforeunload', function(event) {
-        const currentData = collectFormData();
-        const changes = compareFormData(originalFormData, currentData);
-        
-        if (changes.length > 0) {
-            event.preventDefault();
-            event.returnValue = '変更が保存されていません。ページを離れますか？';
-        }
-    });
-}
 
 /**
  * フォームデータ収集
@@ -368,86 +200,10 @@ function collectFormData() {
     return data;
 }
 
-/**
- * プレビュー表示
- */
-function previewProduct() {
-    const formData = collectFormData();
-    const previewContent = generatePreviewContent(formData);
-    
-    const previewElement = document.getElementById('productPreviewContent');
-    const modalElement = document.getElementById('productPreviewModal');
-    
-    if (previewElement && modalElement) {
-        previewElement.innerHTML = previewContent;
-        modalElement.style.display = 'block';
-    }
-}
 
-/**
- * プレビューから保存
- */
-function submitFromPreview() {
-    closePreviewModal();
-    
-    if (validateProductForm()) {
-        submitProductForm();
-    }
-}
 
-/**
- * プレビューモーダルを閉じる
- */
-function closePreviewModal() {
-    const modalElement = document.getElementById('productPreviewModal');
-    if (modalElement) {
-        modalElement.style.display = 'none';
-    }
-}
 
-/**
- * プレビューコンテンツ生成
- * @param {Object} data - フォームデータ
- * @returns {string} プレビューHTML
- */
-function generatePreviewContent(data) {
-    return `
-        <div class="product-preview">
-            <div class="preview-header">
-                <h2>${data.Name || '商品名未入力'}</h2>
-                <div class="preview-price">¥${parseInt(data.Price || 0).toLocaleString()}</div>
-            </div>
-            <div class="preview-body">
-                <div class="preview-section">
-                    <h3>商品説明</h3>
-                    <p>${data.Description || '説明なし'}</p>
-                </div>
-                <div class="preview-section">
-                    <h3>商品情報</h3>
-                    <dl class="preview-details">
-                        <dt>カテゴリ</dt>
-                        <dd>${getCategoryName(data.CategoryId) || '未選択'}</dd>
-                        <dt>JANコード</dt>
-                        <dd>${data.JanCode || 'なし'}</dd>
-                    </dl>
-                </div>
-            </div>
-        </div>
-    `;
-}
 
-/**
- * カテゴリ名取得
- * @param {string} categoryId - カテゴリID
- * @returns {string|null} カテゴリ名
- */
-function getCategoryName(categoryId) {
-    const categorySelect = document.querySelector('select[name="CategoryId"]');
-    if (!categorySelect) return null;
-    
-    const option = categorySelect.querySelector(`option[value="${categoryId}"]`);
-    return option ? option.textContent : null;
-}
 
 /**
  * フォームバリデーションの設定（プレースホルダー）
@@ -466,48 +222,164 @@ function setupImageUpload() {
 }
 
 /**
+ * 画像表示・編集機能の設定
+ */
+function setupImageViewerAndEditor() {
+    // イベントリスナーの設定
+    document.addEventListener('click', function(e) {
+        const target = e.target.closest('[data-action]');
+        if (!target) return;
+        
+        const action = target.dataset.action;
+        
+        switch (action) {
+            case 'open-image-viewer':
+                e.preventDefault();
+                openImageViewer(target.dataset.imagePath, target.dataset.imageAlt);
+                break;
+                
+            case 'edit-image':
+                e.preventDefault();
+                openImageEditModal(target);
+                break;
+                
+            case 'close-modal':
+                e.preventDefault();
+                closeImageEditModal();
+                break;
+                
+            case 'save-settings':
+                e.preventDefault();
+                saveImageSettings();
+                break;
+        }
+    });
+}
+
+/**
+ * 画像ビューアーを開く
+ * @param {string} imagePath - 画像パス
+ * @param {string} altText - 代替テキスト
+ */
+function openImageViewer(imagePath, altText) {
+    const modal = document.createElement('div');
+    modal.className = 'image-view-modal';
+    modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(0,0,0,0.8); z-index: 1000;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+    `;
+    
+    modal.innerHTML = `
+        <div style="max-width: 90%; max-height: 90%; position: relative;">
+            <img src="${imagePath}" alt="${altText}" style="max-width: 100%; max-height: 100%; border-radius: 8px;">
+            <div style="position: absolute; top: -40px; right: 0; color: white; font-size: 24px; cursor: pointer;">&times;</div>
+        </div>
+    `;
+    
+    modal.addEventListener('click', function() {
+        document.body.removeChild(modal);
+        document.body.style.overflow = 'auto';
+    });
+    
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+}
+
+/**
+ * 画像編集モーダルを開く
+ * @param {HTMLElement} editButton - 編集ボタン要素
+ */
+function openImageEditModal(editButton) {
+    const modal = document.getElementById('imageEditModal');
+    const previewImg = document.getElementById('editPreviewImage');
+    const altTextInput = document.getElementById('imageAltText');
+    const isMainCheckbox = document.getElementById('imageIsMain');
+    
+    if (!modal || !previewImg || !altTextInput || !isMainCheckbox) return;
+    
+    // データをモーダルに設定
+    previewImg.src = editButton.dataset.imagePath;
+    previewImg.alt = editButton.dataset.imageAlt || '商品画像';
+    altTextInput.value = editButton.dataset.imageAlt || '';
+    
+    // 現在編集中の画像IDを保存
+    modal.dataset.currentImageId = editButton.dataset.imageId;
+    
+    // モーダルを表示
+    modal.style.display = 'block';
+}
+
+/**
+ * 画像編集モーダルを閉じる
+ */
+function closeImageEditModal() {
+    const modal = document.getElementById('imageEditModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+/**
+ * 画像設定を保存
+ */
+function saveImageSettings() {
+    const modal = document.getElementById('imageEditModal');
+    const altTextInput = document.getElementById('imageAltText');
+    const isMainCheckbox = document.getElementById('imageIsMain');
+    
+    if (!modal || !altTextInput) return;
+    
+    const imageId = modal.dataset.currentImageId;
+    const newAltText = altTextInput.value;
+    const isMain = isMainCheckbox ? isMainCheckbox.checked : false;
+    
+    // 表示されている画像情報を更新
+    const imageItem = document.querySelector(`[data-image-id="${imageId}"]`);
+    if (imageItem) {
+        // 代替テキストを更新
+        const editButton = imageItem.querySelector('[data-action="edit-image"]');
+        if (editButton) {
+            editButton.dataset.imageAlt = newAltText;
+        }
+        
+        const img = imageItem.querySelector('img');
+        if (img) {
+            img.alt = newAltText;
+            img.dataset.imageAlt = newAltText;
+        }
+        
+        // 情報表示を更新
+        let infoElement = imageItem.querySelector('.alt-text');
+        if (newAltText) {
+            if (!infoElement) {
+                const imageInfo = imageItem.querySelector('.image-info');
+                if (imageInfo) {
+                    infoElement = document.createElement('small');
+                    infoElement.className = 'alt-text';
+                    imageInfo.appendChild(infoElement);
+                }
+            }
+            if (infoElement) {
+                infoElement.textContent = `代替テキスト: ${newAltText}`;
+            }
+        } else if (infoElement) {
+            infoElement.remove();
+        }
+    }
+    
+    showSuccess('画像設定を更新しました');
+    closeImageEditModal();
+}
+
+/**
  * ボタンイベントハンドラーの設定
  */
 function setupButtonEventHandlers() {
-    // 別商品として保存ボタン（IDベース）
-    const saveAsNewButton = document.getElementById('saveAsNewButton');
-    if (saveAsNewButton) {
-        saveAsNewButton.addEventListener('click', showSaveAsNewModal);
-    }
-    
-    // プレビューボタン（IDベース）
-    const previewButton = document.getElementById('previewButton');
-    if (previewButton) {
-        previewButton.addEventListener('click', previewProduct);
-    }
-    
     // リセットボタン（IDベース）
     const resetButton = document.getElementById('resetButton');
     if (resetButton) {
         resetButton.addEventListener('click', resetForm);
-    }
-    
-    // 別商品として保存モーダルの閉じるボタン（クラスベース）
-    const closeSaveAsNewButtons = document.querySelectorAll('.close-save-as-new-modal');
-    closeSaveAsNewButtons.forEach(button => {
-        button.addEventListener('click', closeSaveAsNewModal);
-    });
-    
-    // 別商品として保存実行ボタン（IDベース）
-    const saveAsNewSubmitButton = document.getElementById('saveAsNewSubmitButton');
-    if (saveAsNewSubmitButton) {
-        saveAsNewSubmitButton.addEventListener('click', saveAsNewProduct);
-    }
-    
-    // プレビューモーダルの閉じるボタン（クラスベース）
-    const closePreviewButtons = document.querySelectorAll('.close-preview-modal');
-    closePreviewButtons.forEach(button => {
-        button.addEventListener('click', closePreviewModal);
-    });
-    
-    // プレビューからの送信ボタン（IDベース）
-    const submitFromPreviewButton = document.getElementById('submitFromPreviewButton');
-    if (submitFromPreviewButton) {
-        submitFromPreviewButton.addEventListener('click', submitFromPreview);
     }
 }

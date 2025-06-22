@@ -74,16 +74,6 @@
         <!-- 商品フォーム（部分ビュー） -->
         <partial name="_ProductForm" model="Model" />
         
-        <!-- 変更履歴セクション -->
-        <div class="form-section">
-            <h3 class="section-title">変更履歴</h3>
-            <div class="change-history">
-                <div id="changeHistory" class="history-list">
-                    <!-- 変更内容がここに表示される -->
-                    <p class="no-changes">変更はありません</p>
-                </div>
-            </div>
-        </div>
         
         <!-- フォーム操作ボタン -->
         <div class="form-actions">
@@ -92,96 +82,17 @@
                     <span class="btn-icon">💾</span>
                     変更を保存
                 </button>
-                <button type="button" class="btn btn-warning btn-large" id="saveAsNewButton">
-                    <span class="btn-icon">📋</span>
-                    別商品として保存
-                </button>
-                <button type="button" class="btn btn-outline btn-large" id="previewButton">
-                    <span class="btn-icon">👁</span>
-                    プレビュー
-                </button>
                 <button type="button" class="btn btn-light btn-large" id="resetButton">
                     <span class="btn-icon">↻</span>
                     変更を破棄
                 </button>
             </div>
             
-            <!-- 保存オプション -->
-            <div class="save-options">
-                <div class="checkbox-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="keepEditingAfterSave" class="checkbox-input">
-                        <span class="checkbox-custom"></span>
-                        保存後も編集画面に留まる
-                    </label>
-                </div>
-            </div>
         </div>
     </form>
 </div>
 
-<!-- 別商品として保存モーダル -->
-<div id="saveAsNewModal" class="modal-overlay" style="display: none;">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">別商品として保存</h3>
-                <button type="button" class="modal-close" id="closeSaveAsNewModalX">
-                    <span>×</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p>現在の編集内容を新しい商品として保存しますか？</p>
-                <div class="form-group">
-                    <label for="newProductName" class="form-label">新しい商品名</label>
-                    <input type="text" 
-                           id="newProductName" 
-                           class="form-input" 
-                           value="@Model.Name のコピー"
-                           maxlength="100" />
-                </div>
-                <div class="warning-message">
-                    <p><strong>注意:</strong> 元の商品は変更されません。新しい商品として別途作成されます。</p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="closeSaveAsNewModalButton">
-                    キャンセル
-                </button>
-                <button type="button" class="btn btn-primary" id="saveAsNewProductButton">
-                    新しい商品として保存
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- プレビューモーダル -->
-<div id="productPreviewModal" class="modal-overlay preview-modal" style="display: none;">
-    <div class="modal-dialog modal-large">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">商品プレビュー</h3>
-                <button type="button" class="modal-close" id="closePreviewModalX">
-                    <span>×</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div id="productPreviewContent" class="preview-content">
-                    <!-- プレビュー内容がここに表示される -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="closePreviewModalButton">
-                    閉じる
-                </button>
-                <button type="button" class="btn btn-primary" id="submitFromPreviewButton">
-                    このまま保存する
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
 @section Styles {
     <link rel="stylesheet" href="~/css/simple-image-upload.css" asp-append-version="true" />

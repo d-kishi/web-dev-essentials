@@ -207,18 +207,45 @@
             {
                 <div class="existing-image-item" data-image-id="@image.Id">
                     <div class="image-container">
-                        <img src="@image.ImagePath" alt="商品画像" class="existing-image" />
+                        <img src="@image.ImagePath" 
+                             alt="@(image.AltText ?? "商品画像")" 
+                             class="existing-image" 
+                             data-action="open-image-viewer"
+                             data-image-path="@image.ImagePath" 
+                             data-image-alt="@(image.AltText ?? "商品画像")" />
                         <div class="image-overlay">
+                            <button type="button" 
+                                    class="btn btn-outline btn-sm zoom-btn" 
+                                    data-action="open-image-viewer"
+                                    data-image-path="@image.ImagePath" 
+                                    data-image-alt="@(image.AltText ?? "商品画像")"
+                                    title="画像を拡大表示">
+                                🔍
+                            </button>
+                            <button type="button" 
+                                    class="btn btn-warning btn-sm edit-image-btn" 
+                                    data-action="edit-image"
+                                    data-image-id="@image.Id"
+                                    data-image-path="@image.ImagePath" 
+                                    data-image-alt="@(image.AltText ?? "")"
+                                    data-is-main="@(image.Id.ToString())"
+                                    title="画像設定を編集">
+                                ⚙️
+                            </button>
                             <button type="button" 
                                     class="btn btn-danger btn-sm delete-image-btn" 
                                     data-image-id="@image.Id"
                                     title="この画像を削除">
-                                削除
+                                🗑
                             </button>
                         </div>
                     </div>
                     <div class="image-info">
                         <small>表示順: @image.DisplayOrder</small>
+                        @if (!string.IsNullOrEmpty(image.AltText))
+                        {
+                            <small class="alt-text">代替テキスト: @image.AltText</small>
+                        }
                     </div>
                 </div>
             }
