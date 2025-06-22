@@ -17,12 +17,14 @@ function initializeProductDetails() {
     // タブ機能の初期化
     setupTabs();
     
-    
     // 画像ギャラリーの初期化
     setupImageGallery();
     
     // イベントリスナーの設定
     setupEventListeners();
+    
+    // 商品削除機能の初期化
+    setupProductDeletion();
     
     // ボタンイベントハンドラーの設定
     setupButtonEventHandlers();
@@ -55,10 +57,6 @@ function setupEventListeners() {
                 closeImageViewer();
                 break;
                 
-            case 'share-product':
-                e.preventDefault();
-                shareProduct(target.dataset.productId, target.dataset.productName);
-                break;
                 
             case 'duplicate-product':
                 e.preventDefault();
@@ -203,22 +201,47 @@ function confirmDeleteProduct(productId, productName) {
 }
 
 /**
- * 商品削除実行
- * @param {number} productId - 商品ID
+ * 商品削除機能の初期化
+ */
+function setupProductDeletion() {
+    // 商品削除ボタンのイベントリスナー設定
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('product-delete-button')) {
+            const productId = parseInt(e.target.getAttribute('data-product-id'));
+            const productName = e.target.getAttribute('data-product-name');
+            confirmDeleteProduct(productId, productName);
+        }
+    });
+}
+
+/**
+ * 商品削除確認ダイアログの表示
+ * @param {number} productId - 削除対象の商品ID
+ * @param {string} productName - 削除対象の商品名
+ */
+function confirmDeleteProduct(productId, productName) {
+    showConfirmationModal(
+        '商品削除の確認',
+        `商品「${productName}」を削除しますか？`,
+        '削除すると元に戻せません。',
+        '削除',
+        () => deleteProduct(productId)
+    );
+}
+
+/**
+ * 商品削除の実行
+ * @param {number} productId - 削除対象の商品ID
  */
 async function deleteProduct(productId) {
     try {
-        showLoadingModal('商品を削除しています...');
+        const formData = new FormData();
+        formData.append('__RequestVerificationToken', getAntiForgeryToken());
         
         const response = await fetch(`/Products/Delete/${productId}`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': getAntiForgeryToken()
-            }
+            body: formData
         });
-        
-        hideLoadingModal();
         
         if (response.ok) {
             showSuccess('商品が正常に削除されました');
@@ -228,11 +251,9 @@ async function deleteProduct(productId) {
                 window.location.href = '/Products';
             }, 1500);
         } else {
-            const errorText = await response.text();
-            showError('商品の削除に失敗しました: ' + errorText);
+            showError('商品の削除に失敗しました');
         }
     } catch (error) {
-        hideLoadingModal();
         console.error('商品削除エラー:', error);
         showError('商品削除中にエラーが発生しました');
     }
@@ -280,35 +301,6 @@ async function duplicateProduct(productId) {
     }
 }
 
-/**
- * 商品共有
- * @param {string} productId - 商品ID
- * @param {string} productName - 商品名
- */
-function shareProduct(productId, productName) {
-    const url = productId ? 
-        `${window.location.origin}/Products/Details/${productId}` : 
-        window.location.href;
-    const name = productName || window.productName || '商品';
-    const shareText = `商品「${name}」の詳細をご覧ください`;
-    
-    if (navigator.share) {
-        // ネイティブ共有API使用
-        navigator.share({
-            title: name,
-            text: shareText,
-            url: url
-        }).catch(error => {
-            console.log('共有がキャンセルされました:', error);
-        });
-    } else {
-        // フォールバック: クリップボードにコピー
-        copyToClipboard(url);
-        if (typeof showSuccess === 'function') {
-            showSuccess('商品URLをクリップボードにコピーしました');
-        }
-    }
-}
 
 /**
  * クリップボードにコピー
@@ -385,15 +377,6 @@ function setupButtonEventHandlers() {
         });
     }
     
-    // 商品共有ボタン（IDとdata属性ベース）
-    const shareButton = document.getElementById('shareProductButton');
-    if (shareButton) {
-        shareButton.addEventListener('click', function() {
-            const productId = shareButton.dataset.productId;
-            const productName = shareButton.dataset.productName;
-            shareProduct(productId, productName);
-        });
-    }
     
     // タブ表示切り替えボタン（クラスとdata属性ベース）
     const tabButtons = document.querySelectorAll('.tab-button');
@@ -444,5 +427,4 @@ window.openImageModal = openImageModal;
 window.confirmDeleteProduct = confirmDeleteProduct;
 window.deleteProduct = deleteProduct;
 window.duplicateProduct = duplicateProduct;
-window.shareProduct = shareProduct;
 window.copyToClipboard = copyToClipboard;

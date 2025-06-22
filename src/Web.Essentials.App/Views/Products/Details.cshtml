@@ -15,8 +15,7 @@
             編集
         </a>
         <button type="button" 
-                class="btn btn-danger" 
-                id="deleteButton"
+                class="btn btn-danger product-delete-button" 
                 data-product-id="@Model.Id"
                 data-product-name="@Model.Name">
             <span class="btn-icon">🗑</span>
@@ -43,6 +42,9 @@
         </li>
     </ol>
 </nav>
+
+<!-- Anti-Forgery Token for AJAX operations -->
+@Html.AntiForgeryToken()
 
 <!-- 商品詳細コンテンツ -->
 <div class="product-details-container">
@@ -76,9 +78,12 @@
             }
             else
             {
-                <div class="no-image-container">
-                    <img src="/images/no-image.png" alt="画像なし" class="no-image" />
-                    <p class="no-image-text">画像がありません</p>
+                <div class="image-gallery-flex">
+                    <div class="image-item">
+                        <img src="/images/no-image.png" 
+                             alt="画像なし" 
+                             class="product-image" />
+                    </div>
                 </div>
             }
         </div>
@@ -152,12 +157,6 @@
                             data-product-id="@Model.Id">
                         <span class="btn-icon">📋</span>
                         複製して新規作成
-                    </button>
-                    <button type="button" 
-                            class="btn btn-light btn-large" 
-                            id="shareButton">
-                        <span class="btn-icon">📤</span>
-                        共有
                     </button>
                 </div>
             </div>
