@@ -1,4 +1,4 @@
-# Claude CodeをVSCode使ってVibe Cording
+# Claude CodeをVSCode使った開発
 
 ## 環境
 
