@@ -6,6 +6,9 @@
 // 初期値を保存（変更検知用）
 let originalFormData = {};
 
+// 削除された画像IDを管理
+let deletedImageIds = new Set();
+
 /**
  * ページ読み込み時の初期化処理
  */
@@ -29,6 +32,9 @@ function initializeProductEditForm() {
     
     // 画像表示・編集機能の設定
     setupImageViewerAndEditor();
+    
+    // 削除済み画像の初期化
+    initializeDeletedImages();
     
     // フォーム送信イベントの設定
     setupFormSubmitHandler();
@@ -252,6 +258,12 @@ function setupImageViewerAndEditor() {
                 e.preventDefault();
                 saveImageSettings();
                 break;
+                
+            case 'delete-existing-image':
+                e.preventDefault();
+                const imageId = target.getAttribute('data-image-id') || target.dataset.imageId;
+                deleteExistingImage(imageId);
+                break;
         }
     });
 }
@@ -304,8 +316,10 @@ function openImageEditModal(editButton) {
     previewImg.alt = editButton.dataset.imageAlt || '商品画像';
     altTextInput.value = editButton.dataset.imageAlt || '';
     
-    // 現在編集中の画像IDを保存
-    modal.dataset.currentImageId = editButton.dataset.imageId;
+    // 現在編集中の画像IDを保存（ダブルクォートを除去）
+    const imageId = editButton.dataset.imageId || editButton.getAttribute('data-image-id');
+    const cleanImageId = imageId.toString().replace(/^["']|["']$/g, '');
+    modal.dataset.currentImageId = cleanImageId;
     
     // モーダルを表示
     modal.style.display = 'block';
@@ -336,7 +350,8 @@ function saveImageSettings() {
     const isMain = isMainCheckbox ? isMainCheckbox.checked : false;
     
     // 表示されている画像情報を更新
-    const imageItem = document.querySelector(`[data-image-id="${imageId}"]`);
+    const cleanImageId = imageId.toString().replace(/^["']|["']$/g, '');
+    const imageItem = document.querySelector(`[data-image-id="${cleanImageId}"]`);
     if (imageItem) {
         // 代替テキストを更新
         const editButton = imageItem.querySelector('[data-action="edit-image"]');
@@ -371,6 +386,64 @@ function saveImageSettings() {
     
     showSuccess('画像設定を更新しました');
     closeImageEditModal();
+}
+
+/**
+ * 削除済み画像の初期化
+ */
+function initializeDeletedImages() {
+    // ページ読み込み時に削除済み画像を非表示にする
+    const existingDeleteInputs = document.querySelectorAll('input[name="DeleteImageIds"]');
+    existingDeleteInputs.forEach(input => {
+        const imageId = input.value;
+        deletedImageIds.add(imageId);
+        hideImageItem(imageId);
+    });
+}
+
+/**
+ * 画像アイテムを非表示にする
+ * @param {string} imageId - 画像ID
+ */
+function hideImageItem(imageId) {
+    // ダブルクォートを除去
+    const cleanImageId = imageId.toString().replace(/^["']|["']$/g, '');
+    const imageItem = document.querySelector(`[data-image-id="${cleanImageId}"]`);
+    if (imageItem) {
+        imageItem.style.display = 'none';
+        imageItem.classList.add('deleted-image');
+    }
+}
+
+/**
+ * 既存画像の削除
+ * @param {string} imageId - 画像ID
+ */
+function deleteExistingImage(imageId) {
+    if (!confirm('この画像を削除しますか？')) {
+        return;
+    }
+    
+    // 削除済みリストに追加
+    deletedImageIds.add(imageId);
+    
+    // 表示から非表示にする
+    hideImageItem(imageId);
+    
+    // 削除用の隠しフィールドを追加（サーバー送信時に削除対象として送信）
+    const form = document.getElementById('productEditForm');
+    if (form) {
+        // 既存の削除フィールドがない場合のみ追加
+        if (!document.querySelector(`input[name="DeleteImageIds"][value="${imageId}"]`)) {
+            const deleteInput = document.createElement('input');
+            deleteInput.type = 'hidden';
+            deleteInput.name = 'DeleteImageIds';
+            deleteInput.value = imageId;
+            form.appendChild(deleteInput);
+        }
+    }
+    
+    showSuccess('画像を削除しました');
 }
 
 /**

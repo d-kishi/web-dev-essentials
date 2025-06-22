@@ -1,0 +1,80 @@
+@model dynamic
+@{
+    // 動的モデルから必要な情報を取得
+    var imageId = ViewBag.ImageId ?? Model?.Id;
+    var imagePath = ViewBag.ImagePath ?? Model?.ImagePath;
+    var altText = ViewBag.AltText ?? Model?.AltText ?? "";
+    var displayOrder = ViewBag.DisplayOrder ?? Model?.DisplayOrder ?? 0;
+    var isMain = ViewBag.IsMain ?? Model?.IsMain ?? false;
+    var isExisting = ViewBag.IsExisting ?? true; // 既存画像かどうか
+    var fileName = ViewBag.FileName ?? "";
+    var fileSize = ViewBag.FileSize ?? "";
+    var index = ViewBag.Index ?? 0;
+}
+
+<div class="@(isExisting ? "existing-image-item" : "image-preview-item")" data-image-id="@imageId" @(isExisting ? "" : $"data-index=\"{index}\"")>
+    <div class="@(isExisting ? "image-container" : "preview-image-container")">
+        <img src="@imagePath" 
+             alt="@(altText ?? "商品画像")" 
+             class="@(isExisting ? "existing-image" : "preview-image")" 
+             data-action="open-image-viewer"
+             data-image-path="@imagePath" 
+             data-image-alt="@(altText ?? "商品画像")" />
+        
+        <div class="@(isExisting ? "image-overlay" : "preview-overlay")">
+            <button type="button" 
+                    class="overlay-btn edit-btn" 
+                    data-action="@(isExisting ? "edit-image" : "edit-preview-image")"
+                    @(isExisting ? $"data-image-id=\"{imageId}\"" : $"data-index=\"{index}\"")
+                    data-image-path="@imagePath" 
+                    data-image-alt="@altText"
+                    @(isExisting ? $"data-is-main=\"{imageId}\"" : "")
+                    title="編集">
+                ✏️
+            </button>
+            <button type="button" 
+                    class="overlay-btn delete-btn" 
+                    data-action="@(isExisting ? "delete-existing-image" : "delete-preview-image")"
+                    @(isExisting ? $"data-image-id=\"{imageId}\"" : $"data-index=\"{index}\"")
+                    title="削除">
+                🗑️
+            </button>
+            <button type="button" 
+                    class="overlay-btn view-btn" 
+                    data-action="open-image-viewer"
+                    data-image-path="@imagePath" 
+                    data-image-alt="@(altText ?? "商品画像")"
+                    title="拡大表示">
+                🔍
+            </button>
+        </div>
+        
+        @if (isMain)
+        {
+            <div class="main-badge">メイン</div>
+        }
+    </div>
+    
+    <div class="@(isExisting ? "image-info" : "preview-info")">
+        @if (isExisting)
+        {
+            <small>表示順: @displayOrder</small>
+            @if (!string.IsNullOrEmpty(altText))
+            {
+                <small class="alt-text">代替テキスト: @altText</small>
+            }
+        }
+        else
+        {
+            <div class="preview-name">@fileName</div>
+            <div class="preview-details">
+                <span class="preview-size">@fileSize</span>
+                <span class="preview-order">順序: @(index + 1)</span>
+            </div>
+            @if (!string.IsNullOrEmpty(altText))
+            {
+                <div class="preview-alt-text" title="@altText">説明: @altText</div>
+            }
+        }
+    </div>
+</div>

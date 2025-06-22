@@ -76,6 +76,11 @@ public class ProductImageViewModel
     public string? AltText { get; set; }
 
     /// <summary>
+    /// メイン画像フラグ
+    /// </summary>
+    public bool IsMain { get; set; }
+
+    /// <summary>
     /// 作成日時
     /// </summary>
     public DateTime CreatedAt { get; set; }
