@@ -412,12 +412,12 @@ function confirmDeleteProduct(productId, productName) {
  */
 async function deleteProduct(productId) {
     try {
+        const formData = new FormData();
+        formData.append('__RequestVerificationToken', getAntiForgeryToken());
+        
         const response = await fetch(`/Products/Delete/${productId}`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': getAntiForgeryToken()
-            }
+            body: formData
         });
         
         if (response.ok) {
@@ -499,8 +499,14 @@ function setupPagination() {
  * 商品削除機能の初期化
  */
 function setupProductDeletion() {
-    // 削除ボタンのイベントハンドラーは動的コンテンツのため、
-    // updateProductList内で設定
+    // 静的削除ボタンのイベントリスナー設定（ページ初期表示用）
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('product-delete-button')) {
+            const productId = parseInt(e.target.getAttribute('data-product-id'));
+            const productName = e.target.getAttribute('data-product-name');
+            confirmDeleteProduct(productId, productName);
+        }
+    });
 }
 
 /**

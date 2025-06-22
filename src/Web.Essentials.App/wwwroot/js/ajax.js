@@ -608,7 +608,7 @@ window.RxAjax = RxAjax;
 window.RxAPI = RxAPI;
 window.Ajax = Ajax;
 window.AjaxError = AjaxError;
-window.uploadWithProgress$ = uploadWithProgress$;
+window.uploadWithProgress = uploadWithProgress;
 
 // RxJSオペレーターのエクスポート
 window.rxjs = rxjs;

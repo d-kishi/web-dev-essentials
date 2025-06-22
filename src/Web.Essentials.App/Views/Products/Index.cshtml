@@ -28,6 +28,9 @@
     </div>
 </div>
 
+<!-- Anti-Forgery Token for AJAX operations -->
+@Html.AntiForgeryToken()
+
 <!-- 検索フォーム -->
 <partial name="_SearchForm" />
 
@@ -142,8 +145,8 @@
                                             編集
                                         </a>
                                         <button type="button" 
-                                                class="btn btn-danger btn-sm" 
-                                                data-action="confirm-delete-product" data-product-id="@product.Id" data-product-name="@product.Name"
+                                                class="btn btn-danger btn-sm product-delete-button" 
+                                                data-product-id="@product.Id" data-product-name="@product.Name"
                                                 title="削除">
                                             削除
                                         </button>
