@@ -50,13 +50,16 @@ public class CategoryApiController : ControllerBase
             
             List<CategoryDto> resultCategories;
 
+            // 全カテゴリの商品数を一括取得してパフォーマンスを向上
+            var categoryProductCounts = await GetCategoryProductCountsAsync(allCategories);
+
             if (string.IsNullOrWhiteSpace(searchKeyword))
             {
                 // 検索キーワードが無い場合は全カテゴリを返却
                 resultCategories = allCategories
                     .OrderBy(c => c.Level)
                     .ThenBy(c => c.SortOrder)
-                    .Select(c => CreateCategoryDto(c, allCategories))
+                    .Select(c => CreateCategoryDtoWithCachedCount(c, allCategories, categoryProductCounts))
                     .ToList();
             }
             else
@@ -98,7 +101,7 @@ public class CategoryApiController : ControllerBase
                     .Where(c => resultCategoryIds.Contains(c.Id))
                     .OrderBy(c => c.Level)
                     .ThenBy(c => c.SortOrder)
-                    .Select(c => CreateCategoryDto(c, allCategories))
+                    .Select(c => CreateCategoryDtoWithCachedCount(c, allCategories, categoryProductCounts))
                     .ToList();
             }
 
@@ -131,14 +134,47 @@ public class CategoryApiController : ControllerBase
     }
 
     /// <summary>
-    /// カテゴリエンティティからDTOを作成するヘルパーメソッド
+    /// 全カテゴリの商品数を一括取得する
+    /// パフォーマンス向上のため、各カテゴリの商品数を事前に計算
+    /// </summary>
+    /// <param name="allCategories">全カテゴリのコレクション</param>
+    /// <returns>カテゴリIDと商品数のディクショナリ</returns>
+    private async Task<Dictionary<int, int>> GetCategoryProductCountsAsync(IEnumerable<Domain.Entities.Category> allCategories)
+    {
+        var categoryProductCounts = new Dictionary<int, int>();
+        
+        foreach (var category in allCategories)
+        {
+            var hasChildren = allCategories.Any(child => child.ParentCategoryId == category.Id);
+            
+            // 下位カテゴリが存在する場合は下位カテゴリも含めた商品数、
+            // 最下位カテゴリの場合は自身の商品数のみを取得
+            var productCount = hasChildren 
+                ? await _categoryRepository.GetProductCountAsync(category.Id, includeDescendants: true)
+                : await _categoryRepository.GetProductCountAsync(category.Id, includeDescendants: false);
+            
+            categoryProductCounts[category.Id] = productCount;
+        }
+        
+        return categoryProductCounts;
+    }
+
+    /// <summary>
+    /// カテゴリエンティティからDTOを作成するヘルパーメソッド（キャッシュ済み商品数使用）
     /// APIレスポンス用の統一したDTO変換処理。子カテゴリ存在判定、完全パス生成、商品数算出を実行
     /// </summary>
     /// <param name="category">変換元のカテゴリエンティティ</param>
     /// <param name="allCategories">子カテゴリ存在判定のための全カテゴリコレクション</param>
+    /// <param name="categoryProductCounts">事前に計算された商品数のディクショナリ</param>
     /// <returns>APIレスポンス用のカテゴリDTO（階層情報、完全パス、商品数、子カテゴリ有無を含む）</returns>
-    private CategoryDto CreateCategoryDto(Domain.Entities.Category category, IEnumerable<Domain.Entities.Category> allCategories)
+    private CategoryDto CreateCategoryDtoWithCachedCount(
+        Domain.Entities.Category category, 
+        IEnumerable<Domain.Entities.Category> allCategories,
+        Dictionary<int, int> categoryProductCounts)
     {
+        var hasChildren = allCategories.Any(child => child.ParentCategoryId == category.Id);
+        var productCount = categoryProductCounts.GetValueOrDefault(category.Id, 0);
+        
         return new CategoryDto
         {
             Id = category.Id,
@@ -148,8 +184,41 @@ public class CategoryApiController : ControllerBase
             Level = category.Level,
             SortOrder = category.SortOrder,
             FullPath = category.GetFullPath(),
-            ProductCount = category.ProductCategories?.Count ?? 0,
-            HasChildren = allCategories.Any(child => child.ParentCategoryId == category.Id),
+            ProductCount = productCount,
+            HasChildren = hasChildren,
+            CreatedAt = category.CreatedAt,
+            UpdatedAt = category.UpdatedAt
+        };
+    }
+
+    /// <summary>
+    /// カテゴリエンティティからDTOを作成するヘルパーメソッド（レガシー版・単発使用用）
+    /// APIレスポンス用の統一したDTO変換処理。子カテゴリ存在判定、完全パス生成、商品数算出を実行
+    /// </summary>
+    /// <param name="category">変換元のカテゴリエンティティ</param>
+    /// <param name="allCategories">子カテゴリ存在判定のための全カテゴリコレクション</param>
+    /// <returns>APIレスポンス用のカテゴリDTO（階層情報、完全パス、商品数、子カテゴリ有無を含む）</returns>
+    private async Task<CategoryDto> CreateCategoryDtoAsync(Domain.Entities.Category category, IEnumerable<Domain.Entities.Category> allCategories)
+    {
+        var hasChildren = allCategories.Any(child => child.ParentCategoryId == category.Id);
+        
+        // 下位カテゴリが存在する場合は下位カテゴリも含めた商品数、
+        // 最下位カテゴリの場合は自身の商品数のみを取得
+        var productCount = hasChildren 
+            ? await _categoryRepository.GetProductCountAsync(category.Id, includeDescendants: true)
+            : await _categoryRepository.GetProductCountAsync(category.Id, includeDescendants: false);
+        
+        return new CategoryDto
+        {
+            Id = category.Id,
+            Name = category.Name,
+            Description = category.Description,
+            ParentCategoryId = category.ParentCategoryId,
+            Level = category.Level,
+            SortOrder = category.SortOrder,
+            FullPath = category.GetFullPath(),
+            ProductCount = productCount,
+            HasChildren = hasChildren,
             CreatedAt = category.CreatedAt,
             UpdatedAt = category.UpdatedAt
         };
@@ -185,20 +254,7 @@ public class CategoryApiController : ControllerBase
 
             // DTOに変換
             var allCategories = await _categoryRepository.GetAllAsync(includeProductCount: true);
-            var categoryDTO = new CategoryDto
-            {
-                Id = category.Id,
-                Name = category.Name,
-                Description = category.Description,
-                ParentCategoryId = category.ParentCategoryId,
-                Level = category.Level,
-                SortOrder = category.SortOrder,
-                FullPath = category.GetFullPath(),
-                ProductCount = category.ProductCategories?.Count ?? 0,
-                HasChildren = allCategories.Any(child => child.ParentCategoryId == category.Id),
-                CreatedAt = category.CreatedAt,
-                UpdatedAt = category.UpdatedAt
-            };
+            var categoryDTO = await CreateCategoryDtoAsync(category, allCategories);
 
             var response = new ApiResponse<CategoryDto>
             {
