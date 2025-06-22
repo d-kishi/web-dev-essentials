@@ -251,115 +251,91 @@ Web.Essentials.App
 ```
 Web.Essentials.Domain/
 ├── Entities/
-│   ├── Product.cs
-│   ├── Category.cs
-│   ├── ProductCategory.cs
-│   └── ProductImage.cs
 ├── ValueObjects/
-│   ├── Price.cs
-│   └── JanCode.cs
 ├── Services/
-│   ├── ProductDomainService.cs
-│   └── CategoryDomainService.cs
 ├── Repositories/
-│   ├── IProductRepository.cs
-│   ├── ICategoryRepository.cs
-│   └── IProductImageRepository.cs
 └── Common/
-    ├── BaseEntity.cs
-    └── IDomainService.cs
 ```
+
+**各ディレクトリの目的**:
+- **Entities/**: ドメインエンティティ。ビジネスの中心的なオブジェクトとそのライフサイクルを管理
+- **ValueObjects/**: 値オブジェクト。不変でエンティティの属性として使用される値の集合
+- **Services/**: ドメインサービス。複数のエンティティにまたがるビジネスロジックを実装
+- **Repositories/**: リポジトリインターフェース。データ永続化の抽象化を定義
+- **Common/**: 共通基底クラスとドメイン横断的な仕組み
 
 ### 5.2 Web.Essentials.Infrastructure
 ```
 Web.Essentials.Infrastructure/
 ├── Data/
-│   ├── ApplicationDbContext.cs
 │   ├── Configurations/
-│   │   ├── ProductConfiguration.cs
-│   │   ├── CategoryConfiguration.cs
-│   │   └── ProductImageConfiguration.cs
 │   └── SeedData/
-│       ├── CategorySeedData.cs
-│       ├── ProductSeedData.cs
-│       └── ProductImageSeedData.cs
 ├── Repositories/
-│   ├── ProductRepository.cs
-│   ├── CategoryRepository.cs
-│   └── ProductImageRepository.cs
 └── Services/
-    └── FileUploadService.cs
 ```
+
+**各ディレクトリの目的**:
+- **Data/**: Entity Framework関連（DbContext、設定クラス、初期データ）
+  - **Configurations/**: エンティティの詳細設定（テーブル名、関係、制約など）
+  - **SeedData/**: 開発・テスト用の初期データ定義
+- **Repositories/**: ドメインのリポジトリインターフェースの具体実装
+- **Services/**: 外部システム連携やインフラ層固有のサービス実装
 
 ### 5.3 Web.Essentials.App
 ```
 Web.Essentials.App/
 ├── Controllers/
 │   ├── Mvc/
-│   │   ├── ProductsController.cs
-│   │   ├── CategoriesController.cs
-│   │   └── HomeController.cs
 │   └── Api/
-│       ├── ProductApiController.cs
-│       └── CategoryApiController.cs
 ├── ViewModels/
 │   ├── Products/
-│   │   ├── ProductIndexViewModel.cs
-│   │   ├── ProductCreateViewModel.cs
-│   │   ├── ProductEditViewModel.cs
-│   │   └── ProductDetailsViewModel.cs
 │   ├── Categories/
-│   │   ├── CategoryIndexViewModel.cs
-│   │   ├── CategoryCreateViewModel.cs
-│   │   └── CategoryEditViewModel.cs
 │   └── Common/
-│       ├── PagingInfo.cs
-│       └── CategorySelectItem.cs
 ├── DTOs/
-│   ├── ProductDTOs.cs
-│   ├── CategoryDTOs.cs
 │   └── Common/
-│       └── ApiResponse.cs
 ├── Services/
-│   ├── ProductApplicationService.cs
-│   └── CategoryApplicationService.cs
 ├── Interfaces/
-│   ├── IProductApplicationService.cs
-│   └── ICategoryApplicationService.cs
 ├── Views/
 │   ├── Products/
 │   ├── Categories/
 │   ├── Home/
 │   └── Shared/
-│       ├── Components/
-│       │   ├── _ProductForm.cshtml
-│       │   ├── _CategoryForm.cshtml
-│       │   ├── _SearchForm.cshtml
-│       │   └── _Pagination.cshtml
-│       └── _Layout.cshtml
-├── wwwroot/
-│   ├── js/
-│   │   ├── products/
-│   │   │   ├── products-index.js
-│   │   │   ├── products-create.js
-│   │   │   └── products-edit.js
-│   │   ├── categories/
-│   │   │   ├── categories-index.js
-│   │   │   └── categories-create.js
-│   │   ├── common/
-│   │   │   ├── api-client.js
-│   │   │   ├── pagination.js
-│   │   │   └── validation.js
-│   │   └── lib/
-│   │       └── rxjs/
-│   ├── css/
-│   │   ├── products/
-│   │   ├── categories/
-│   │   └── common/
-│   └── uploads/
-│       └── products/
-└── Program.cs
+│       └── Components/
+└── wwwroot/
+    ├── js/
+    │   ├── products/
+    │   ├── categories/
+    │   ├── common/
+    │   └── lib/
+    ├── css/
+    │   ├── products/
+    │   ├── categories/
+    │   └── common/
+    └── uploads/
 ```
+
+**各ディレクトリの目的**:
+- **Controllers/**: HTTPリクエスト処理
+  - **Mvc/**: 画面表示用のMVCコントローラー（HTML応答）
+  - **Api/**: Ajax/API用コントローラー（JSON応答）
+- **ViewModels/**: MVC画面専用モデル（バリデーション、ファイルアップロード対応）
+  - **機能別フォルダ**: 各機能の画面用ViewModel（Index、Create、Edit、Details）
+  - **Common/**: 複数機能で共通利用されるViewModel
+- **DTOs/**: API応答専用の軽量データ転送オブジェクト
+  - **Common/**: API横断的なレスポンス形式（ApiResponse、エラー情報など）
+- **Services/**: アプリケーションサービス（ドメインサービスの調整、データ変換）
+- **Interfaces/**: アプリケーションサービスのインターフェース定義
+- **Views/**: Razorビューテンプレート
+  - **機能別フォルダ**: 各機能の画面テンプレート
+  - **Shared/**: 共通レイアウトと部分ビュー
+    - **Components/**: 再利用可能なビューコンポーネント
+- **wwwroot/**: 静的ファイル（JavaScript、CSS、画像、アップロードファイル）
+  - **js/**: クライアントサイドJavaScript
+    - **機能別フォルダ**: 各機能専用のスクリプト
+    - **common/**: 共通ユーティリティ（API通信、バリデーション、ページネーション）
+    - **lib/**: 外部ライブラリ
+  - **css/**: スタイルシート（機能別・共通別）
+  - **uploads/**: ユーザーアップロードファイルの保存先
 
 ## 6. 技術要件
 
