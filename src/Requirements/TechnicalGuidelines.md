@@ -1851,4 +1851,328 @@ document.addEventListener('DOMContentLoaded', () => {
 
 ---
 
-この技術ガイドラインに従って実装することで、保守性が高く、教育効果のあるコードベースを構築できます。特に**単一責任の原則**と**ファイル分離**を徹底することで、コードの理解しやすさと保守性を向上させることができます。
+## 12. 検索機能の実装方針
+
+### 12.1 検索機能の役割分担
+
+#### 12.1.1 共通検索コンポーネント vs 画面固有実装
+
+**基本方針**
+- **画面固有の検索機能を優先**：各画面の要件に特化した実装
+- **共通コンポーネントは最小限**：汎用的なAPI通信クラスのみ共通化
+- **機能重複時の対応**：統一化より画面要件を優先
+
+**実装指針**
+```javascript
+// ✅ 推奨：画面固有の検索実装
+// products-index.js - 商品一覧専用の検索機能
+class ProductSearchController {
+    constructor() {
+        this.setupRealtimeSearch();
+        this.setupAdvancedFilters();
+    }
+}
+
+// categories-index.js - カテゴリ一覧専用の検索機能
+class CategorySearchController {
+    constructor() {
+        this.setupHierarchicalSearch();
+        this.setupCategoryFilters();
+    }
+}
+
+// ❌ 避ける：過度な共通化
+// 異なる画面要件を無理に統一しようとしない
+```
+
+#### 12.1.2 リアルタイム検索の実装方針
+
+**デバウンス処理の標準化**
+- **遅延時間**: 300-500ms（画面の特性に応じて調整）
+- **最小文字数**: 2文字以上（日本語対応）
+- **API呼び出し制限**: 前回のリクエストをキャンセル
+
+```javascript
+/**
+ * リアルタイム検索の標準実装パターン
+ */
+function setupRealtimeSearch(inputElement, searchCallback, options = {}) {
+    const defaultOptions = {
+        debounceTime: 300,
+        minLength: 2,
+        ...options
+    };
+    
+    let debounceTimer = null;
+    let currentController = null;
+    
+    inputElement.addEventListener('input', (event) => {
+        const searchTerm = event.target.value.trim();
+        
+        // 前回のタイマーをクリア
+        if (debounceTimer) {
+            clearTimeout(debounceTimer);
+        }
+        
+        // 前回のリクエストをキャンセル
+        if (currentController) {
+            currentController.abort();
+        }
+        
+        // 最小文字数チェック
+        if (searchTerm.length < defaultOptions.minLength) {
+            searchCallback([]);
+            return;
+        }
+        
+        // デバウンス処理
+        debounceTimer = setTimeout(() => {
+            currentController = new AbortController();
+            searchCallback(searchTerm, currentController.signal);
+        }, defaultOptions.debounceTime);
+    });
+}
+```
+
+#### 12.1.3 検索候補機能の要否
+
+**基本方針：検索候補機能は無効化**
+- 各画面で独自のリアルタイム検索が実装済み
+- 検索候補機能は機能重複を招くため無効化
+- `components.js`の`showSuggestions`メソッドは無効化済み
+
+**代替案：画面固有の検索支援**
+```javascript
+// 商品検索での検索履歴表示
+class ProductSearchHistory {
+    constructor() {
+        this.storageKey = 'product-search-history';
+        this.maxHistoryItems = 10;
+    }
+    
+    saveSearch(searchTerm) {
+        if (!searchTerm.trim()) return;
+        
+        const history = this.getHistory();
+        const filteredHistory = history.filter(term => term !== searchTerm);
+        filteredHistory.unshift(searchTerm);
+        
+        const limitedHistory = filteredHistory.slice(0, this.maxHistoryItems);
+        localStorage.setItem(this.storageKey, JSON.stringify(limitedHistory));
+    }
+    
+    getHistory() {
+        const stored = localStorage.getItem(this.storageKey);
+        return stored ? JSON.parse(stored) : [];
+    }
+}
+```
+
+### 12.2 API通信の統一方針
+
+#### 12.2.1 エラーハンドリングの標準化
+
+**統一エラー処理パターン**
+```javascript
+/**
+ * API通信での標準エラーハンドリング
+ */
+class ApiErrorHandler {
+    static handle(error, context = '') {
+        console.error(`${context}でエラーが発生:`, error);
+        
+        let userMessage = 'エラーが発生しました。';
+        
+        if (error.name === 'AbortError') {
+            return; // リクエストキャンセルは表示しない
+        } else if (error.status === 404) {
+            userMessage = 'データが見つかりませんでした。';
+        } else if (error.status === 500) {
+            userMessage = 'サーバーエラーが発生しました。';
+        } else if (!navigator.onLine) {
+            userMessage = 'ネットワークに接続できません。';
+        }
+        
+        // ユーザーへの通知
+        this.showErrorToast(userMessage);
+    }
+    
+    static showErrorToast(message) {
+        // 統一エラー表示処理
+        const toast = document.createElement('div');
+        toast.className = 'error-toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => toast.remove(), 5000);
+    }
+}
+```
+
+## 13. コード品質とメンテナンス性
+
+### 13.1 機能重複時の統一方針
+
+#### 13.1.1 重複排除の優先順位
+
+**判断基準**
+1. **機能要件の維持**: 画面固有の要件を損なわない
+2. **保守性の向上**: 統一化によりメンテナンスが容易になる
+3. **理解しやすさ**: 教育用プロジェクトとしての分かりやすさ
+
+**統一化の実施パターン**
+```javascript
+// ✅ 推奨：機能が完全に同一の場合は統一
+// modal.js - 汎用モーダル機能
+class ModalManager {
+    static show(title, content, options = {}) {
+        // 共通モーダル表示処理
+    }
+}
+
+// ✅ 推奨：部分的な共通化
+// form-validator.js - 基本バリデーション機能
+class BaseValidator {
+    validateRequired(value, message) {
+        return value.trim() !== '' ? null : message;
+    }
+}
+
+// products-form-validator.js - 商品固有のバリデーション
+class ProductFormValidator extends BaseValidator {
+    validatePrice(value) {
+        return this.validateRequired(value, '価格は必須です') ||
+               this.validateNumeric(value, '価格は数値で入力してください');
+    }
+}
+```
+
+#### 13.1.2 PartialView活用による再利用性向上
+
+**統一されたPartialViewの設計指針**
+- **単一責任**: 1つのPartialViewは1つの責務のみ
+- **データ駆動**: ViewBagを活用した動的表示制御
+- **拡張性**: 新しい要件に対応可能な設計
+
+**実装例：画像表示の統一化**
+```csharp
+// _ImageItem.cshtml - 統一された画像表示PartialView
+@model dynamic
+@{
+    var isExisting = ViewBag.IsExisting ?? true;
+    var imageId = ViewBag.ImageId ?? Model?.Id;
+    var imagePath = ViewBag.ImagePath ?? Model?.ImagePath;
+    var isMain = ViewBag.IsMain ?? Model?.IsMain ?? false;
+}
+
+<div class="@(isExisting ? "existing-image-item" : "preview-image-item")" 
+     data-image-id="@imageId">
+    <img src="@imagePath" alt="@(ViewBag.AltText ?? "画像")" />
+    
+    <div class="image-overlay">
+        <button data-action="edit-image" title="編集">✏️</button>
+        <button data-action="delete-image" title="削除">🗑️</button>
+        <button data-action="view-image" title="拡大">🔍</button>
+    </div>
+    
+    @if (isMain)
+    {
+        <div class="main-badge">メイン</div>
+    }
+</div>
+```
+
+### 13.2 命名規則とコード構造の標準化
+
+#### 13.2.1 ファイル命名の統一
+
+**JavaScript ファイル命名規則**
+```
+画面別: {controller}-{action}.js
+例: products-index.js, categories-create.js
+
+機能別: {feature}-{component}.js
+例: image-upload.js, form-validator.js
+
+共通: common-{component}.js
+例: common-api.js, common-utils.js
+```
+
+**CSS ファイル命名規則**
+```
+画面別: {controller}-{action}.css
+例: products-form.css, categories-index.css
+
+コンポーネント別: {component}.css
+例: modal.css, pagination.css, forms.css
+```
+
+#### 13.2.2 JavaScript 関数・クラス命名の統一
+
+**命名パターンの標準化**
+```javascript
+// クラス名: PascalCase
+class ProductSearchController { }
+class ImageUploadManager { }
+
+// メソッド名: camelCase + 動詞始まり
+async function fetchProducts() { }
+function updateProductList() { }
+function validateFormData() { }
+
+// イベントハンドラー: handle + イベント名
+function handleSearchSubmit() { }
+function handleImageUpload() { }
+
+// 初期化関数: setup/initialize + 対象
+function setupEventListeners() { }
+function initializeForm() { }
+```
+
+#### 13.2.3 CSS クラス命名の統一（BEM準拠）
+
+**BEM記法の徹底**
+```css
+/* Block */
+.product-card { }
+.search-form { }
+.image-gallery { }
+
+/* Element */
+.product-card__title { }
+.product-card__price { }
+.search-form__input { }
+
+/* Modifier */
+.product-card--featured { }
+.search-form--compact { }
+.button--primary { }
+```
+
+### 13.3 コードレビューとメンテナンス基準
+
+#### 13.3.1 実装チェックリスト
+
+**JavaScript 実装時のチェック項目**
+- [ ] 単一責任の原則に従っているか
+- [ ] 適切なエラーハンドリングが実装されているか
+- [ ] デバウンス処理が適切に実装されているか
+- [ ] メモリリークの可能性はないか（イベントリスナーの削除等）
+- [ ] JSDoc コメントが記載されているか
+
+**C# 実装時のチェック項目**
+- [ ] XMLドキュメントコメントが記載されているか
+- [ ] 非同期処理が適切に実装されているか
+- [ ] 例外処理が適切に実装されているか
+- [ ] 依存関係逆転の原則に従っているか
+- [ ] ビジネスルールがドメインサービスに配置されているか
+
+**CSS 実装時のチェック項目**
+- [ ] BEM記法に従っているか
+- [ ] レスポンシブ対応が適切か
+- [ ] パフォーマンスに影響するスタイルはないか
+- [ ] ブラウザ互換性に問題はないか
+
+---
+
+この技術ガイドラインに従って実装することで、保守性が高く、教育効果のあるコードベースを構築できます。特に**単一責任の原則**、**ファイル分離**、**検索機能の統一方針**を徹底することで、コードの理解しやすさと保守性を向上させることができます。
