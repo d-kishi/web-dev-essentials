@@ -270,10 +270,9 @@ async function submitCategoryForm() {
                 originalFormData = collectFormData();
                 updateChangeHistory([]);
             } else {
-                // カテゴリ詳細に戻る
+                // カテゴリ一覧に戻る
                 setTimeout(() => {
-                    const categoryId = document.querySelector('input[name="Id"]').value;
-                    window.location.href = `/Categories/Details/${categoryId}`;
+                    window.location.href = '/Categories';
                 }, 1500);
             }
         } else {

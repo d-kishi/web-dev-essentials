@@ -57,6 +57,40 @@
     </div>
 </div>
 
+<!-- 削除確認モーダル -->
+<div id="deleteCategoryModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>カテゴリ削除確認</h3>
+            <button type="button" class="modal-close" data-action="close-delete-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="warning-message">
+                <span class="warning-icon">⚠️</span>
+                <p>以下のカテゴリを削除してもよろしいですか？</p>
+            </div>
+            <div class="delete-target-info">
+                <div class="info-row">
+                    <label>カテゴリ名:</label>
+                    <span id="deleteCategoryName" class="info-value"></span>
+                </div>
+                <div class="info-row">
+                    <label>商品数:</label>
+                    <span id="deleteCategoryProductCount" class="info-value"></span>
+                </div>
+            </div>
+            <div class="delete-warning" style="display: none;">
+                <p class="error-text">このカテゴリは削除できません。</p>
+                <ul id="deleteWarningList" class="error-list"></ul>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-action="close-delete-modal">キャンセル</button>
+            <button type="button" id="confirmDeleteButton" class="btn btn-danger" data-action="confirm-delete">削除する</button>
+        </div>
+    </div>
+</div>
+
 @section Styles {
     <link rel="stylesheet" href="~/css/category-hierarchy.css" asp-append-version="true" />
 }

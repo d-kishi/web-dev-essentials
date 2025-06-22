@@ -76,40 +76,6 @@ public class CategoriesController : Controller
         }
     }
 
-    /// <summary>
-    /// カテゴリ詳細表示
-    /// 指定されたIDのカテゴリ詳細を表示
-    /// </summary>
-    /// <param name="id">カテゴリID</param>
-    /// <returns>カテゴリ詳細ビュー</returns>
-    public async Task<IActionResult> Details(int id)
-    {
-        try
-        {
-            var category = await _categoryRepository.GetByIdAsync(id);
-            if (category == null)
-            {
-                return NotFound($"カテゴリID {id} が見つかりません");
-            }
-            
-            // 詳細ViewModelに変換
-            var viewModel = new CategoryDetailsViewModel
-            {
-                Id = category.Id,
-                Name = category.Name,
-                Description = category.Description,
-                CreatedAt = category.CreatedAt,
-                UpdatedAt = category.UpdatedAt
-            };
-
-            return View(viewModel);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "カテゴリ詳細表示中にエラーが発生しました。カテゴリID: {CategoryId}", id);
-            return View("Error");
-        }
-    }
 
     /// <summary>
     /// カテゴリ登録画面表示
@@ -315,39 +281,6 @@ public class CategoriesController : Controller
         }
     }
 
-    /// <summary>
-    /// カテゴリ削除確認画面表示
-    /// 指定されたIDのカテゴリ削除確認画面を表示
-    /// </summary>
-    /// <param name="id">カテゴリID</param>
-    /// <returns>カテゴリ削除確認ビュー</returns>
-    public async Task<IActionResult> Delete(int id)
-    {
-        try
-        {
-            var category = await _categoryRepository.GetByIdAsync(id);
-            if (category == null)
-            {
-                return NotFound($"カテゴリID {id} が見つかりません");
-            }
-            
-            var viewModel = new CategoryDeleteViewModel
-            {
-                Id = category.Id,
-                Name = category.Name,
-                Description = category.Description,
-                CreatedAt = category.CreatedAt,
-                UpdatedAt = category.UpdatedAt
-            };
-
-            return View(viewModel);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "カテゴリ削除確認画面表示中にエラーが発生しました。カテゴリID: {CategoryId}", id);
-            return View("Error");
-        }
-    }
 
     /// <summary>
     /// カテゴリ削除処理
@@ -355,20 +288,32 @@ public class CategoriesController : Controller
     /// </summary>
     /// <param name="id">カテゴリID</param>
     /// <returns>削除成功時は一覧画面へリダイレクト</returns>
-    [HttpPost, ActionName("Delete")]
+    [HttpPost]
+    [Route("Categories/Delete/{id}")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(int id)
+    public async Task<IActionResult> Delete(int id)
     {
         try
         {
             var category = await _categoryRepository.GetByIdAsync(id);
             if (category == null)
             {
+                if (Request.Headers.Accept.ToString().Contains("application/json") || 
+                    Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = false, message = $"カテゴリID {id} が見つかりません" });
+                }
                 return NotFound($"カテゴリID {id} が見つかりません");
             }
 
             // カテゴリを削除
             await _categoryRepository.DeleteAsync(id);
+
+            if (Request.Headers.Accept.ToString().Contains("application/json") || 
+                Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = true, message = "カテゴリが正常に削除されました" });
+            }
 
             TempData["SuccessMessage"] = "カテゴリが正常に削除されました";
             return RedirectToAction(nameof(Index));
@@ -376,6 +321,13 @@ public class CategoriesController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "カテゴリ削除中にエラーが発生しました。カテゴリID: {CategoryId}", id);
+            
+            if (Request.Headers.Accept.ToString().Contains("application/json") || 
+                Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = false, message = "カテゴリ削除中にエラーが発生しました" });
+            }
+            
             TempData["ErrorMessage"] = "カテゴリ削除中にエラーが発生しました";
             return RedirectToAction(nameof(Index));
         }

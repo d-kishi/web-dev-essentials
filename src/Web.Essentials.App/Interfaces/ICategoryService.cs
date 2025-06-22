@@ -50,14 +50,7 @@ public interface ICategoryService
 
     #endregion
 
-    #region 詳細・存在確認
-
-    /// <summary>
-    /// カテゴリ詳細取得
-    /// </summary>
-    /// <param name="id">カテゴリID</param>
-    /// <returns>カテゴリ詳細ViewModel</returns>
-    Task<CategoryDetailsViewModel?> GetCategoryDetailsAsync(int id);
+    #region 存在確認
 
     /// <summary>
     /// カテゴリ存在確認

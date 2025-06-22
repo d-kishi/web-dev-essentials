@@ -58,44 +58,6 @@ public class CategoryService : ICategoryService
         }
     }
 
-    /// <inheritdoc />
-    public async Task<CategoryDetailsViewModel?> GetCategoryDetailsAsync(int id)
-    {
-        try
-        {
-            _logger.LogInformation("カテゴリ詳細取得サービス実行。カテゴリID: {CategoryId}", id);
-
-            var category = await _categoryRepository.GetByIdAsync(id);
-            if (category == null)
-            {
-                _logger.LogWarning("カテゴリが見つかりませんでした。カテゴリID: {CategoryId}", id);
-                return null;
-            }
-
-            // 関連商品数を取得（多対多関係経由）
-            var (relatedProducts, _) = await _productRepository.GetAllAsync();
-            var productCount = relatedProducts.Count(p => 
-                p.ProductCategories.Any(pc => pc.CategoryId == id));
-
-            // ViewModelに変換
-            var viewModel = new CategoryDetailsViewModel
-            {
-                Id = category.Id,
-                Name = category.Name,
-                Description = category.Description,
-                CreatedAt = category.CreatedAt,
-                UpdatedAt = category.UpdatedAt,
-                ProductCount = productCount
-            };
-
-            return viewModel;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "カテゴリ詳細取得サービス実行中にエラーが発生しました。カテゴリID: {CategoryId}", id);
-            throw;
-        }
-    }
 
     /// <inheritdoc />
     public async Task<CategoryEditViewModel?> PrepareEditViewModelAsync(int id)

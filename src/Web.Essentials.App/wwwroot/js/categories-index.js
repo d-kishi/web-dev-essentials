@@ -373,7 +373,7 @@ function createHierarchyNode(category, depth = 0, searchKeyword = '') {
             <div class="category-info">
                 <div class="category-main">
                     <span class="level-badge">L${category.level || 0}</span>
-                    <a href="/Categories/Details/${category.id}" class="category-name">${displayName}</a>
+                    <a href="/Categories/Edit/${category.id}" class="category-name">${displayName}</a>
                     ${displayDescription ? `<span class="category-description">- ${displayDescription}</span>` : ''}
                 </div>
                 <div class="category-meta">
@@ -432,7 +432,7 @@ function createTreeNode(category, depth = 0) {
             <div class="category-info">
                 <div class="category-main">
                     <span class="level-badge">L${category.level || 0}</span>
-                    <a href="/Categories/Details/${category.id}" class="category-name">${category.name}</a>
+                    <a href="/Categories/Edit/${category.id}" class="category-name">${category.name}</a>
                     ${category.description ? `<span class="category-description">- ${category.description}</span>` : ''}
                 </div>
                 <div class="category-meta">
@@ -493,7 +493,7 @@ function createSearchResultNode(category) {
             <div class="category-info">
                 <div class="category-main">
                     <span class="level-badge">L${level}</span>
-                    <a href="/Categories/Details/${category.id}" class="category-name">${category.name}</a>
+                    <a href="/Categories/Edit/${category.id}" class="category-name">${category.name}</a>
                     ${category.description ? `<span class="category-description">- ${category.description}</span>` : ''}
                 </div>
                 <div class="category-meta">
@@ -519,34 +519,73 @@ function createSearchResultNode(category) {
 }
 
 /**
- * カテゴリ削除確認ダイアログの表示
+ * カテゴリ削除確認モーダルの表示
  * @param {number} categoryId - 削除対象のカテゴリID
  * @param {string} categoryName - 削除対象のカテゴリ名
  * @param {number} productCount - 関連商品数
  * @param {boolean} hasChildren - 子カテゴリの有無
  */
 function confirmDeleteCategory(categoryId, categoryName, productCount, hasChildren) {
-    if (productCount > 0 || hasChildren) {
-        let message = '';
-        if (productCount > 0 && hasChildren) {
-            message = `カテゴリ「${categoryName}」には${productCount}個の商品と子カテゴリが存在するため削除できません。`;
-        } else if (productCount > 0) {
-            message = `カテゴリ「${categoryName}」には${productCount}個の商品が存在するため削除できません。`;
-        } else if (hasChildren) {
-            message = `カテゴリ「${categoryName}」には子カテゴリが存在するため削除できません。`;
-        }
-        
-        showError(message + '\n関連する商品や子カテゴリを先に削除または移動してください。');
+    const modal = document.getElementById('deleteCategoryModal');
+    const categoryNameElement = document.getElementById('deleteCategoryName');
+    const productCountElement = document.getElementById('deleteCategoryProductCount');
+    const warningSection = document.querySelector('.delete-warning');
+    const warningList = document.getElementById('deleteWarningList');
+    const confirmButton = document.getElementById('confirmDeleteButton');
+    
+    if (!modal || !categoryNameElement || !productCountElement) {
+        console.error('削除モーダルの要素が見つかりません');
         return;
     }
     
-    showConfirmationModal(
-        'カテゴリ削除の確認',
-        `カテゴリ「${categoryName}」を削除しますか？`,
-        '削除すると元に戻せません。',
-        '削除',
-        () => deleteCategory(categoryId)
-    );
+    // カテゴリ情報を設定
+    categoryNameElement.textContent = categoryName;
+    productCountElement.textContent = `${productCount}個`;
+    
+    // 削除可能かチェック
+    const canDelete = productCount === 0 && !hasChildren;
+    
+    if (!canDelete) {
+        // 削除不可の場合：警告表示、削除ボタン無効化
+        const warnings = [];
+        if (productCount > 0) {
+            warnings.push(`${productCount}個の商品が存在します`);
+        }
+        if (hasChildren) {
+            warnings.push('子カテゴリが存在します');
+        }
+        
+        warningList.innerHTML = warnings.map(warning => `<li>${warning}</li>`).join('');
+        warningSection.style.display = 'block';
+        confirmButton.disabled = true;
+        confirmButton.classList.add('disabled');
+    } else {
+        // 削除可能の場合：警告非表示、削除ボタン有効化
+        warningSection.style.display = 'none';
+        confirmButton.disabled = false;
+        confirmButton.classList.remove('disabled');
+        
+        // 削除ボタンのクリックイベントを設定（前のイベントをクリア）
+        const newConfirmButton = confirmButton.cloneNode(true);
+        confirmButton.parentNode.replaceChild(newConfirmButton, confirmButton);
+        newConfirmButton.addEventListener('click', () => {
+            hideDeleteModal();
+            deleteCategory(categoryId);
+        });
+    }
+    
+    // モーダル表示
+    modal.style.display = 'block';
+}
+
+/**
+ * 削除確認モーダルを隠す
+ */
+function hideDeleteModal() {
+    const modal = document.getElementById('deleteCategoryModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
 /**
@@ -559,20 +598,23 @@ async function deleteCategory(categoryId) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
                 'RequestVerificationToken': getAntiForgeryToken()
             }
         });
         
-        if (response.ok) {
-            showSuccess('カテゴリが正常に削除されました');
+        const result = await response.json();
+        
+        if (result.success) {
+            showSuccess(result.message || 'カテゴリが正常に削除されました');
             loadCategoryList(); // 一覧を再読み込み
         } else {
-            const errorText = await response.text();
-            showApiError(errorText || 'カテゴリの削除に失敗しました');
+            showError(result.message || 'カテゴリの削除に失敗しました');
         }
     } catch (error) {
         console.error('カテゴリ削除エラー:', error);
-        showApiError(error);
+        showError('カテゴリ削除中にエラーが発生しました');
     }
 }
 
@@ -706,6 +748,22 @@ function setupRealtimeSearch(searchInput) {
  * カテゴリ削除機能の初期化
  */
 function setupCategoryDeletion() {
+    // モーダルのクローズボタンのイベントハンドラー設定
+    const closeButtons = document.querySelectorAll('[data-action="close-delete-modal"]');
+    closeButtons.forEach(button => {
+        button.addEventListener('click', hideDeleteModal);
+    });
+    
+    // モーダルの背景クリックで閉じる
+    const modal = document.getElementById('deleteCategoryModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                hideDeleteModal();
+            }
+        });
+    }
+    
     // 削除ボタンのイベントハンドラーは動的コンテンツのため、
     // updateCategoryList内で設定
 }
