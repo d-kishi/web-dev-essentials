@@ -594,17 +594,39 @@ function hideDeleteModal() {
  */
 async function deleteCategory(categoryId) {
     try {
+        // FormDataでAntiforgery tokenを送信
+        const formData = new FormData();
+        const token = getAntiForgeryToken();
+        if (token) {
+            formData.append('__RequestVerificationToken', token);
+        }
+        
         const response = await fetch(`/Categories/Delete/${categoryId}`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json',
-                'RequestVerificationToken': getAntiForgeryToken()
-            }
+                'Accept': 'application/json'
+            },
+            body: formData
         });
         
-        const result = await response.json();
+        // レスポンスがJSONかチェック
+        const contentType = response.headers.get('content-type');
+        let result;
+        
+        if (contentType && contentType.includes('application/json')) {
+            result = await response.json();
+        } else {
+            // JSONでない場合はテキストとして取得
+            const text = await response.text();
+            console.error('Expected JSON response but got:', text);
+            
+            if (response.ok) {
+                result = { success: true, message: 'カテゴリが正常に削除されました' };
+            } else {
+                result = { success: false, message: `削除に失敗しました (${response.status})` };
+            }
+        }
         
         if (result.success) {
             showSuccess(result.message || 'カテゴリが正常に削除されました');

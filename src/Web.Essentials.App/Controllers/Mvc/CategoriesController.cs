@@ -301,6 +301,7 @@ public class CategoriesController : Controller
                 if (Request.Headers.Accept.ToString().Contains("application/json") || 
                     Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 {
+                    Response.ContentType = "application/json";
                     return Json(new { success = false, message = $"カテゴリID {id} が見つかりません" });
                 }
                 return NotFound($"カテゴリID {id} が見つかりません");
@@ -312,6 +313,7 @@ public class CategoriesController : Controller
             if (Request.Headers.Accept.ToString().Contains("application/json") || 
                 Request.Headers["X-Requested-With"] == "XMLHttpRequest")
             {
+                Response.ContentType = "application/json";
                 return Json(new { success = true, message = "カテゴリが正常に削除されました" });
             }
 
@@ -325,6 +327,7 @@ public class CategoriesController : Controller
             if (Request.Headers.Accept.ToString().Contains("application/json") || 
                 Request.Headers["X-Requested-With"] == "XMLHttpRequest")
             {
+                Response.ContentType = "application/json";
                 return Json(new { success = false, message = "カテゴリ削除中にエラーが発生しました" });
             }
             

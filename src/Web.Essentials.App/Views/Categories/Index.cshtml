@@ -93,9 +93,159 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/category-hierarchy.css" asp-append-version="true" />
+    <style>
+        /* 削除確認モーダルのスタイル */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 0;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+        
+        @@keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            color: #dc3545;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6c757d;
+        }
+        
+        .modal-close:hover {
+            color: #000;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .warning-message {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .warning-icon {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        
+        .delete-target-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        
+        .info-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+        
+        .info-row label {
+            font-weight: bold;
+            margin-right: 10px;
+            min-width: 80px;
+        }
+        
+        .info-value {
+            color: #495057;
+        }
+        
+        .delete-warning {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+        
+        .error-text {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .error-list {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:disabled,
+        .btn-danger.disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .btn:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+    </style>
 }
 
 @section Scripts {
+    <script src="~/js/common.js" asp-append-version="true"></script>
     <script src="~/js/categories-index.js" asp-append-version="true" defer></script>
     <script defer>
         // サーバーサイドデータを JavaScriptに渡す

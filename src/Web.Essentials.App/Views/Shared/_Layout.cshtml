@@ -32,6 +32,9 @@
     @await RenderSectionAsync("Scripts", required: false)
 </head>
 <body>
+    <!-- Antiforgery Token -->
+    @Html.AntiForgeryToken()
+    
     <!-- ヘッダー -->
     <header class="main-header">
         <div class="header-container">

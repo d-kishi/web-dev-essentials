@@ -20,7 +20,8 @@
       "Bash(node:*)",
       "Bash(dotnet restore --verbosity quiet)",
       "Bash(pkill:*)",
-      "Bash(dotnet restore:*)"
+      "Bash(dotnet restore:*)",
+      "Bash(dotnet run:*)"
     ],
     "deny": []
   }
