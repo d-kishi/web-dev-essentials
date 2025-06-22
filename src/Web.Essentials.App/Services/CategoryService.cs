@@ -44,7 +44,7 @@ public class CategoryService : ICategoryService
             var allCategories = await _categoryRepository.GetAllAsync();
 
             // 検索・フィルタリング処理
-            var filteredCategories = FilterCategories(allCategories, searchRequest);
+            var filteredCategories = await FilterCategoriesAsync(allCategories, searchRequest);
 
             // DTOに変換（商品数も含む）
             var categoryDTOs = await ConvertToCategoryDtosAsync(filteredCategories);
@@ -226,12 +226,12 @@ public class CategoryService : ICategoryService
     /// <summary>
     /// カテゴリのフィルタリング処理
     /// 検索条件に基づいてカテゴリをフィルタリングし、名前や説明による部分一致検索、
-    /// レベル指定フィルタリング、親カテゴリID指定フィルタリングを実行
+    /// レベル指定フィルタリング、親カテゴリID指定フィルタリング、削除可能フィルタリングを実行
     /// </summary>
     /// <param name="categories">フィルタリング対象のカテゴリ一覧</param>
-    /// <param name="searchRequest">検索条件。NameTerm（名前検索）、Level（レベル指定）、ParentId（親カテゴリID）を含む</param>
+    /// <param name="searchRequest">検索条件。NameTerm（名前検索）、Level（レベル指定）、ParentId（親カテゴリID）、DeletableOnly（削除可能）を含む</param>
     /// <returns>検索条件に一致するフィルタリング後のカテゴリ一覧</returns>
-    private static IList<Category> FilterCategories(
+    private async Task<IList<Category>> FilterCategoriesAsync(
         IEnumerable<Category> categories, 
         CategorySearchRequestDto searchRequest)
     {
@@ -257,7 +257,39 @@ public class CategoryService : ICategoryService
             query = query.Where(c => c.ParentCategoryId == searchRequest.ParentId.Value);
         }
 
-        return query.ToList();
+        var filteredCategories = query.ToList();
+
+        // 削除可能フィルタリング（商品数=0かつ子カテゴリなし）
+        if (searchRequest.DeletableOnly == true)
+        {
+            var deletableCategories = new List<Category>();
+            
+            // 商品数を一括取得
+            var (allProducts, _) = await _productRepository.GetAllAsync();
+            var productCountDict = allProducts
+                .SelectMany(p => p.ProductCategories.Select(pc => pc.CategoryId))
+                .GroupBy(categoryId => categoryId)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            foreach (var category in filteredCategories)
+            {
+                // 商品数チェック
+                var productCount = productCountDict.TryGetValue(category.Id, out var count) ? count : 0;
+                
+                // 子カテゴリ存在チェック
+                var hasChildren = categories.Any(c => c.ParentCategoryId == category.Id);
+                
+                // 削除可能な場合のみ追加
+                if (productCount == 0 && !hasChildren)
+                {
+                    deletableCategories.Add(category);
+                }
+            }
+            
+            return deletableCategories;
+        }
+
+        return filteredCategories;
     }
 
     /// <summary>
@@ -266,7 +298,7 @@ public class CategoryService : ICategoryService
     /// 全商品データを一括取得してカテゴリごとの商品数を効率的に計算
     /// </summary>
     /// <param name="categories">変換対象のカテゴリエンティティ一覧</param>
-    /// <returns>カテゴリID、名前、説明、作成日時、更新日時、関連商品数を含むDTO一覧</returns>
+    /// <returns>カテゴリID、名前、説明、作成日時、更新日時、関連商品数、削除可能判定を含むDTO一覧</returns>
     private async Task<List<CategoryDto>> ConvertToCategoryDtosAsync(IList<Category> categories)
     {
         // 関連商品数を一括取得（N+1問題を避けるため）
@@ -276,14 +308,28 @@ public class CategoryService : ICategoryService
             .GroupBy(categoryId => categoryId)
             .ToDictionary(g => g.Key, g => g.Count());
 
-        return categories.Select(c => new CategoryDto
-        {
-            Id = c.Id,
-            Name = c.Name,
-            Description = c.Description,
-            CreatedAt = c.CreatedAt,
-            UpdatedAt = c.UpdatedAt,
-            ProductCount = productCountDict.TryGetValue(c.Id, out var count) ? count : 0
+        // 全カテゴリを取得して子カテゴリ存在チェック用に準備
+        var allCategories = await _categoryRepository.GetAllAsync();
+
+        return categories.Select(c => {
+            var productCount = productCountDict.TryGetValue(c.Id, out var count) ? count : 0;
+            var hasChildren = allCategories.Any(child => child.ParentCategoryId == c.Id);
+            
+            return new CategoryDto
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Description = c.Description,
+                ParentCategoryId = c.ParentCategoryId,
+                Level = c.Level,
+                SortOrder = c.SortOrder,
+                FullPath = c.Name, // 簡易実装
+                ProductCount = productCount,
+                HasChildren = hasChildren,
+                CanDelete = productCount == 0 && !hasChildren,
+                CreatedAt = c.CreatedAt,
+                UpdatedAt = c.UpdatedAt
+            };
         }).ToList();
     }
 

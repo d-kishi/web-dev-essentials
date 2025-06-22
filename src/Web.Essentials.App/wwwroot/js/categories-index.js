@@ -5,7 +5,8 @@
 
 // 現在の検索条件を保持するグローバル変数
 let currentSearchParams = {
-    searchKeyword: ''
+    searchKeyword: '',
+    deletableOnly: false
 };
 
 /**
@@ -83,8 +84,11 @@ function loadInitialData() {
  */
 function performSearch() {
     const searchKeyword = document.getElementById('searchKeyword').value || '';
+    const deletableFilter = document.getElementById('deletableFilter');
+    const deletableOnly = deletableFilter ? deletableFilter.value === 'true' : false;
     
     currentSearchParams.searchKeyword = searchKeyword.trim();
+    currentSearchParams.deletableOnly = deletableOnly;
     
     // キーワード検索、無条件検索に関わらず同じ処理フローでAPIから取得
     loadCategoryList();
@@ -101,7 +105,8 @@ function resetSearch() {
     }
     
     currentSearchParams = {
-        searchKeyword: ''
+        searchKeyword: '',
+        deletableOnly: false
     };
     
     // リセット時は無条件検索と同じ処理フロー（APIから取得）
@@ -125,6 +130,11 @@ async function loadCategoryList() {
         // 検索キーワードがある場合のみパラメータに追加
         if (currentSearchParams.searchKeyword && currentSearchParams.searchKeyword.trim() !== '') {
             params.append('searchKeyword', currentSearchParams.searchKeyword.trim());
+        }
+        
+        // 削除可能フィルターがtrueの場合のみパラメータに追加
+        if (currentSearchParams.deletableOnly) {
+            params.append('deletableOnly', 'true');
         }
         
         const apiUrl = `/api/categories?${params.toString()}`;

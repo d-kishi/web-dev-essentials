@@ -51,6 +51,18 @@
                 </div>
             }
             
+            <!-- 削除可能カテゴリフィルタ（カテゴリ検索時のみ） -->
+            @if (!showCategoryFilter)
+            {
+                <div class="search-field">
+                    <label for="deletableFilter" class="search-label">削除可能</label>
+                    <select id="deletableFilter" name="deletableOnly" class="search-select">
+                        <option value="">すべてのカテゴリ</option>
+                        <option value="true">削除可能なカテゴリのみ</option>
+                    </select>
+                </div>
+            }
+            
             <!-- 検索ボタン -->
             <div class="search-actions">
                 <button type="button" class="btn btn-primary search-btn" data-action="perform-search">

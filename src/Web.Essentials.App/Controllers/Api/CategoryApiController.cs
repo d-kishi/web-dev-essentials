@@ -35,15 +35,17 @@ public class CategoryApiController : ControllerBase
     /// 検索キーワードが指定された場合は、ヒットしたカテゴリとその祖先のみを返却
     /// </summary>
     /// <param name="searchKeyword">検索キーワード（カテゴリ名での部分一致検索）</param>
+    /// <param name="deletableOnly">削除可能なカテゴリのみを取得するかどうか</param>
     /// <returns>カテゴリ一覧を含むAPI応答</returns>
     [HttpGet]
     public async Task<ActionResult<ApiResponse<List<CategoryDto>>>> GetCategories(
-        [FromQuery] string? searchKeyword = null)
+        [FromQuery] string? searchKeyword = null,
+        [FromQuery] bool? deletableOnly = null)
     {
         try
         {
-            _logger.LogInformation("カテゴリ一覧取得API呼び出し。検索キーワード: {SearchKeyword}",
-                searchKeyword);
+            _logger.LogInformation("カテゴリ一覧取得API呼び出し。検索キーワード: {SearchKeyword}, 削除可能のみ: {DeletableOnly}",
+                searchKeyword, deletableOnly);
 
             // 全カテゴリを取得（商品数も含む）
             var allCategories = await _categoryRepository.GetAllAsync(includeProductCount: true);
@@ -53,16 +55,10 @@ public class CategoryApiController : ControllerBase
             // 全カテゴリの商品数を一括取得してパフォーマンスを向上
             var categoryProductCounts = await GetCategoryProductCountsAsync(allCategories);
 
-            if (string.IsNullOrWhiteSpace(searchKeyword))
-            {
-                // 検索キーワードが無い場合は全カテゴリを返却
-                resultCategories = allCategories
-                    .OrderBy(c => c.Level)
-                    .ThenBy(c => c.SortOrder)
-                    .Select(c => CreateCategoryDtoWithCachedCount(c, allCategories, categoryProductCounts))
-                    .ToList();
-            }
-            else
+            // 基本フィルタリング（検索キーワード）
+            IEnumerable<Domain.Entities.Category> filteredCategories = allCategories;
+            
+            if (!string.IsNullOrWhiteSpace(searchKeyword))
             {
                 // 検索キーワードに部分一致するカテゴリを取得
                 var hitCategories = allCategories
@@ -96,14 +92,38 @@ public class CategoryApiController : ControllerBase
                     }
                 }
 
-                // 結果に含めるカテゴリを抽出してソート
-                resultCategories = allCategories
-                    .Where(c => resultCategoryIds.Contains(c.Id))
-                    .OrderBy(c => c.Level)
-                    .ThenBy(c => c.SortOrder)
-                    .Select(c => CreateCategoryDtoWithCachedCount(c, allCategories, categoryProductCounts))
-                    .ToList();
+                filteredCategories = allCategories.Where(c => resultCategoryIds.Contains(c.Id));
             }
+
+            // 削除可能フィルタリング
+            if (deletableOnly == true)
+            {
+                var deletableCategories = new List<Domain.Entities.Category>();
+                
+                foreach (var category in filteredCategories)
+                {
+                    // 商品数チェック
+                    var productCount = categoryProductCounts.GetValueOrDefault(category.Id, 0);
+                    
+                    // 子カテゴリ存在チェック
+                    var hasChildren = allCategories.Any(c => c.ParentCategoryId == category.Id);
+                    
+                    // 削除可能な場合のみ追加
+                    if (productCount == 0 && !hasChildren)
+                    {
+                        deletableCategories.Add(category);
+                    }
+                }
+                
+                filteredCategories = deletableCategories;
+            }
+
+            // DTOに変換してソート
+            resultCategories = filteredCategories
+                .OrderBy(c => c.Level)
+                .ThenBy(c => c.SortOrder)
+                .Select(c => CreateCategoryDtoWithCachedCount(c, allCategories, categoryProductCounts))
+                .ToList();
 
             // レスポンスDTO作成
             var response = new ApiResponse<List<CategoryDto>>
@@ -186,6 +206,7 @@ public class CategoryApiController : ControllerBase
             FullPath = category.GetFullPath(),
             ProductCount = productCount,
             HasChildren = hasChildren,
+            CanDelete = productCount == 0 && !hasChildren,
             CreatedAt = category.CreatedAt,
             UpdatedAt = category.UpdatedAt
         };
@@ -219,6 +240,7 @@ public class CategoryApiController : ControllerBase
             FullPath = category.GetFullPath(),
             ProductCount = productCount,
             HasChildren = hasChildren,
+            CanDelete = productCount == 0 && !hasChildren,
             CreatedAt = category.CreatedAt,
             UpdatedAt = category.UpdatedAt
         };

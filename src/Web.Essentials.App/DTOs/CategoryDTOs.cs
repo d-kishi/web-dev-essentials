@@ -56,6 +56,11 @@ public class CategoryDto
     public bool HasChildren { get; set; }
 
     /// <summary>
+    /// 削除可能かどうか（商品数=0かつ子カテゴリなし）
+    /// </summary>
+    public bool CanDelete { get; set; }
+
+    /// <summary>
     /// 作成日時（UTC）
     /// </summary>
     public DateTime CreatedAt { get; set; }
@@ -118,6 +123,11 @@ public class CategoryListItemDto
     /// 子カテゴリ数
     /// </summary>
     public int ChildCount { get; set; }
+
+    /// <summary>
+    /// 削除可能かどうか（商品数=0かつ子カテゴリなし）
+    /// </summary>
+    public bool CanDelete { get; set; }
 
     /// <summary>
     /// 作成日時（UTC）
@@ -197,6 +207,11 @@ public class CategorySearchRequestDto
     /// 関連商品数を含むかどうか
     /// </summary>
     public bool IncludeProductCount { get; set; } = false;
+
+    /// <summary>
+    /// 削除可能なカテゴリのみを取得するかどうか
+    /// </summary>
+    public bool? DeletableOnly { get; set; }
 }
 
 /// <summary>
