@@ -206,6 +206,8 @@ public class ProductService : IProductService
                     ProductId = img.ProductId,
                     ImagePath = img.ImagePath,
                     DisplayOrder = img.DisplayOrder,
+                    AltText = img.AltText,
+                    IsMain = img.IsMain,
                     CreatedAt = img.CreatedAt
                 }).OrderBy(img => img.DisplayOrder).ToList()
             };
