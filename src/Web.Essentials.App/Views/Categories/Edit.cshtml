@@ -10,10 +10,6 @@
         <p class="page-description">カテゴリ「@Model.Name」の情報を編集します。</p>
     </div>
     <div class="page-actions">
-        <a asp-action="Details" asp-controller="Categories" asp-route-id="@Model.Id" class="btn btn-info">
-            <span class="btn-icon">👁</span>
-            詳細表示
-        </a>
         <a asp-action="Index" asp-controller="Categories" class="btn btn-secondary">
             <span class="btn-icon">←</span>
             カテゴリ一覧に戻る
@@ -31,7 +27,7 @@
             <a asp-action="Index" asp-controller="Categories">カテゴリ一覧</a>
         </li>
         <li class="breadcrumb-item">
-            <a asp-action="Details" asp-controller="Categories" asp-route-id="@Model.Id">@Model.Name</a>
+            @Model.Name
         </li>
         <li class="breadcrumb-item active" aria-current="page">
             編集
@@ -168,16 +164,6 @@
         <!-- カテゴリフォーム（部分ビュー） -->
         <partial name="_CategoryForm" model="Model" />
         
-        <!-- 変更履歴セクション -->
-        <div class="form-section">
-            <h3 class="section-title">変更履歴</h3>
-            <div class="change-history">
-                <div id="changeHistory" class="history-list">
-                    <!-- 変更内容がここに表示される -->
-                    <p class="no-changes">変更はありません</p>
-                </div>
-            </div>
-        </div>
         
         <!-- フォーム操作ボタン -->
         <div class="form-actions">
@@ -185,10 +171,6 @@
                 <button type="submit" class="btn btn-primary btn-large" id="saveButton">
                     <span class="btn-icon">💾</span>
                     変更を保存
-                </button>
-                <button type="button" class="btn btn-warning btn-large" id="saveAsNewButton">
-                    <span class="btn-icon">📋</span>
-                    別カテゴリとして保存
                 </button>
                 <button type="button" class="btn btn-light btn-large" id="resetButton">
                     <span class="btn-icon">↻</span>
@@ -210,54 +192,6 @@
     </form>
 </div>
 
-<!-- 別カテゴリとして保存モーダル -->
-<div id="saveAsNewModal" class="modal-overlay" style="display: none;">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">別カテゴリとして保存</h3>
-                <button type="button" class="modal-close" id="closeSaveAsNewModalX">
-                    <span>×</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p>現在の編集内容を新しいカテゴリとして保存しますか？</p>
-                <div class="form-group">
-                    <label for="newCategoryName" class="form-label">新しいカテゴリ名</label>
-                    <input type="text" 
-                           id="newCategoryName" 
-                           class="form-input" 
-                           value="@Model.Name のコピー"
-                           maxlength="50" />
-                </div>
-                <div class="form-group">
-                    <label for="newParentCategory" class="form-label">親カテゴリ</label>
-                    <select id="newParentCategory" class="form-select">
-                        <option value="">ルートカテゴリとして作成</option>
-                        @if (Model.ParentCategories?.Any() == true)
-                        {
-                            @foreach (var parentCategory in Model.ParentCategories)
-                            {
-                                <option value="@parentCategory.Id">@parentCategory.FullPath</option>
-                            }
-                        }
-                    </select>
-                </div>
-                <div class="warning-message">
-                    <p><strong>注意:</strong> 元のカテゴリは変更されません。新しいカテゴリとして別途作成されます。</p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="closeSaveAsNewModalButton">
-                    キャンセル
-                </button>
-                <button type="button" class="btn btn-primary" id="saveAsNewCategoryButton">
-                    新しいカテゴリとして保存
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
 
 @section Scripts {

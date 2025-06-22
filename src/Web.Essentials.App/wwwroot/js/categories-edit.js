@@ -117,10 +117,6 @@ function setupChangeDetection() {
  * 変更検知
  */
 function detectChanges() {
-    const currentData = collectFormData();
-    const changes = compareFormData(originalFormData, currentData);
-    updateChangeHistory(changes);
-    
     // 階層パス更新
     const nameInput = document.querySelector('input[name="Name"]');
     if (nameInput) {
@@ -128,71 +124,6 @@ function detectChanges() {
     }
 }
 
-/**
- * フォームデータ比較
- * @param {Object} original - 元のフォームデータ
- * @param {Object} current - 現在のフォームデータ
- * @returns {Array} 変更内容の配列
- */
-function compareFormData(original, current) {
-    const changes = [];
-    
-    for (let key in current) {
-        if (original[key] !== current[key]) {
-            changes.push({
-                field: key,
-                from: original[key],
-                to: current[key],
-                timestamp: new Date()
-            });
-        }
-    }
-    
-    return changes;
-}
-
-/**
- * 変更履歴更新
- * @param {Array} changes - 変更内容の配列
- */
-function updateChangeHistory(changes) {
-    const historyContainer = document.getElementById('changeHistory');
-    if (!historyContainer) return;
-    
-    if (changes.length === 0) {
-        historyContainer.innerHTML = '<p class="no-changes">変更はありません</p>';
-        return;
-    }
-    
-    const historyHtml = changes.map(change => `
-        <div class="history-item">
-            <div class="history-field">${getFieldDisplayName(change.field)}</div>
-            <div class="history-change">
-                <span class="change-from">${change.from || '(空)'}</span>
-                <span class="change-arrow">→</span>
-                <span class="change-to">${change.to || '(空)'}</span>
-            </div>
-            <div class="history-time">${change.timestamp.toLocaleTimeString()}</div>
-        </div>
-    `).join('');
-    
-    historyContainer.innerHTML = historyHtml;
-}
-
-/**
- * フィールド表示名取得
- * @param {string} fieldName - フィールド名
- * @returns {string} 表示名
- */
-function getFieldDisplayName(fieldName) {
-    const fieldNames = {
-        'Name': 'カテゴリ名',
-        'Description': 'カテゴリ説明',
-        'ParentCategoryId': '親カテゴリ'
-    };
-    
-    return fieldNames[fieldName] || fieldName;
-}
 
 /**
  * カテゴリフォームのバリデーション
@@ -268,7 +199,6 @@ async function submitCategoryForm() {
             if (keepEditing && keepEditing.checked) {
                 // 初期値を更新
                 originalFormData = collectFormData();
-                updateChangeHistory([]);
             } else {
                 // カテゴリ一覧に戻る
                 setTimeout(() => {
@@ -293,74 +223,6 @@ async function submitCategoryForm() {
 }
 
 
-/**
- * 別カテゴリとして保存モーダル表示
- */
-function showSaveAsNewModal() {
-    const modalElement = document.getElementById('saveAsNewModal');
-    if (modalElement) {
-        modalElement.style.display = 'block';
-    }
-}
-
-/**
- * 別カテゴリとして保存モーダルを閉じる
- */
-function closeSaveAsNewModal() {
-    const modalElement = document.getElementById('saveAsNewModal');
-    if (modalElement) {
-        modalElement.style.display = 'none';
-    }
-}
-
-/**
- * 別カテゴリとして保存実行
- */
-async function saveAsNewCategory() {
-    try {
-        const newCategoryName = document.getElementById('newCategoryName');
-        const newParentCategory = document.getElementById('newParentCategory');
-        
-        if (!newCategoryName || !newCategoryName.value.trim()) {
-            showError('新しいカテゴリ名を入力してください');
-            return;
-        }
-        
-        showLoadingModal('新しいカテゴリとして保存しています...');
-        
-        const form = document.getElementById('categoryEditForm');
-        const formData = new FormData(form);
-        formData.set('Name', newCategoryName.value); // カテゴリ名を更新
-        if (newParentCategory) {
-            formData.set('ParentCategoryId', newParentCategory.value); // 親カテゴリを更新
-        }
-        formData.delete('Id'); // IDを削除（新規作成）
-        
-        const response = await fetch('/Categories/Create', {
-            method: 'POST',
-            body: formData
-        });
-        
-        hideLoadingModal();
-        
-        if (response.ok) {
-            showSuccess(`新しいカテゴリ「${newCategoryName.value}」として保存されました`);
-            closeSaveAsNewModal();
-            
-            // カテゴリ一覧に戻る
-            setTimeout(() => {
-                window.location.href = '/Categories';
-            }, 1500);
-        } else {
-            const errorText = await response.text();
-            showError('新しいカテゴリの保存に失敗しました: ' + errorText);
-        }
-    } catch (error) {
-        hideLoadingModal();
-        console.error('新しいカテゴリ保存エラー:', error);
-        showError('新しいカテゴリ保存中にエラーが発生しました');
-    }
-}
 
 /**
  * フォームリセット
@@ -376,7 +238,6 @@ function resetForm() {
         }
         
         updateCategoryLevel();
-        updateChangeHistory([]);
         hideValidationErrors();
     }
 }
@@ -387,9 +248,9 @@ function resetForm() {
 function setupUnloadWarning() {
     window.addEventListener('beforeunload', function(event) {
         const currentData = collectFormData();
-        const changes = compareFormData(originalFormData, currentData);
+        const hasChanges = JSON.stringify(originalFormData) !== JSON.stringify(currentData);
         
-        if (changes.length > 0) {
+        if (hasChanges) {
             event.preventDefault();
             event.returnValue = '変更が保存されていません。ページを離れますか？';
         }
@@ -419,37 +280,14 @@ function collectFormData() {
  * ボタンイベントハンドラーの設定
  */
 function setupButtonEventHandlers() {
-    // 新規保存ボタン（IDベース）
-    const saveAsNewButton = document.getElementById('saveAsNewButton');
-    if (saveAsNewButton) {
-        saveAsNewButton.addEventListener('click', showSaveAsNewModal);
-    }
-    
-    
     // リセットボタン（IDベース）
     const resetButton = document.getElementById('resetButton');
     if (resetButton) {
         resetButton.addEventListener('click', resetForm);
     }
-    
-    // 新規保存モーダルの閉じるボタン（クラスベース）
-    const closeSaveAsNewButtons = document.querySelectorAll('.close-save-as-new-modal');
-    closeSaveAsNewButtons.forEach(button => {
-        button.addEventListener('click', closeSaveAsNewModal);
-    });
-    
-    // 新規保存実行ボタン（IDベース）
-    const saveAsNewCategoryButton = document.getElementById('saveAsNewCategoryButton');
-    if (saveAsNewCategoryButton) {
-        saveAsNewCategoryButton.addEventListener('click', saveAsNewCategory);
-    }
-    
 }
 
 // 互換性のためのグローバル関数公開（段階的に削除予定）
 // 新しいID/class/data属性アプローチに移行済み
 window.updateCategoryLevel = updateCategoryLevel;
-window.showSaveAsNewModal = showSaveAsNewModal;
-window.closeSaveAsNewModal = closeSaveAsNewModal;
-window.saveAsNewCategory = saveAsNewCategory;
 window.resetForm = resetForm;
