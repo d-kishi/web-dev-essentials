@@ -17,8 +17,6 @@ function initializeProductDetails() {
     // タブ機能の初期化
     setupTabs();
     
-    // 変更履歴の読み込み
-    loadChangeHistory();
     
     // 画像ギャラリーの初期化
     setupImageGallery();
@@ -106,10 +104,6 @@ function showTab(tabName) {
     if (tabButton) tabButton.classList.add('active');
     if (tabContent) tabContent.classList.add('active');
     
-    // 変更履歴タブの場合は履歴を読み込み
-    if (tabName === 'history') {
-        loadChangeHistory();
-    }
 }
 
 /**
@@ -339,70 +333,7 @@ async function copyToClipboard(text) {
     }
 }
 
-/**
- * 変更履歴読み込み
- */
-async function loadChangeHistory() {
-    const productId = window.productId;
-    if (!productId) return;
-    
-    try {
-        const historyContent = document.getElementById('changeHistoryContent');
-        if (!historyContent) return;
-        
-        historyContent.innerHTML = '<p class="loading-text">変更履歴を読み込み中...</p>';
-        
-        const response = await fetch(`/Products/GetChangeHistory/${productId}`);
-        
-        if (response.ok) {
-            const history = await response.json();
-            renderChangeHistory(history);
-        } else {
-            historyContent.innerHTML = '<p class="error-text">変更履歴の読み込みに失敗しました</p>';
-        }
-    } catch (error) {
-        console.error('変更履歴読み込みエラー:', error);
-        const historyContent = document.getElementById('changeHistoryContent');
-        if (historyContent) {
-            historyContent.innerHTML = '<p class="error-text">変更履歴の読み込み中にエラーが発生しました</p>';
-        }
-    }
-}
 
-/**
- * 変更履歴表示
- * @param {Array} history - 変更履歴データ
- */
-function renderChangeHistory(history) {
-    const historyContent = document.getElementById('changeHistoryContent');
-    if (!historyContent) return;
-    
-    if (!history || history.length === 0) {
-        historyContent.innerHTML = '<p class="no-data-text">変更履歴はありません</p>';
-        return;
-    }
-    
-    const historyHtml = history.map(item => `
-        <div class="history-item">
-            <div class="history-header">
-                <span class="history-date">${new Date(item.changedAt).toLocaleString()}</span>
-                <span class="history-type">${item.changeType}</span>
-            </div>
-            <div class="history-details">
-                ${item.changes.map(change => `
-                    <div class="history-change">
-                        <span class="change-field">${change.fieldName}</span>
-                        <span class="change-from">${change.oldValue || '(空)'}</span>
-                        <span class="change-arrow">→</span>
-                        <span class="change-to">${change.newValue || '(空)'}</span>
-                    </div>
-                `).join('')}
-            </div>
-        </div>
-    `).join('');
-    
-    historyContent.innerHTML = historyHtml;
-}
 
 // ESCキーで画像ビューアーを閉じる
 document.addEventListener('keydown', function(event) {
@@ -515,4 +446,3 @@ window.deleteProduct = deleteProduct;
 window.duplicateProduct = duplicateProduct;
 window.shareProduct = shareProduct;
 window.copyToClipboard = copyToClipboard;
-window.loadChangeHistory = loadChangeHistory;
