@@ -282,7 +282,7 @@ Razor構文を使うことで、C#のロジックとHTMLを直感的に組み合
 
 ## TagHelper
 
-TagHelperは、.NET Coreで導入された機能で、通常のHTMLタグに`asp-`で始まる属性を追加することで、Razorエンジンが自動的に適切なHTMLを生成してくれる仕組みです。
+TagHelperは、.NET Coreで導入された機能で、通常のHTMLタグに`asp-`で始まる属性を追加することで、Razorエンジンが自動的に適切なHTMLを生成してくれる仕組みです。Web.Essentials.Appの実装例を交えて解説します。
 
 ### 基本的な使い方
 
@@ -291,76 +291,240 @@ TagHelperは、.NET Coreで導入された機能で、通常のHTMLタグに`asp
 **フォームタグ**
 
 ```cshtml
-<form asp-controller="User" asp-action="Create" method="post">
+<!-- Web.Essentials.App/Views/Categories/Create.cshtml -->
+<form asp-controller="Categories" asp-action="Create" method="post">
   <!-- フォーム内容 -->
 </form>
 ```
 
-ポイントとして、TagHelperでformを定義した場合は適切なaction属性とCSRFトークンが自動生成されます。  
-これにより、従来のようにCSRF対策で`@Html.AntiForgeryToken()`を記述する必要はありません。
+**なぜTagHelperのformなのか**：
+- **CSRF対策自動化**: `@Html.AntiForgeryToken()`の記述が不要
+- **URL生成**: ルーティング変更時の自動対応
+- **型安全性**: コントローラー名とアクション名のコンパイル時チェック
 
-**入力フィールド**
+**入力フィールド（基本）**
 
 ```cshtml
-@model UserModel
+@model CategoryCreateViewModel
 
-<input asp-for="UserName" />
-<input asp-for="Email" />
-<input asp-for="Age" />
+<!-- テキスト入力 -->
+<input asp-for="Name" class="form-input" />
+<!-- 自動生成: name="Name" id="Name" value="@Model.Name" -->
+
+<!-- 数値入力 -->
+<input asp-for="Price" type="number" step="0.01" class="form-input" />
+
+<!-- テキストエリア -->
+<textarea asp-for="Description" class="form-textarea" rows="3"></textarea>
 ```
 
-モデルのプロパティに基づいて、name、id、value属性が自動設定されます。
-`asp-for`のvalueはモデルのプロパティになりますが、このプロパティに定義した`Required`や`StringLength`、`DataType`といったC#の属性に基づいてHTMLの属性も自動設定されます。  
+モデルのプロパティに基づいて、name、id、value属性が自動設定されます。  
+asp-forのvalueはモデルのプロパティになりますが、このプロパティに定義したRequiredやStringLength、DataTypeといったC#の属性に基づいてHTMLの属性も自動設定されます。
 
-**ラベル**
+**入力フィールド（高度）**
 
 ```cshtml
-<label asp-for="UserName"></label>
-<label asp-for="Email"></label>
+<!-- ファイルアップロード（商品画像） -->
+<input type="file" 
+       name="ImageFiles" 
+       multiple 
+       accept="image/*" 
+       class="form-file" 
+       data-max-files="5" />
+
+<!-- パスワード -->
+<input asp-for="Password" type="password" class="form-input" />
+
+<!-- 隠しフィールド -->
+<input asp-for="Id" type="hidden" />
 ```
 
-モデルの`[Display(Name="...")]`属性やプロパティ名からラベルテキストが生成されます
-
-**バリデーションメッセージ**
+**ラベルとバリデーション**
 
 ```cshtml
-<span asp-validation-for="UserName" class="text-danger"></span>
-<span asp-validation-for="Email" class="text-danger"></span>
+<!-- Web.Essentials.App/Views/Categories/Edit.cshtml -->
+<div class="form-group">
+    <label asp-for="Name" class="form-label"></label>
+    <!-- 自動生成: for="Name">カテゴリ名</label> (Display属性から取得) -->
+    
+    <input asp-for="Name" class="form-input" />
+    
+    <span asp-validation-for="Name" class="validation-error"></span>
+    <!-- バリデーションエラー時に自動表示 -->
+</div>
 ```
 
-モデルのバリデーション属性に基づいてエラーメッセージが表示されます
+モデルの[Display(Name="...")]属性やプロパティ名からラベルテキストが生成されます。  
+また、モデルのバリデーション属性に基づいてエラーメッセージが表示されます。
 
-#### リンク関連
+#### 選択系（実装例）
 
-**アクションリンク**
-
-```cshtml
-<a asp-controller="User" asp-action="Index">ユーザー一覧</a>
-<a asp-controller="User" asp-action="Edit" asp-route-id="123">編集</a>
-```
-
-適切なURL（/User/Index、/User/Edit/123）が生成されます
-
-**画像タグ**
+**ドロップダウンリスト（階層カテゴリ選択）**
 
 ```cshtml
-<img asp-append-version="true" src="~/images/logo.png" alt="ロゴ" />
-```
-
-`asp-append-version="true"`とすることで、キャッシュバスティングのためのバージョン番号が自動付与されます  
-これは特に、CDN(Content Delivery Network)を導入したWebアプリケーションでファイルを更新する場合にCDNキャッシュのクリアを気にする必要が無くなります
-
-#### 選択系
-
-**ドロップダウンリスト**
-
-```cshtml
-<select asp-for="CategoryId" asp-items="ViewBag.Categories">
-  <option value="">選択してください</option>
+<!-- Web.Essentials.App/Views/Categories/Create.cshtml -->
+<select asp-for="ParentCategoryId" 
+        asp-items="@(new SelectList(Model.ParentCategories, "Id", "FullPath"))"
+        class="form-select">
+    <option value="">ルートカテゴリとして作成</option>
 </select>
 ```
 
-`asp-items`にリスト・配列を設定する事により、選択肢を自動生成します
+asp-itemsにリスト・配列を設定する事により、選択肢を自動生成します。
+
+**複数選択（商品のカテゴリ選択）**
+
+```cshtml
+<!-- Web.Essentials.App/Views/Products/Create.cshtml -->
+<select asp-for="SelectedCategoryIds" 
+        asp-items="@ViewBag.AllCategories"
+        multiple 
+        class="form-select category-multi-select">
+</select>
+```
+
+対応するController側：
+```csharp
+ViewBag.AllCategories = new SelectList(categories, "Id", "FullPath");
+```
+
+**チェックボックス**
+
+```cshtml
+<!-- 単一チェックボックス -->
+<div class="checkbox-group">
+    <label class="checkbox-label">
+        <input asp-for="IsActive" class="checkbox-input" />
+        <span class="checkbox-custom"></span>
+        アクティブ
+    </label>
+</div>
+
+<!-- 複数チェックボックス（カテゴリ選択） -->
+@for (int i = 0; i < Model.AvailableCategories.Count; i++)
+{
+    <div class="checkbox-group">
+        <input asp-for="@Model.AvailableCategories[i].IsSelected" type="hidden" />
+        <input asp-for="@Model.AvailableCategories[i].CategoryId" type="hidden" />
+        <label class="checkbox-label">
+            <input asp-for="@Model.AvailableCategories[i].IsSelected" class="checkbox-input" />
+            <span class="checkbox-custom"></span>
+            @Model.AvailableCategories[i].CategoryName
+        </label>
+    </div>
+}
+```
+
+#### リンク関連
+
+**アクションリンク（実装例）**
+
+```cshtml
+<!-- Web.Essentials.App/Views/Categories/Index.cshtml -->
+<!-- 編集リンク -->
+<a asp-controller="Categories" asp-action="Edit" asp-route-id="@category.Id" 
+   class="btn btn-sm btn-warning">編集</a>
+
+<!-- カテゴリ一覧に戻る -->
+<a asp-controller="Categories" asp-action="Index" 
+   class="btn btn-secondary">カテゴリ一覧に戻る</a>
+
+<!-- 商品詳細（複数パラメータ） -->
+<a asp-controller="Products" asp-action="Details" 
+   asp-route-id="@product.Id" 
+   asp-route-categoryId="@product.CategoryId"
+   class="product-link">@product.Name</a>
+```
+
+**静的ファイルとキャッシュバスティング**
+
+```cshtml
+<!-- Web.Essentials.App/Views/Shared/_Layout.cshtml -->
+<!-- CSS -->
+<link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/category-hierarchy.css" asp-append-version="true" />
+
+<!-- JavaScript -->
+<script src="~/js/common.js" asp-append-version="true" defer></script>
+<script src="~/js/categories-index.js" asp-append-version="true" defer></script>
+
+<!-- 画像 -->
+<img asp-append-version="true" src="~/images/no-image.png" alt="画像なし" class="product-image" />
+```
+
+#### 条件付き表示とパーシャルビュー
+
+**条件付きTagHelper**
+
+```cshtml
+<!-- Web.Essentials.App/Views/Categories/Edit.cshtml -->
+<!-- 子カテゴリがある場合は親カテゴリ変更を無効化 -->
+<select asp-for="ParentCategoryId" 
+        asp-items="@(new SelectList(Model.ParentCategories, "Id", "FullPath"))"
+        class="form-select"
+        disabled="@(Model.ChildCategories?.Any() == true)">
+    <option value="">ルートカテゴリとして設定</option>
+</select>
+
+@if (Model.ChildCategories?.Any() == true)
+{
+    <div class="field-help">
+        <small class="text-warning">子カテゴリが存在するため、親カテゴリの変更は無効化されています。</small>
+    </div>
+}
+```
+
+**パーシャルビューでのTagHelper**
+
+```cshtml
+<!-- Web.Essentials.App/Views/Shared/_SearchForm.cshtml -->
+<partial name="_SearchForm" model="Model.SearchParams" />
+
+<!-- パーシャルビュー内部 -->
+@model SearchFormViewModel
+<form asp-controller="Categories" asp-action="Index" method="get" id="searchForm">
+    <input asp-for="SearchKeyword" class="form-input search-input" placeholder="カテゴリ名で検索..." />
+    
+    <select asp-for="DeletableOnly" class="form-select">
+        <option value="false">全て表示</option>
+        <option value="true">削除可能のみ</option>
+    </select>
+    
+    <button type="submit" class="btn btn-primary" data-action="perform-search">検索</button>
+</form>
+```
+
+### TagHelperの高度な活用
+
+**カスタム属性との組み合わせ**
+
+```cshtml
+<!-- Web.Essentials.App/Views/Categories/Index.cshtml -->
+<button type="button" 
+        class="btn btn-sm btn-danger category-delete-button" 
+        asp-for="@category.Id"
+        data-category-id="@category.Id" 
+        data-category-name="@category.Name" 
+        data-product-count="@category.ProductCount"
+        data-has-children="@category.HasChildren">
+    削除
+</button>
+```
+
+**フォーム内の動的コンテンツ**
+
+```cshtml
+<!-- 階層レベルに応じた表示制御 -->
+@for (int i = 0; i < Model.MaxLevel; i++)
+{
+    <div class="level-indicator level-@i" 
+         style="display: @(Model.CurrentLevel >= i ? "block" : "none")">
+        <label asp-for="Levels[i].Name" class="form-label">レベル @(i + 1)</label>
+        <input asp-for="Levels[i].Name" class="form-input" />
+        <span asp-validation-for="Levels[i].Name" class="validation-error"></span>
+    </div>
+}
+```
 
 ### TagHelperの利点
 
@@ -369,8 +533,23 @@ TagHelperは、.NET Coreで導入された機能で、通常のHTMLタグに`asp
 3. **自動生成**: name、id、value属性やルーティングURLの自動生成
 4. **バリデーション統合**: モデルのData Annotationsと自動連携
 5. **IntelliSense**: Visual StudioやVS Codeでの補完サポート
+6. **保守性**: ルーティング変更時の自動対応
 
-この方法により、HTMLの可読性を保ちながら、MVCフレームワークの強力な機能を活用できます。
+### 実装時のベストプラクティス
+
+**なぜこれらの機能が重要なのか**：
+- **開発効率**: 手動でのHTML属性設定が不要
+- **バグ削減**: タイプミスやリンク切れの防止
+- **リファクタリング安全性**: コントローラー名変更時の自動追従
+- **一貫性**: 統一されたフォーム処理パターン
+
+**注意点**：
+- `asp-for`は強く型付けされているため、プロパティ名変更時は自動で追従
+- 複雑な選択肢はControllerまたはViewModelで準備
+- ファイルアップロードは`enctype="multipart/form-data"`を忘れずに
+- 動的なフォーム要素はJavaScriptとの連携が必要
+
+この方法により、HTMLの可読性を保ちながら、MVCフレームワークの強力な機能を最大限活用できます。
 
 ## FormとModel
 
