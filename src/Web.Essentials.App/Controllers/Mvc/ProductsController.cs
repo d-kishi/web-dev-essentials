@@ -395,68 +395,14 @@ public class ProductsController : Controller
     }
 
     /// <summary>
-    /// 商品削除確認画面表示
-    /// 指定されたIDの商品削除確認画面を表示
-    /// </summary>
-    /// <param name="id">商品ID</param>
-    /// <returns>商品削除確認ビュー</returns>
-    public async Task<IActionResult> Delete(int id)
-    {
-        try
-        {
-            var product = await _productRepository.GetByIdAsync(id);
-            if (product == null)
-            {
-                return NotFound($"商品ID {id} が見つかりません");
-            }
-
-            // 商品画像も取得
-            var productImages = await _productImageRepository.GetByProductIdAsync(id);
-            
-            var viewModel = new ProductDeleteViewModel
-            {
-                Id = product.Id,
-                Name = product.Name,
-                Description = product.Description,
-                Price = (uint)product.Price,
-                Status = product.Status,
-                JanCode = product.JanCode,
-                Categories = product.ProductCategories.Select(pc => new CategoryDisplayItem
-                {
-                    Id = pc.Category.Id,
-                    Name = pc.Category.Name,
-                    FullPath = pc.Category.Name
-                }).ToList(),
-                CreatedAt = product.CreatedAt,
-                UpdatedAt = product.UpdatedAt,
-                Images = productImages.Select(img => new ProductImageDisplayItem
-                {
-                    Id = img.Id,
-                    ImagePath = img.ImagePath,
-                    DisplayOrder = img.DisplayOrder,
-                    AltText = img.AltText,
-                    IsMain = img.IsMain
-                }).ToList()
-            };
-
-            return View(viewModel);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "商品削除確認画面表示中にエラーが発生しました。商品ID: {ProductId}", id);
-            return View("Error");
-        }
-    }
-
-    /// <summary>
-    /// 商品削除処理
-    /// 指定されたIDの商品を削除
+    /// Ajax商品削除処理
+    /// 商品一覧画面からのAjax削除リクエストを処理
     /// </summary>
     /// <param name="id">商品ID</param>
     /// <returns>削除成功時は一覧画面へリダイレクト</returns>
-    [HttpPost, ActionName("Delete")]
+    [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(int id)
+    public async Task<IActionResult> Delete(int id)
     {
         try
         {
