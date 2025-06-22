@@ -48,6 +48,9 @@ function initializeProductForm() {
         });
     }
 
+    // 画像関連のイベントハンドラーを初期化（単一責任の原則に基づく分離実装）
+    setupImageEventHandlers();
+
     // 既存画像削除ボタンの初期化
     document.querySelectorAll('.delete-image-btn').forEach(button => {
         button.addEventListener('click', function() {
@@ -180,32 +183,81 @@ function handleImageUpload(input) {
 }
 
 /**
- * 画像プレビュー作成
+ * 画像プレビュー作成（遅延読み込み対応）
  * @param {File} file - 画像ファイル
  * @param {number} index - インデックス
  * @param {HTMLElement} container - プレビューコンテナ
  */
 function createImagePreview(file, index, container) {
+    // プレビューアイテムをまず作成（遅延読み込み用）
+    const previewItem = document.createElement('div');
+    previewItem.className = 'image-preview-item';
+    previewItem.innerHTML = `
+        <div class="preview-image-container">
+            <div class="preview-placeholder" data-file-index="${index}">
+                <div class="placeholder-icon">📷</div>
+                <div class="placeholder-text">読み込み中...</div>
+            </div>
+            <button type="button" class="preview-remove-btn">
+                ×
+            </button>
+        </div>
+        <div class="preview-info">
+            <div class="preview-filename">${file.name}</div>
+            <div class="preview-filesize">${formatFileSize(file.size)}</div>
+        </div>
+    `;
+    
+    if (container) {
+        container.appendChild(previewItem);
+    }
+    
+    // 遅延読み込みでファイルを読み込む
+    requestIdleCallback(() => {
+        loadImagePreview(file, previewItem);
+    }, { timeout: 2000 });
+}
+
+/**
+ * 画像プレビューの遅延読み込み
+ * @param {File} file - 画像ファイル
+ * @param {HTMLElement} previewItem - プレビューアイテム要素
+ */
+function loadImagePreview(file, previewItem) {
     const reader = new FileReader();
     
     reader.onload = function(e) {
-        const previewItem = document.createElement('div');
-        previewItem.className = 'image-preview-item';
-        previewItem.innerHTML = `
-            <div class="preview-image-container">
-                <img src="${e.target.result}" alt="プレビュー" class="preview-image" />
-                <button type="button" class="preview-remove-btn">
-                    ×
-                </button>
-            </div>
-            <div class="preview-info">
-                <div class="preview-filename">${file.name}</div>
-                <div class="preview-filesize">${formatFileSize(file.size)}</div>
-            </div>
-        `;
-        
-        if (container) {
-            container.appendChild(previewItem);
+        const placeholder = previewItem.querySelector('.preview-placeholder');
+        if (placeholder) {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.alt = 'プレビュー';
+            img.className = 'preview-image';
+            
+            // 画像読み込み完了後にプレースホルダーと置き換え
+            img.onload = function() {
+                placeholder.replaceWith(img);
+            };
+            
+            // 画像読み込みエラー時の処理
+            img.onerror = function() {
+                placeholder.innerHTML = `
+                    <div class="placeholder-icon">⚠</div>
+                    <div class="placeholder-text">読み込みエラー</div>
+                `;
+                placeholder.classList.add('error');
+            };
+        }
+    };
+    
+    reader.onerror = function() {
+        const placeholder = previewItem.querySelector('.preview-placeholder');
+        if (placeholder) {
+            placeholder.innerHTML = `
+                <div class="placeholder-icon">⚠</div>
+                <div class="placeholder-text">ファイル読み込みエラー</div>
+            `;
+            placeholder.classList.add('error');
         }
     };
     
@@ -285,6 +337,86 @@ async function deleteExistingImage(imageId) {
     }
 }
 
+/**
+ * 画像関連のイベントハンドラーを設定
+ * 単一責任の原則に基づき、インラインイベントハンドラーを分離実装
+ */
+function setupImageEventHandlers() {
+    // ファイル選択ボタン
+    const selectFileBtn = document.querySelector('[data-action="select-file"]');
+    if (selectFileBtn) {
+        selectFileBtn.addEventListener('click', function() {
+            const fileInput = document.getElementById('imageFiles');
+            if (fileInput) {
+                fileInput.click();
+            }
+        });
+    }
+
+    // すべてクリアボタン
+    const clearAllBtn = document.querySelector('[data-action="clear-all"]');
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', clearAllImages);
+    }
+
+    // モーダル閉じるボタン（複数あるため全て取得）
+    const closeModalBtns = document.querySelectorAll('[data-action="close-modal"]');
+    closeModalBtns.forEach(btn => {
+        btn.addEventListener('click', closeImageEditModal);
+    });
+
+    // 設定保存ボタン
+    const saveSettingsBtn = document.querySelector('[data-action="save-settings"]');
+    if (saveSettingsBtn) {
+        saveSettingsBtn.addEventListener('click', saveImageSettings);
+    }
+}
+
+/**
+ * すべての画像をクリアする
+ * 既存のグローバル関数が存在する場合はそれを使用、なければ新規実装
+ */
+function clearAllImages() {
+    // 画像プレビューコンテナをクリア
+    const previewContainer = document.getElementById('imagePreviewContainer');
+    if (previewContainer) {
+        previewContainer.innerHTML = '';
+    }
+
+    // ファイル入力をクリア
+    const fileInput = document.getElementById('imageFiles');
+    if (fileInput) {
+        fileInput.value = '';
+    }
+
+    console.log('すべての画像がクリアされました');
+}
+
+/**
+ * 画像編集モーダルを閉じる
+ */
+function closeImageEditModal() {
+    const modal = document.getElementById('imageEditModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+/**
+ * 画像設定を保存する
+ */
+function saveImageSettings() {
+    // 画像設定の保存処理
+    const altText = document.getElementById('imageAltText');
+    if (altText) {
+        console.log('画像設定を保存:', altText.value);
+        // 実際の保存処理をここに実装
+    }
+    
+    // モーダルを閉じる
+    closeImageEditModal();
+}
+
 // グローバル関数として公開
 window.formatPrice = formatPrice;
 window.validateJanCode = validateJanCode;
@@ -292,3 +424,7 @@ window.updateCharacterCount = updateCharacterCount;
 window.handleImageUpload = handleImageUpload;
 window.removeImagePreview = removeImagePreview;
 window.deleteExistingImage = deleteExistingImage;
+window.setupImageEventHandlers = setupImageEventHandlers;
+window.clearAllImages = clearAllImages;
+window.closeImageEditModal = closeImageEditModal;
+window.saveImageSettings = saveImageSettings;

@@ -382,8 +382,13 @@ const Notifications = {
     
     /**
      * エラーメッセージ表示
+     * AjaxErrorオブジェクトにも対応
      */
     showError(message, duration = 8000) {
+        // AjaxErrorオブジェクトの場合はユーザー向けメッセージを取得
+        if (message && typeof message.getUserMessage === 'function') {
+            message = message.getUserMessage();
+        }
         this.show(message, 'error', duration);
     },
     
@@ -399,6 +404,59 @@ const Notifications = {
      */
     showInfo(message, duration = 5000) {
         this.show(message, 'info', duration);
+    },
+    
+    /**
+     * ネットワークエラー専用表示
+     */
+    showNetworkError(error, duration = 10000) {
+        let message = 'ネットワークエラーが発生しました';
+        
+        if (error && typeof error.getErrorType === 'function') {
+            const errorType = error.getErrorType();
+            switch (errorType) {
+                case 'network':
+                    message = 'ネットワーク接続に問題があります。インターネット接続を確認してください。';
+                    break;
+                case 'server':
+                    message = 'サーバーで問題が発生しました。しばらく時間をおいて再度お試しください。';
+                    break;
+                case 'client':
+                    message = error.getUserMessage();
+                    break;
+                default:
+                    message = error.getUserMessage();
+            }
+        } else if (error && error.message) {
+            message = error.message;
+        }
+        
+        this.show(message, 'error', duration);
+    },
+    
+    /**
+     * API通信エラー専用表示
+     */
+    showApiError(error, duration = 8000) {
+        let message = 'API通信でエラーが発生しました';
+        
+        if (error && typeof error.getUserMessage === 'function') {
+            message = error.getUserMessage();
+        } else if (error && error.message) {
+            message = error.message;
+        }
+        
+        // エラーの種類に応じて表示時間を調整
+        if (error && typeof error.getErrorType === 'function') {
+            const errorType = error.getErrorType();
+            if (errorType === 'network') {
+                duration = 12000; // ネットワークエラーは長めに表示
+            } else if (errorType === 'server') {
+                duration = 10000; // サーバーエラーも長めに表示
+            }
+        }
+        
+        this.show(message, 'error', duration);
     },
     
     /**
@@ -621,6 +679,8 @@ window.showSuccess = (message, duration) => Notifications.showSuccess(message, d
 window.showError = (message, duration) => Notifications.showError(message, duration);
 window.showWarning = (message, duration) => Notifications.showWarning(message, duration);
 window.showInfo = (message, duration) => Notifications.showInfo(message, duration);
+window.showNetworkError = (error, duration) => Notifications.showNetworkError(error, duration);
+window.showApiError = (error, duration) => Notifications.showApiError(error, duration);
 window.showLoadingModal = (message) => Loading.show(message);
 window.hideLoadingModal = () => Loading.hide();
 

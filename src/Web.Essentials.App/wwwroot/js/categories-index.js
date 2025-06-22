@@ -135,11 +135,11 @@ async function loadCategoryList() {
         if (result.success) {
             updateCategoryList(result.data);
         } else {
-            showError('カテゴリ一覧の取得に失敗しました: ' + result.message);
+            showApiError(result.message || 'カテゴリ一覧の取得に失敗しました');
         }
     } catch (error) {
         console.error('カテゴリ一覧読み込みエラー:', error);
-        showError('カテゴリ一覧の読み込み中にエラーが発生しました');
+        showApiError(error);
     } finally {
         hideLoading();
     }
@@ -164,6 +164,9 @@ function updateCategoryList(categories) {
                 <a href="/Categories/Create" class="btn btn-primary">カテゴリを登録する</a>
             </div>
         `;
+        
+        // 検索統計の更新（0件）
+        updateSearchStatsDisplay(0, currentSearchParams.searchKeyword);
     } else {
         // カテゴリ一覧をツリー構造で表示
         treeContainer.innerHTML = '';
@@ -204,6 +207,52 @@ function updateCategoryList(categories) {
         
         // 動的に生成されたボタンのイベントリスナーを設定
         setupDynamicEventHandlers();
+        
+        // 検索統計の更新
+        updateSearchStatsDisplay(categories.length, currentSearchParams.searchKeyword);
+    }
+}
+
+/**
+ * 検索統計の更新
+ * @param {string} searchValue - 検索キーワード
+ */
+function updateSearchStats(searchValue) {
+    // 実際の検索統計はupdateCategoryList内で呼ばれるupdateSearchStatsDisplayで行う
+    // この関数は検索開始時の統計表示制御用
+    const searchStatsElement = document.getElementById('searchStats');
+    if (searchStatsElement) {
+        if (searchValue && searchValue.trim() !== '') {
+            searchStatsElement.style.display = 'block';
+        } else {
+            searchStatsElement.style.display = 'none';
+        }
+    }
+}
+
+/**
+ * 検索統計表示の更新
+ * @param {number} resultCount - 検索結果件数
+ * @param {string} searchKeyword - 検索キーワード
+ */
+function updateSearchStatsDisplay(resultCount, searchKeyword) {
+    const searchStatsElement = document.getElementById('searchStats');
+    const searchStatsText = document.getElementById('searchStatsText');
+    const searchTime = document.getElementById('searchTime');
+    
+    if (searchStatsElement && searchStatsText) {
+        if (searchKeyword && searchKeyword.trim() !== '') {
+            // 検索キーワードがある場合は統計を表示
+            searchStatsText.textContent = `検索結果: ${resultCount}件`;
+            if (searchTime) {
+                const now = new Date();
+                searchTime.textContent = `(${now.toLocaleTimeString('ja-JP')})`;
+            }
+            searchStatsElement.style.display = 'block';
+        } else {
+            // 検索キーワードがない場合は統計を非表示
+            searchStatsElement.style.display = 'none';
+        }
     }
 }
 
@@ -509,11 +558,11 @@ async function deleteCategory(categoryId) {
             loadCategoryList(); // 一覧を再読み込み
         } else {
             const errorText = await response.text();
-            showError('カテゴリの削除に失敗しました: ' + errorText);
+            showApiError(errorText || 'カテゴリの削除に失敗しました');
         }
     } catch (error) {
         console.error('カテゴリ削除エラー:', error);
-        showError('カテゴリ削除中にエラーが発生しました');
+        showApiError(error);
     }
 }
 
@@ -569,12 +618,73 @@ function highlightSearchTerm(text, searchTerm) {
  */
 function setupSearchForm() {
     const searchForm = document.getElementById('searchForm');
+    const searchInput = document.getElementById('searchKeyword');
+    
     if (searchForm) {
         searchForm.addEventListener('submit', function(e) {
             e.preventDefault();
             performSearch();
         });
     }
+    
+    // リアルタイム検索の設定
+    if (searchInput) {
+        setupRealtimeSearch(searchInput);
+    }
+    
+    // 検索・リセットボタンの設定
+    const searchBtn = document.querySelector('[data-action="perform-search"]');
+    const resetBtn = document.querySelector('[data-action="reset-search"]');
+    
+    if (searchBtn) {
+        searchBtn.addEventListener('click', performSearch);
+    }
+    
+    if (resetBtn) {
+        resetBtn.addEventListener('click', resetSearch);
+    }
+}
+
+/**
+ * リアルタイム検索の設定
+ * 入力中のデバウンス処理でリアルタイム検索を実現
+ * @param {HTMLInputElement} searchInput - 検索入力フィールド
+ */
+function setupRealtimeSearch(searchInput) {
+    let debounceTimer = null;
+    const debounceDelay = 500; // 500ms後に検索実行
+    
+    searchInput.addEventListener('input', function(e) {
+        const searchValue = e.target.value.trim();
+        
+        // 前回のタイマーをクリア
+        if (debounceTimer) {
+            clearTimeout(debounceTimer);
+        }
+        
+        // 新しいタイマーを設定
+        debounceTimer = setTimeout(() => {
+            // 検索キーワードが変更された場合のみ検索実行
+            if (currentSearchParams.searchKeyword !== searchValue) {
+                currentSearchParams.searchKeyword = searchValue;
+                loadCategoryList();
+                
+                // 検索統計の更新
+                updateSearchStats(searchValue);
+            }
+        }, debounceDelay);
+    });
+    
+    // Enterキー押下時は即座に検索実行
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (debounceTimer) {
+                clearTimeout(debounceTimer);
+            }
+            performSearch();
+        }
+    });
 }
 
 // ソート機能は使用しないためコメントアウト

@@ -84,13 +84,45 @@ class RxAjaxClient {
         return fromFetch(fullUrl, config).pipe(
             switchMap(response => {
                 if (!response.ok) {
-                    return throwError(new AjaxError(`HTTP Error: ${response.status}`, response.status, null));
+                    // エラーレスポンスの詳細を取得
+                    return from(response.text()).pipe(
+                        map(errorText => {
+                            let errorMessage = `HTTP Error: ${response.status}`;
+                            try {
+                                const errorData = JSON.parse(errorText);
+                                errorMessage = errorData.message || errorMessage;
+                            } catch (e) {
+                                errorMessage = errorText || errorMessage;
+                            }
+                            throw new AjaxError(errorMessage, response.status, errorText);
+                        })
+                    );
                 }
-                return from(response.json());
+                return from(response.json()).pipe(
+                    catchError(parseError => {
+                        console.warn('JSON parse failed, returning text response:', parseError);
+                        return from(response.text());
+                    })
+                );
             }),
             catchError(error => {
                 console.error('Ajax request failed:', error);
-                return throwError(new AjaxError('ネットワークエラーが発生しました', 0, error));
+                
+                // エラーの種類に応じて適切なメッセージを設定
+                let errorMessage = 'ネットワークエラーが発生しました';
+                let errorStatus = 0;
+                
+                if (error instanceof AjaxError) {
+                    return throwError(error);
+                } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    errorMessage = 'サーバーに接続できませんでした。ネットワーク接続を確認してください。';
+                } else if (error.name === 'AbortError') {
+                    errorMessage = 'リクエストがキャンセルされました。';
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                
+                return throwError(new AjaxError(errorMessage, errorStatus, error));
             })
         );
     }
@@ -246,31 +278,53 @@ class RxApiClient extends RxAjaxClient {
     }
     
     /**
-     * リアルタイム検索用のオペレーター
+     * デバウンス機能付き関数を作成
+     * Pure JavaScript実装（RxJS使用禁止）
      */
-    createRealtimeSearch$(inputElement, options = {}) {
+    createDebouncedFunction(func, delay = 300) {
+        let timeoutId;
+        return function (...args) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => func.apply(this, args), delay);
+        };
+    }
+    
+    /**
+     * リアルタイム検索機能
+     * 入力要素に対してデバウンス付き検索を設定
+     */
+    setupRealtimeSearch(inputElement, searchCallback, options = {}) {
         const defaultOptions = {
             debounceTime: 300,
             minLength: 2,
             ...options
         };
         
-        return from(inputElement, 'input').pipe(
-            map(event => event.target.value.trim()),
-            debounceTime(defaultOptions.debounceTime),
-            distinctUntilChanged(),
-            switchMap(term => {
-                if (term.length < defaultOptions.minLength) {
-                    return of([]);
-                }
-                return this.getProducts$({ nameTerm: term, pageSize: 10 });
-            })
-        );
+        const debouncedSearch = this.createDebouncedFunction(async (term) => {
+            if (term.length < defaultOptions.minLength) {
+                searchCallback([]);
+                return;
+            }
+            
+            try {
+                const response = await this.get(`/api/products?nameTerm=${encodeURIComponent(term)}&pageSize=10`);
+                searchCallback(response.data || []);
+            } catch (error) {
+                console.error('検索エラー:', error);
+                searchCallback([]);
+            }
+        }, defaultOptions.debounceTime);
+        
+        inputElement.addEventListener('input', (event) => {
+            const term = event.target.value.trim();
+            debouncedSearch(term);
+        });
     }
 }
 
 /**
  * Ajax エラークラス
+ * API通信で発生するエラーの統一処理用
  */
 class AjaxError extends Error {
     constructor(message, status, data) {
@@ -278,6 +332,56 @@ class AjaxError extends Error {
         this.name = 'AjaxError';
         this.status = status;
         this.data = data;
+        this.timestamp = new Date().toISOString();
+    }
+    
+    /**
+     * エラーの種類を判定
+     * @returns {string} エラータイプ
+     */
+    getErrorType() {
+        if (this.status === 0) {
+            return 'network';
+        } else if (this.status >= 400 && this.status < 500) {
+            return 'client';
+        } else if (this.status >= 500) {
+            return 'server';
+        }
+        return 'unknown';
+    }
+    
+    /**
+     * ユーザー向けメッセージを取得
+     * @returns {string} ユーザー向けエラーメッセージ
+     */
+    getUserMessage() {
+        const errorType = this.getErrorType();
+        
+        switch (errorType) {
+            case 'network':
+                return 'ネットワーク接続に問題があります。インターネット接続を確認してください。';
+            case 'client':
+                return this.message || '入力内容に問題があります。確認して再度お試しください。';
+            case 'server':
+                return 'サーバーで問題が発生しました。しばらく時間をおいて再度お試しください。';
+            default:
+                return this.message || '予期しないエラーが発生しました。';
+        }
+    }
+    
+    /**
+     * エラー情報をログ用にシリアライズ
+     * @returns {object} ログ用エラー情報
+     */
+    toLogObject() {
+        return {
+            message: this.message,
+            status: this.status,
+            type: this.getErrorType(),
+            timestamp: this.timestamp,
+            stack: this.stack,
+            data: this.data
+        };
     }
 }
 
@@ -341,18 +445,53 @@ class AjaxClient {
             const contentType = response.headers.get('Content-Type') || '';
             let responseData;
             
-            if (contentType.includes('application/json')) {
-                responseData = await response.json();
-            } else {
+            // レスポンスデータの解析
+            try {
+                if (contentType.includes('application/json')) {
+                    responseData = await response.json();
+                } else {
+                    responseData = await response.text();
+                }
+            } catch (parseError) {
+                console.warn('Response parse failed:', parseError);
                 responseData = await response.text();
             }
             
             if (!response.ok) {
-                throw new AjaxError(
-                    responseData.message || `HTTP Error: ${response.status}`,
-                    response.status,
-                    responseData
-                );
+                // エラーレスポンスの詳細メッセージを取得
+                let errorMessage = `HTTP Error: ${response.status}`;
+                
+                if (typeof responseData === 'object' && responseData.message) {
+                    errorMessage = responseData.message;
+                } else if (typeof responseData === 'string' && responseData.trim()) {
+                    errorMessage = responseData;
+                } else {
+                    // HTTPステータスコードに基づくデフォルトメッセージ
+                    switch (response.status) {
+                        case 400:
+                            errorMessage = 'リクエストが正しくありません。入力内容を確認してください。';
+                            break;
+                        case 401:
+                            errorMessage = '認証が必要です。ログインしてください。';
+                            break;
+                        case 403:
+                            errorMessage = 'アクセス権限がありません。';
+                            break;
+                        case 404:
+                            errorMessage = '要求されたリソースが見つかりません。';
+                            break;
+                        case 500:
+                            errorMessage = 'サーバー内部エラーが発生しました。';
+                            break;
+                        case 503:
+                            errorMessage = 'サービスが一時的に利用できません。';
+                            break;
+                        default:
+                            errorMessage = `サーバーエラーが発生しました (${response.status})`;
+                    }
+                }
+                
+                throw new AjaxError(errorMessage, response.status, responseData);
             }
             
             return {
@@ -363,16 +502,34 @@ class AjaxClient {
             };
         } catch (error) {
             console.error('Ajax request failed:', error);
-            throw new AjaxError('ネットワークエラーが発生しました', 0, error);
+            
+            // AjaxErrorの場合はそのまま再スロー
+            if (error instanceof AjaxError) {
+                throw error;
+            }
+            
+            // ネットワークエラーの詳細分類
+            let errorMessage = 'ネットワークエラーが発生しました';
+            
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                errorMessage = 'サーバーに接続できませんでした。ネットワーク接続を確認してください。';
+            } else if (error.name === 'AbortError') {
+                errorMessage = 'リクエストがタイムアウトしました。';
+            } else if (error.message) {
+                errorMessage = `通信エラー: ${error.message}`;
+            }
+            
+            throw new AjaxError(errorMessage, 0, error);
         }
     }
 }
 
 /**
  * ファイルアップロード用（進捗表示付き）
+ * Pure JavaScript実装（Promise + XMLHttpRequest）
  */
-function uploadWithProgress$(url, formData, progressCallback) {
-    return new rxjs.Observable(observer => {
+function uploadWithProgress(url, formData, progressCallback) {
+    return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         
         if (progressCallback && typeof progressCallback === 'function') {
@@ -388,23 +545,21 @@ function uploadWithProgress$(url, formData, progressCallback) {
             if (xhr.status >= 200 && xhr.status < 300) {
                 try {
                     const response = JSON.parse(xhr.responseText);
-                    observer.next(response);
-                    observer.complete();
+                    resolve(response);
                 } catch (error) {
-                    observer.next(xhr.responseText);
-                    observer.complete();
+                    resolve(xhr.responseText);
                 }
             } else {
-                observer.error(new AjaxError(`HTTP Error: ${xhr.status}`, xhr.status, xhr.responseText));
+                reject(new AjaxError(`HTTP Error: ${xhr.status}`, xhr.status, xhr.responseText));
             }
         });
         
         xhr.addEventListener('error', () => {
-            observer.error(new AjaxError('Network Error', 0, null));
+            reject(new AjaxError('Network Error', 0, null));
         });
         
         xhr.addEventListener('abort', () => {
-            observer.error(new AjaxError('Upload Aborted', 0, null));
+            reject(new AjaxError('Upload Aborted', 0, null));
         });
         
         xhr.open('POST', url);
@@ -412,10 +567,9 @@ function uploadWithProgress$(url, formData, progressCallback) {
         xhr.setRequestHeader('RequestVerificationToken', getAntiForgeryToken());
         xhr.send(formData);
         
-        // キャンセル処理
-        return () => {
-            xhr.abort();
-        };
+        // キャンセル機能は別途実装が必要な場合はAbortControllerを使用
+        xhr._abort = () => xhr.abort();
+        return xhr;
     });
 }
 

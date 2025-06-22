@@ -214,11 +214,12 @@ public class CategoryService : ICategoryService
 
     /// <summary>
     /// カテゴリのフィルタリング処理
-    /// 検索条件に基づいてカテゴリをフィルタリング
+    /// 検索条件に基づいてカテゴリをフィルタリングし、名前や説明による部分一致検索、
+    /// レベル指定フィルタリング、親カテゴリID指定フィルタリングを実行
     /// </summary>
     /// <param name="categories">フィルタリング対象のカテゴリ一覧</param>
-    /// <param name="searchRequest">検索条件</param>
-    /// <returns>フィルタリング後のカテゴリ一覧</returns>
+    /// <param name="searchRequest">検索条件。NameTerm（名前検索）、Level（レベル指定）、ParentId（親カテゴリID）を含む</param>
+    /// <returns>検索条件に一致するフィルタリング後のカテゴリ一覧</returns>
     private static IList<Category> FilterCategories(
         IEnumerable<Category> categories, 
         CategorySearchRequestDto searchRequest)
@@ -250,10 +251,11 @@ public class CategoryService : ICategoryService
 
     /// <summary>
     /// カテゴリエンティティをDTOに変換
-    /// 関連商品数も含めた詳細なDTO変換
+    /// 関連商品数も含めた詳細なDTO変換処理を実行し、N+1問題を避けるため
+    /// 全商品データを一括取得してカテゴリごとの商品数を効率的に計算
     /// </summary>
     /// <param name="categories">変換対象のカテゴリエンティティ一覧</param>
-    /// <returns>変換後のDTO一覧</returns>
+    /// <returns>カテゴリID、名前、説明、作成日時、更新日時、関連商品数を含むDTO一覧</returns>
     private async Task<List<CategoryDto>> ConvertToCategoryDtosAsync(IList<Category> categories)
     {
         // 関連商品数を一括取得（N+1問題を避けるため）
@@ -276,11 +278,12 @@ public class CategoryService : ICategoryService
 
     /// <summary>
     /// ページング情報の作成
+    /// 総件数とページサイズから総ページ数を計算し、前後ページの存在状況を判定
     /// </summary>
-    /// <param name="currentPage">現在のページ番号</param>
-    /// <param name="pageSize">1ページあたりの件数</param>
-    /// <param name="totalCount">総件数</param>
-    /// <returns>ページング情報</returns>
+    /// <param name="currentPage">現在のページ番号（1から開始）</param>
+    /// <param name="pageSize">1ページあたりの表示件数</param>
+    /// <param name="totalCount">検索結果の総件数</param>
+    /// <returns>現在ページ、ページサイズ、総件数、総ページ数、前後ページ存在フラグを含むページング情報</returns>
     private static PagingDto CreatePagingInfo(int currentPage, int pageSize, int totalCount)
     {
         var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
@@ -388,9 +391,11 @@ public class CategoryService : ICategoryService
 
     /// <summary>
     /// カテゴリエンティティのコレクションを階層構造を持つCategorySelectItemsに変換
+    /// 親子関係を解析してツリー構造を構築し、各カテゴリの完全パス（親 > 子）形式で表示名を生成
+    /// ルートカテゴリから開始して再帰的に子カテゴリを処理
     /// </summary>
-    /// <param name="categories">カテゴリエンティティのコレクション</param>
-    /// <returns>階層構造を持つCategorySelectItemsのコレクション</returns>
+    /// <param name="categories">変換対象のカテゴリエンティティのコレクション</param>
+    /// <returns>階層構造と完全パスを持つCategorySelectItemsのコレクション</returns>
     private async Task<IEnumerable<CategorySelectItem>> ConvertToCategorySelectItemsAsync(IEnumerable<Category> categories)
     {
         // カテゴリごとの商品数を取得（簡略化：後でオプションとして使用）
@@ -411,11 +416,12 @@ public class CategoryService : ICategoryService
 
     /// <summary>
     /// カテゴリエンティティをCategorySelectItemに変換（再帰的に子カテゴリも含む）
+    /// 完全パスの構築、子カテゴリの再帰的処理、商品数の設定を実行
     /// </summary>
-    /// <param name="category">変換対象のカテゴリ</param>
-    /// <param name="categoryDict">カテゴリIDでインデックス化されたカテゴリ辞書</param>
-    /// <param name="productCounts">カテゴリごとの商品数</param>
-    /// <returns>変換されたCategorySelectItem</returns>
+    /// <param name="category">変換対象のカテゴリエンティティ</param>
+    /// <param name="categoryDict">高速検索用のカテゴリIDでインデックス化されたカテゴリ辞書</param>
+    /// <param name="productCounts">パフォーマンス最適化済みのカテゴリごとの商品数マップ</param>
+    /// <returns>階層構造情報、完全パス、子カテゴリ一覧を含む変換されたCategorySelectItem</returns>
     private CategorySelectItem ConvertToCategorySelectItem(
         Category category, 
         Dictionary<int, Category> categoryDict,
@@ -441,10 +447,11 @@ public class CategoryService : ICategoryService
 
     /// <summary>
     /// カテゴリの完全パスを構築
+    /// 指定カテゴリから親方向に辿って階層パスを"親 > 子 > 孫"形式で生成
     /// </summary>
-    /// <param name="category">対象カテゴリ</param>
-    /// <param name="categoryDict">カテゴリ辞書</param>
-    /// <returns>完全パス</returns>
+    /// <param name="category">完全パス生成対象のカテゴリエンティティ</param>
+    /// <param name="categoryDict">親カテゴリ検索用のカテゴリID辞書</param>
+    /// <returns>"親カテゴリ > 子カテゴリ > 対象カテゴリ"形式の完全パス文字列</returns>
     private string BuildCategoryFullPath(Category category, Dictionary<int, Category> categoryDict)
     {
         var pathParts = new List<string>();

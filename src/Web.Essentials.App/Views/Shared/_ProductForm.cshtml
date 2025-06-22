@@ -135,7 +135,7 @@
                     <p class="upload-description">
                         ファイルをドラッグ&ドロップするか、クリックして選択してください
                     </p>
-                    <button type="button" class="btn btn-outline" onclick="document.getElementById('imageFiles').click()">
+                    <button type="button" class="btn btn-outline" data-action="select-file">
                         ファイルを選択
                     </button>
                     <input type="file" 
@@ -162,7 +162,7 @@
                     <!-- 画像プレビューがここに表示される -->
                 </div>
                 <div class="preview-actions">
-                    <button type="button" class="btn btn-outline btn-sm" onclick="clearAllImages()">
+                    <button type="button" class="btn btn-outline btn-sm" data-action="clear-all">
                         すべてクリア
                     </button>
                 </div>
@@ -232,7 +232,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">画像編集</h3>
-                <button type="button" class="modal-close" onclick="closeImageEditModal()">
+                <button type="button" class="modal-close" data-action="close-modal">
                     <span>&times;</span>
                 </button>
             </div>
@@ -270,10 +270,10 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeImageEditModal()">
+                <button type="button" class="btn btn-secondary" data-action="close-modal">
                     キャンセル
                 </button>
-                <button type="button" class="btn btn-primary" onclick="saveImageSettings()">
+                <button type="button" class="btn btn-primary" data-action="save-settings">
                     設定を保存
                 </button>
             </div>

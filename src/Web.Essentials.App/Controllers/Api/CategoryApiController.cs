@@ -132,10 +132,11 @@ public class CategoryApiController : ControllerBase
 
     /// <summary>
     /// カテゴリエンティティからDTOを作成するヘルパーメソッド
+    /// APIレスポンス用の統一したDTO変換処理。子カテゴリ存在判定、完全パス生成、商品数算出を実行
     /// </summary>
-    /// <param name="category">カテゴリエンティティ</param>
-    /// <param name="allCategories">全カテゴリリスト（子カテゴリ存在判定用）</param>
-    /// <returns>カテゴリDTO</returns>
+    /// <param name="category">変換元のカテゴリエンティティ</param>
+    /// <param name="allCategories">子カテゴリ存在判定のための全カテゴリコレクション</param>
+    /// <returns>APIレスポンス用のカテゴリDTO（階層情報、完全パス、商品数、子カテゴリ有無を含む）</returns>
     private CategoryDto CreateCategoryDto(Domain.Entities.Category category, IEnumerable<Domain.Entities.Category> allCategories)
     {
         return new CategoryDto
