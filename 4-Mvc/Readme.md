@@ -3,7 +3,7 @@
 このディレクトリに作成したサンプルコードは、.NET9のMVCで作成しています。  
 本稿では、MVCのView構成や属性ヘルパの使い方について学習します。
 
-バックエンドの処理はControllerとModelを用意しただけになりますので、設計や実装方法としては参考になるものではありません。
+また、`../src/Web.Essentials.App`に実装されたカテゴリ管理アプリケーションを実例として、実践的なMVCアプリケーション開発で必要な知識を解説します。
 
 ## 目次
 
@@ -22,34 +22,144 @@
     - [選択系](#選択系)
   - [TagHelperの利点](#taghelperの利点)
 - [FormとModel](#formとmodel)
+- [実践的なMVCアプリケーション開発](#実践的なmvcアプリケーション開発)
+  - [MVCパターンの実装例](#mvcパターンの実装例)
+  - [フロントエンド連携](#フロントエンド連携)
+  - [実用的なUI/UX実装](#実用的なuiux実装)
+  - [セキュリティ実装](#セキュリティ実装)
+  - [エラーハンドリング](#エラーハンドリング)
+  - [状態管理とデータフロー](#状態管理とデータフロー)
+  - [Web標準準拠の意義](#web標準準拠の意義)
 
 ## プロジェクト構成
 
-- **Controllers**: ユーザーからのリクエストを処理し、適切なViewを返す
-- **Views**: ユーザーインターフェースを定義するRazorテンプレート
-- **Models**: データ構造を定義
-- **wwwroot**: 静的ファイル（CSS、JavaScript、画像など）を格納
+Web.Essentials.Appは、Clean Architectureパターンを採用した多層アーキテクチャで構成されています：
+
+```
+src/
+├── Web.Essentials.App/          # プレゼンテーション層
+│   ├── Controllers/
+│   │   ├── Api/                # WebAPI用コントローラー
+│   │   │   ├── CategoryApiController.cs
+│   │   │   └── ProductApiController.cs
+│   │   ├── Mvc/                # MVC用コントローラー
+│   │   │   ├── CategoriesController.cs
+│   │   │   └── ProductsController.cs
+│   │   └── HomeController.cs
+│   ├── Views/                  # Razorビューテンプレート
+│   ├── ViewModels/             # View専用データ構造
+│   ├── Services/               # アプリケーションサービス
+│   ├── wwwroot/                # 静的ファイル
+│   └── Program.cs              # アプリケーションエントリーポイント
+├── Web.Essentials.Domain/       # ドメイン層
+│   ├── Entities/               # エンティティ（Category, Product等）
+│   └── Repositories/           # リポジトリインターフェース
+├── Web.Essentials.Infrastructure/ # インフラ層
+│   ├── Data/                   # データベースコンテキスト
+│   └── Repositories/           # リポジトリ実装
+└── Web.Essentials.sln          # ソリューションファイル
+```
+
+### 主要コンポーネント
+
+- **Controllers**: ユーザーリクエストの処理とレスポンス制御
+- **Views**: ユーザーインターフェースの定義（Razorテンプレート）
+- **ViewModels**: View専用のデータ転送オブジェクト
+- **Services**: ビジネスロジックとドメインサービス
+- **Entities**: ドメインオブジェクト（Category, Product等）
+- **Repositories**: データアクセス抽象化
+- **wwwroot**: 静的ファイル（CSS、JavaScript、画像等）
 
 ## 実行方法
 
-.NETは.Net Frameworkとは異なり、VSCodeで開発することができますが今回はVisual Studioで作成しました。  
-ルートディレクトリの`WebEssentials.sln`をVisualStudioで読み込み、`4-Mvc\4-Mvc.csproj`を起動すると実行できます。
+### 前提条件
+
+- .NET 8.0 SDK以降
+- VSCode（推奨拡張機能：C# Dev Kit）
+
+### 起動手順
+
+1. **プロジェクトのクローン/ダウンロード**
+   ```bash
+   # リポジトリをクローンした場合
+   cd web-dev-essentials/src
+   ```
+
+2. **依存関係の復元**
+   ```bash
+   dotnet restore
+   ```
+
+3. **アプリケーションの起動**
+   ```bash
+   dotnet run --project Web.Essentials.App
+   ```
+
+4. **ブラウザでアクセス**
+   ```
+   http://localhost:5017
+   ```
+
+### 開発時の便利なコマンド
+
+```bash
+# ビルドのみ実行
+dotnet build
+
+# ホットリロード付きで起動（ファイル変更時に自動再起動）
+dotnet watch --project Web.Essentials.App
+
+# 特定のポートで起動
+dotnet run --project Web.Essentials.App --urls "http://localhost:8080"
+```
+
+### VSCodeでの開発
+
+1. VSCodeでsrcフォルダーを開く
+2. C# Dev Kit拡張機能をインストール
+3. `Ctrl+Shift+P` → "C#: Select Project" でWeb.Essentials.Appを選択
+4. `F5`キーでデバッグ実行
 
 ## Viewの構成
 
-Viewsディレクトリの構成を解説します。
+Web.Essentials.AppのViewsディレクトリの構成を解説します。
 
 ### ディレクトリ構造
 
 ```
 Views/
-├─ _ViewStart.cshtml      # 全Viewの初期設定
-├─ _ViewImports.cshtml    # 共通の名前空間とディレクティブ
-├── Shared/
-│   └── _Layout.cshtml    # 共通レイアウト
-└── User/
-  └── Create.cshtml       # UserコントローラのCreateアクション用View
+├── _ViewStart.cshtml         # 全Viewの初期設定
+├── _ViewImports.cshtml       # 共通の名前空間とディレクティブ
+├── Shared/                   # 共通ビューとパーシャルビュー
+│   ├── _Layout.cshtml        # アプリケーション共通レイアウト
+│   ├── _ConfirmationModal.cshtml  # 確認モーダル
+│   ├── _Messages.cshtml      # メッセージ表示
+│   ├── _Pagination.cshtml    # ページング
+│   ├── _SearchForm.cshtml    # 検索フォーム
+│   ├── _CategoryForm.cshtml  # カテゴリフォーム
+│   ├── _ProductForm.cshtml   # 商品フォーム
+│   └── Error.cshtml          # エラーページ
+├── Home/                     # ホーム画面
+│   ├── Index.cshtml          # トップページ
+│   └── Privacy.cshtml        # プライバシーページ
+├── Categories/               # カテゴリ管理画面
+│   ├── Index.cshtml          # カテゴリ一覧
+│   ├── Create.cshtml         # カテゴリ登録
+│   └── Edit.cshtml           # カテゴリ編集
+└── Products/                 # 商品管理画面
+    ├── Index.cshtml          # 商品一覧
+    ├── Create.cshtml         # 商品登録
+    ├── Edit.cshtml           # 商品編集
+    └── Details.cshtml        # 商品詳細
 ```
+
+### 実装されている主要機能
+
+- **カテゴリ管理**: 階層構造のカテゴリCRUD操作
+- **商品管理**: 画像アップロード付き商品CRUD操作
+- **検索機能**: リアルタイム検索とフィルタリング
+- **モーダル操作**: 削除確認などのユーザーインタラクション
+- **レスポンシブ対応**: マルチデバイス対応UI
 
 #### 読み込み順序と役割
 
@@ -293,3 +403,335 @@ TagHelperは、.NET Coreで導入された機能で、通常のHTMLタグに`asp
 	</div>  
 </form>  
 ```
+
+---
+
+# 実践的なMVCアプリケーション開発
+
+`../src/Web.Essentials.App`のカテゴリ管理アプリケーションを実例として、実際のWebアプリケーション開発で必要な知識を解説します。
+
+## MVCパターンの実装例
+
+### なぜMVCパターンなのか
+
+MVCパターンは**責任の分離**により、アプリケーションの保守性と拡張性を向上させます。
+
+- **Model**: データとビジネスロジック
+- **View**: ユーザーインターフェース
+- **Controller**: ユーザー入力の処理とModelとViewの仲介
+
+この分離により、画面の変更がビジネスロジックに影響しない、テストしやすいコードになります。
+
+### 実装例：CRUDパターン
+
+`CategoriesController.cs`では、以下のCRUD操作を実装しています：
+
+```csharp
+public class CategoriesController : Controller
+{
+    // 一覧表示
+    public async Task<IActionResult> Index() { ... }
+    
+    // 新規作成画面表示
+    public async Task<IActionResult> Create() { ... }
+    
+    // 新規作成処理
+    [HttpPost]
+    public async Task<IActionResult> Create(CategoryCreateViewModel viewModel) { ... }
+    
+    // 編集画面表示
+    public async Task<IActionResult> Edit(int id) { ... }
+    
+    // 編集処理
+    [HttpPost]
+    public async Task<IActionResult> Edit(int id, CategoryEditViewModel viewModel) { ... }
+    
+    // 削除処理
+    [HttpPost]
+    [Route("Categories/Delete/{id}")]
+    public async Task<IActionResult> Delete(int id) { ... }
+}
+```
+
+**なぜこの構造なのか**：
+- **GET/POSTの分離**: 表示と処理を明確に分ける
+- **RESTful設計**: 直感的なURL構造
+- **ViewModelの活用**: Viewに特化したデータ構造
+
+### ViewModelの目的
+
+`CategoryEditViewModel.cs`のようなViewModelは、以下の目的で使用されます：
+
+**なぜViewModelが必要か**：
+- **View特化**: 画面表示に必要なデータのみを含む
+- **セキュリティ**: エンティティの内部構造を隠蔽
+- **検証**: 画面固有のバリデーションルール
+
+### ルーティング戦略
+
+```csharp
+[Route("Categories/Delete/{id}")]
+public async Task<IActionResult> Delete(int id)
+```
+
+**なぜカスタムルートなのか**：
+- **Ajax対応**: JavaScript から呼び出しやすいURL
+- **RESTful設計**: `/Categories/Delete/123` のような直感的なパス
+
+## フロントエンド連携
+
+### Pure JavaScript選択の理由
+
+`wwwroot/js/categories-index.js`では、jQueryを使わずにPure JavaScriptで実装しています。
+
+**なぜjQuery脱却なのか**：
+- **軽量性**: バンドルサイズの削減
+- **標準準拠**: Web標準APIの活用
+- **依存関係削減**: ライブラリ管理の簡素化
+- **学習効率**: ブラウザネイティブAPIの理解
+
+### Fetch APIによる非同期通信
+
+```javascript
+const response = await fetch('/Categories/Delete/' + categoryId, {
+    method: 'POST',
+    headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json'
+    },
+    body: formData
+});
+```
+
+**なぜFetch APIなのか**：
+- **Promise基盤**: async/awaitとの親和性
+- **標準API**: XMLHttpRequestからの進化
+- **柔軟性**: レスポンス処理の細かな制御
+
+### RxJSによるリアクティブプログラミング
+
+`_Layout.cshtml`ではRxJSライブラリを読み込んでいます：
+
+```html
+<script src="https://unpkg.com/rxjs@7.8.1/dist/bundles/rxjs.umd.min.js"></script>
+```
+
+**なぜRxJSなのか**：
+- **非同期処理の宣言的記述**: ストリーム処理による直感的なコード
+- **イベント管理**: 複雑なユーザーインタラクションの簡素化
+- **データフロー制御**: リアクティブなUI更新
+
+RxJSは検索機能のデバウンス処理やリアルタイム更新などで威力を発揮します。実装例は`categories-index.js`の`setupRealtimeSearch`関数を参照してください。
+
+### モジュール設計
+
+```
+wwwroot/js/
+├── common.js           # 共通ユーティリティ
+├── categories-index.js # カテゴリ一覧画面専用
+└── categories-edit.js  # カテゴリ編集画面専用
+```
+
+**なぜ責任分離なのか**：
+- **保守性**: 機能ごとの独立性
+- **再利用性**: 共通機能の活用
+- **パフォーマンス**: 必要な機能のみ読み込み
+
+## 実用的なUI/UX実装
+
+### モーダル実装の目的
+
+`Index.cshtml`の削除確認モーダル：
+
+```html
+<div id="deleteCategoryModal" class="modal">
+    <div class="modal-content">
+        <!-- モーダル内容 -->
+    </div>
+</div>
+```
+
+**なぜモーダルなのか**：
+- **ユーザー体験**: 破壊的操作の確認
+- **情報保持**: 現在のコンテキストを維持
+- **誤操作防止**: 意図しない削除の回避
+
+### CSS設計思想
+
+`wwwroot/css/category-hierarchy.css`では、コンポーネント指向の設計を採用：
+
+```css
+.tree-item { /* ツリーアイテムの基本スタイル */ }
+.modal { /* モーダルの基本スタイル */ }
+.btn { /* ボタンの基本スタイル */ }
+```
+
+**なぜコンポーネント指向なのか**：
+- **再利用性**: 同じスタイルを複数箇所で活用
+- **保守性**: スタイル変更の影響範囲を限定
+- **一貫性**: UI/UXの統一
+
+### レスポンシブ対応
+
+**なぜレスポンシブ設計なのか**：
+- **マルチデバイス対応**: スマートフォン、タブレット、PC
+- **ユーザビリティ**: デバイスに最適な表示
+- **保守効率**: 単一コードベースでの管理
+
+## セキュリティ実装
+
+### CSRF攻撃対策
+
+`_Layout.cshtml`でのAntiforgeryToken：
+
+```html
+@Html.AntiForgeryToken()
+```
+
+JavaScript側でのトークン送信：
+
+```javascript
+const formData = new FormData();
+const token = getAntiForgeryToken();
+if (token) {
+    formData.append('__RequestVerificationToken', token);
+}
+```
+
+**なぜCSRF対策が必要なのか**：
+- **攻撃防止**: 悪意のあるサイトからの不正リクエスト阻止
+- **信頼性確保**: 正当なユーザーのアクションのみ受け付け
+- **データ保護**: 意図しないデータ変更の防止
+
+### 入力検証の二重化
+
+**クライアント側検証**：
+```javascript
+if (!nameInput.value.trim()) {
+    errors.push('カテゴリ名は必須です');
+    isValid = false;
+}
+```
+
+**サーバー側検証**：
+```csharp
+if (!ModelState.IsValid) {
+    return Json(new { success = false, errors = errors });
+}
+```
+
+**なぜ二重化するのか**：
+- **UX向上**: 即座のフィードバック（クライアント側）
+- **セキュリティ**: 確実な検証（サーバー側）
+- **信頼性**: JavaScriptが無効でも動作
+
+## エラーハンドリング
+
+### 統一されたエラー処理
+
+`common.js`の`Notifications`オブジェクト：
+
+```javascript
+const Notifications = {
+    showError(message, duration = 8000) { ... },
+    showSuccess(message, duration = 5000) { ... },
+    showApiError(error, duration = 8000) { ... }
+}
+```
+
+**なぜ統一するのか**：
+- **一貫性**: 同じ方法でのエラー表示
+- **保守性**: エラー処理ロジックの中央管理
+- **ユーザー体験**: 予測可能なフィードバック
+
+### 非同期処理のエラー設計
+
+```javascript
+try {
+    const response = await fetch(apiUrl);
+    const result = await response.json();
+    // 成功処理
+} catch (error) {
+    console.error('API通信エラー:', error);
+    showApiError(error);
+}
+```
+
+**なぜtry-catchなのか**：
+- **エラー捕捉**: 予期しないエラーの適切な処理
+- **ユーザー通知**: 技術的エラーをユーザーフレンドリーに変換
+- **ログ記録**: 開発者向けの詳細情報保持
+
+## 状態管理とデータフロー
+
+### クライアント側状態管理
+
+`categories-index.js`の状態管理：
+
+```javascript
+let currentSearchParams = {
+    searchKeyword: '',
+    deletableOnly: false
+};
+```
+
+**なぜ状態管理が重要なのか**：
+- **整合性維持**: UI状態とデータの同期
+- **ユーザー体験**: 操作状態の保持
+- **デバッグ**: 状態変化の追跡可能性
+
+### サーバー・クライアント責任分離
+
+**サーバー側責任**：
+- データの永続化
+- ビジネスロジック
+- セキュリティ検証
+
+**クライアント側責任**：
+- UI状態管理
+- ユーザーインタラクション
+- 表示ロジック
+
+**なぜ分離するのか**：
+- **スケーラビリティ**: 各層の独立した拡張
+- **保守性**: 関心事の分離
+- **パフォーマンス**: 適切な処理分散
+
+## Web標準準拠の意義
+
+### ネイティブAPI活用
+
+jQueryの代わりにネイティブAPIを使用：
+
+```javascript
+// jQuery: $('.className')
+// Native: document.querySelectorAll('.className')
+
+// jQuery: $.ajax()
+// Native: fetch()
+
+// jQuery: $(element).on('click', handler)
+// Native: element.addEventListener('click', handler)
+```
+
+**なぜWeb標準準拠なのか**：
+- **長期保守性**: ブラウザ標準による安定性
+- **学習効率**: フレームワーク固有の記法が不要
+- **互換性**: 標準APIによる高い互換性
+- **パフォーマンス**: 余分なライブラリ層の除去
+
+### ブラウザ標準APIの利点
+
+**学習コスト削減**：
+- フレームワーク固有の記法を覚える必要がない
+- Web標準の知識は他のプロジェクトでも活用可能
+
+**長期保守性**：
+- ブラウザベンダーによる標準仕様のサポート
+- フレームワークのバージョンアップ依存からの解放
+
+**パフォーマンス向上**：
+- ライブラリのダウンロード時間削減
+- メモリ使用量の最適化
+
+これらの実装パターンを理解することで、保守性が高く、ユーザビリティに優れたWebアプリケーションを開発できるようになります。コード詳細は `../src/Web.Essentials.App` を参照して、実際の実装を確認してください。
