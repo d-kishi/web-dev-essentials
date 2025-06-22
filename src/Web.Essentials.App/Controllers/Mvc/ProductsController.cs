@@ -412,14 +412,12 @@ public class ProductsController : Controller
                 return NotFound($"商品ID {id} が見つかりません");
             }
 
-            // 関連する商品画像も削除
+            // 関連する商品画像レコードを削除（物理ファイルは残す）
             var productImages = await _productImageRepository.GetByProductIdAsync(id);
             foreach (var image in productImages)
             {
                 await _productImageRepository.DeleteAsync(image.Id);
-                
-                // 物理ファイルも削除
-                await DeleteImageFileAsync(image.ImagePath);
+                // 物理ファイルは削除しない（要件により保持）
             }
 
             // 商品を削除
@@ -474,25 +472,6 @@ public class ProductsController : Controller
         }
     }
 
-    /// <summary>
-    /// 画像ファイルの物理削除
-    /// </summary>
-    /// <param name="imagePath">画像パス</param>
-    private async Task DeleteImageFileAsync(string imagePath)
-    {
-        try
-        {
-            var physicalPath = Path.Combine("wwwroot", imagePath.TrimStart('/'));
-            if (System.IO.File.Exists(physicalPath))
-            {
-                await Task.Run(() => System.IO.File.Delete(physicalPath));
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "画像ファイルの削除に失敗しました。パス: {ImagePath}", imagePath);
-        }
-    }
 
     /// <summary>
     /// 編集ViewModel用データの再読み込み
