@@ -1082,3 +1082,59 @@ Claude Codeとの協働により、開発者はより創造的で価値の高い
 ---
 
 **「Claude Codeはゲームチェンジャー。適切に活用すれば、開発の生産性と品質は飛躍的に向上する。」**
+
+---
+
+## 参考情報・学習リソース
+
+### 公式情報源（必読）
+
+#### Claude Code 公式ドキュメント
+- **URL**: https://docs.anthropic.com/en/docs/claude-code
+- **重要性**: Claude Codeの全機能・ベストプラクティス・最新情報が体系化された唯一の公式情報源
+- **推薦学習順序**:
+  1. `overview` - Claude Codeの全体像理解
+  2. `quickstart` - 確実な初期セットアップ
+  3. `common-workflows` - 実践的な使用パターン習得
+  4. `memory` - CLAUDE.mdによるプロジェクト知識管理
+  5. `troubleshooting` - よくある問題の解決法
+  6. `ide-integrations` - VSCode連携の最適化
+  7. `security` - セキュアな利用方法
+
+**特に重要なページ**:
+- **`memory`**: プロジェクト固有知識の効果的な管理方法
+- **`common-workflows`**: Extended thinking、画像貼り付け、--resumeオプション
+- **`interactive-mode`**: キーボードショートカット・効率的操作法
+- **`settings`**: 設定ファイル・環境変数による最適化
+
+#### Claude Code GitHub リポジトリ
+- **URL**: https://github.com/anthropics/claude-code
+- **活用目的**: 最新アップデート・既知問題・コミュニティ情報の収集
+- **効果的な使い方**:
+  - **Issues検索**: 同様の問題に対する解決策を探す
+  - **Discussions**: ベストプラクティス・使用例の情報交換
+  - **Releases**: 新機能・バグ修正の最新情報確認
+  - **Wiki/Documentation**: 補完的な技術情報・Tips
+
+**推薦検索クエリ例**:
+```
+# 特定技術での問題検索
+label:bug .NET
+label:enhancement JavaScript
+
+# 機能別情報検索
+memory management
+error handling
+performance optimization
+```
+
+### 学習アプローチ
+
+上記公式リソースを基盤として、以下の段階的アプローチで実践スキルを習得することを推奨します：
+
+1. **公式ドキュメント精読** → 基礎理解
+2. **小規模プロジェクトでの実践** → 基本操作習得
+3. **既存プロジェクトでの活用** → 応用スキル向上
+4. **チーム導入・ナレッジ共有** → 組織レベルでの価値創出
+
+継続的に公式情報をキャッチアップしながら、実践経験を積み重ねることが最も効果的な学習法です。
