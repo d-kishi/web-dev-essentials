@@ -501,12 +501,6 @@ public class ProductService : IProductService
             searchRequest.PageSize);
     }
 
-    /// <inheritdoc />
-    public async Task<ProductIndexViewModel> GetProductIndexAsync(ProductIndexViewModel viewModel)
-    {
-        // 基本実装
-        return await Task.FromResult(viewModel);
-    }
 
     /// <inheritdoc />
     public async Task<ProductStatisticsDto> GetStatisticsAsync()
@@ -583,38 +577,6 @@ public class ProductService : IProductService
         }).OrderBy(c => c.FullPath);
     }
 
-    /// <summary>
-    /// カテゴリエンティティを商品用CategorySelectItemに変換（最下位のみ選択可能）
-    /// </summary>
-    /// <param name="category">変換対象のカテゴリ</param>
-    /// <param name="categoryDict">カテゴリIDでインデックス化されたカテゴリ辞書</param>
-    /// <param name="productCounts">カテゴリごとの商品数</param>
-    /// <returns>変換されたCategorySelectItem</returns>
-    private CategorySelectItem ConvertToCategorySelectItemForProduct(
-        Category category, 
-        Dictionary<int, Category> categoryDict,
-        Dictionary<int, int> productCounts)
-    {
-        var fullPath = BuildCategoryFullPath(category, categoryDict);
-        var childCategories = categoryDict.Values
-            .Where(c => c.ParentCategoryId == category.Id)
-            .Select(child => ConvertToCategorySelectItemForProduct(child, categoryDict, productCounts))
-            .ToList();
-
-        // 子カテゴリを持たない場合のみ選択可能として扱う
-        var hasChildren = childCategories.Any();
-
-        return new CategorySelectItem
-        {
-            Id = category.Id,
-            Name = category.Name,
-            Description = category.Description,
-            FullPath = fullPath,
-            Level = category.Level,
-            ProductCount = productCounts.GetValueOrDefault(category.Id, 0),
-            ChildCategories = childCategories
-        };
-    }
 
 
     /// <summary>

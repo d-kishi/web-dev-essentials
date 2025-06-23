@@ -140,44 +140,6 @@
     gap: 0.5rem;
 }
 
-.selected-category-tag {
-    display: inline-flex;
-    align-items: center;
-    background-color: #007bff;
-    color: white;
-    padding: 0.25rem 0.5rem;
-    border-radius: 16px;
-    font-size: 0.85rem;
-}
-
-.tag-name {
-    font-weight: 500;
-}
-
-.tag-path {
-    margin-left: 0.25rem;
-    opacity: 0.8;
-}
-
-.tag-remove {
-    background: none;
-    border: none;
-    color: white;
-    margin-left: 0.5rem;
-    cursor: pointer;
-    font-weight: bold;
-    padding: 0;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.tag-remove:hover {
-    background-color: rgba(255,255,255,0.2);
-}
 
 .category-hierarchy-info {
     margin-top: 1rem;

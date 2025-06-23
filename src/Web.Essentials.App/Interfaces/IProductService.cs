@@ -22,12 +22,6 @@ public interface IProductService
     /// <returns>商品一覧DTO</returns>
     Task<ProductListDto> GetProductsAsync(ProductSearchRequestDto searchRequest);
 
-    /// <summary>
-    /// 商品一覧取得（ViewModel用）
-    /// </summary>
-    /// <param name="viewModel">検索条件ViewModel</param>
-    /// <returns>商品一覧ViewModel</returns>
-    Task<ProductIndexViewModel> GetProductIndexAsync(ProductIndexViewModel viewModel);
 
     #endregion
 

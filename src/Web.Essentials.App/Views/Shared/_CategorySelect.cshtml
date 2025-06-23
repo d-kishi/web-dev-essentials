@@ -123,7 +123,7 @@
             <div id="categoryTree" class="category-tree">
                 @if (categories.Any())
                 {
-                    <partial name="_CategoryHierarchy" model="categories.Where(c => c.Level == 0).ToCategoryTreeNodeViewModels()" />
+                    <partial name="_CategoryHierarchy" model="categories.Where(c => c.Level == 0)" />
                 }
                 else
                 {

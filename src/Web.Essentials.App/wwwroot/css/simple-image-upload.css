@@ -53,25 +53,6 @@
     margin-top: 1rem;
 }
 
-/* 選択されたファイル一覧 */
-.selected-files-area {
-    margin-top: 1.5rem;
-    padding: 1rem;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    background-color: #f9f9f9;
-}
-
-.files-title {
-    margin: 0 0 1rem 0;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #333;
-}
-
-.selected-files-list {
-    margin-bottom: 1rem;
-}
 
 .selected-file-item {
     display: flex;

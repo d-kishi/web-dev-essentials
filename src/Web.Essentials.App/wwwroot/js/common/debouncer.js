@@ -40,15 +40,6 @@ class Debouncer {
         }
     }
 
-    /**
-     * 即座実行
-     * @param {Function} func - 実行する関数
-     * @param {...any} args - 関数の引数
-     */
-    executeImmediate(func, ...args) {
-        this.cancel();
-        func.apply(this, args);
-    }
 }
 
 // グローバル公開
