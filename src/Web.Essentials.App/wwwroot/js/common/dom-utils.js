@@ -10,14 +10,14 @@ const Utils = {
     /**
      * 要素取得のヘルパー関数
      */
-    $(selector) {
+    element(selector) {
         if (typeof selector === 'string') {
             return document.querySelector(selector);
         }
         return selector;
     },
     
-    $$(selector) {
+    elements(selector) {
         return document.querySelectorAll(selector);
     },
     
@@ -25,7 +25,7 @@ const Utils = {
      * イベントリスナー追加のヘルパー関数
      */
     on(element, event, handler, options = false) {
-        const el = this.$(element);
+        const el = this.element(element);
         if (el) {
             el.addEventListener(event, handler, options);
         }
@@ -35,7 +35,7 @@ const Utils = {
      * 複数要素にイベントリスナー追加
      */
     onAll(selector, event, handler, options = false) {
-        const elements = this.$$(selector);
+        const elements = this.elements(selector);
         elements.forEach(el => {
             el.addEventListener(event, handler, options);
         });
@@ -45,22 +45,22 @@ const Utils = {
      * 要素のクラス操作
      */
     addClass(element, className) {
-        const el = this.$(element);
+        const el = this.element(element);
         if (el) el.classList.add(className);
     },
     
     removeClass(element, className) {
-        const el = this.$(element);
+        const el = this.element(element);
         if (el) el.classList.remove(className);
     },
     
     toggleClass(element, className) {
-        const el = this.$(element);
+        const el = this.element(element);
         if (el) el.classList.toggle(className);
     },
     
     hasClass(element, className) {
-        const el = this.$(element);
+        const el = this.element(element);
         return el ? el.classList.contains(className) : false;
     },
     
@@ -68,17 +68,17 @@ const Utils = {
      * 要素の表示/非表示
      */
     show(element, display = 'block') {
-        const el = this.$(element);
+        const el = this.element(element);
         if (el) el.style.display = display;
     },
     
     hide(element) {
-        const el = this.$(element);
+        const el = this.element(element);
         if (el) el.style.display = 'none';
     },
     
     toggle(element, display = 'block') {
-        const el = this.$(element);
+        const el = this.element(element);
         if (el) {
             el.style.display = el.style.display === 'none' ? display : 'none';
         }
@@ -88,7 +88,7 @@ const Utils = {
      * 要素の属性操作
      */
     attr(element, name, value = null) {
-        const el = this.$(element);
+        const el = this.element(element);
         if (!el) return null;
         
         if (value === null) {
@@ -100,7 +100,7 @@ const Utils = {
     },
     
     removeAttr(element, name) {
-        const el = this.$(element);
+        const el = this.element(element);
         if (el) el.removeAttribute(name);
     },
     
@@ -108,7 +108,7 @@ const Utils = {
      * 要素のプロパティ操作
      */
     prop(element, name, value = null) {
-        const el = this.$(element);
+        const el = this.element(element);
         if (!el) return null;
         
         if (value === null) {
@@ -123,7 +123,7 @@ const Utils = {
      * 要素のHTML/テキスト操作
      */
     html(element, content = null) {
-        const el = this.$(element);
+        const el = this.element(element);
         if (!el) return null;
         
         if (content === null) {
@@ -135,7 +135,7 @@ const Utils = {
     },
     
     text(element, content = null) {
-        const el = this.$(element);
+        const el = this.element(element);
         if (!el) return null;
         
         if (content === null) {
@@ -150,7 +150,7 @@ const Utils = {
      * フォーム値操作
      */
     val(element, value = null) {
-        const el = this.$(element);
+        const el = this.element(element);
         if (!el) return null;
         
         if (value === null) {
@@ -165,7 +165,7 @@ const Utils = {
      * CSS操作
      */
     css(element, property, value = null) {
-        const el = this.$(element);
+        const el = this.element(element);
         if (!el) return null;
         
         if (typeof property === 'object') {
@@ -186,7 +186,7 @@ const Utils = {
      * アニメーション関連
      */
     fadeIn(element, duration = 300) {
-        const el = this.$(element);
+        const el = this.element(element);
         if (!el) return;
         
         el.style.opacity = '0';
@@ -209,7 +209,7 @@ const Utils = {
     },
     
     fadeOut(element, duration = 300) {
-        const el = this.$(element);
+        const el = this.element(element);
         if (!el) return;
         
         const start = performance.now();
@@ -235,7 +235,7 @@ const Utils = {
      * DOM操作
      */
     append(parent, child) {
-        const parentEl = this.$(parent);
+        const parentEl = this.element(parent);
         if (parentEl) {
             if (typeof child === 'string') {
                 parentEl.insertAdjacentHTML('beforeend', child);
@@ -246,7 +246,7 @@ const Utils = {
     },
     
     prepend(parent, child) {
-        const parentEl = this.$(parent);
+        const parentEl = this.element(parent);
         if (parentEl) {
             if (typeof child === 'string') {
                 parentEl.insertAdjacentHTML('afterbegin', child);
@@ -257,7 +257,7 @@ const Utils = {
     },
     
     remove(element) {
-        const el = this.$(element);
+        const el = this.element(element);
         if (el && el.parentNode) {
             el.parentNode.removeChild(el);
         }
@@ -267,7 +267,7 @@ const Utils = {
      * データ操作
      */
     data(element, key, value = null) {
-        const el = this.$(element);
+        const el = this.element(element);
         if (!el) return null;
         
         if (value === null) {
@@ -282,7 +282,7 @@ const Utils = {
      * 位置・サイズ操作
      */
     offset(element) {
-        const el = this.$(element);
+        const el = this.element(element);
         if (!el) return null;
         
         const rect = el.getBoundingClientRect();
@@ -494,7 +494,9 @@ const Notifications = {
             animation: slideInRight 0.3s ease-out;
         `;
         
-        document.body.appendChild(notification);
+        if (document.body) {
+            document.body.appendChild(notification);
+        }
         
         // 自動削除
         if (duration > 0) {
@@ -544,7 +546,9 @@ const Loading = {
             </div>
         `;
         
-        document.body.appendChild(modal);
+        if (document.body) {
+            document.body.appendChild(modal);
+        }
     },
     
     /**
@@ -718,7 +722,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const styleSheet = document.createElement('style');
     styleSheet.textContent = styles;
-    document.head.appendChild(styleSheet);
+    if (document.head) {
+        document.head.appendChild(styleSheet);
+    }
 });
 
 /**
@@ -756,7 +762,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ドロップダウン外クリックで閉じる
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.dropdown')) {
-            Utils.$$('.dropdown.active').forEach(dropdown => {
+            Utils.elements('.dropdown.active').forEach(dropdown => {
                 Utils.removeClass(dropdown, 'active');
             });
         }

@@ -40,16 +40,12 @@ function initializeProductForm() {
         updateCharacterCount(descriptionTextarea, 'descriptionCount');
     }
 
-    // 画像ファイル入力の初期化
-    const imageInput = document.querySelector('input[name="ImageFiles"]');
-    if (imageInput) {
-        imageInput.addEventListener('change', function() {
-            handleImageUpload(this);
-        });
-    }
+    // 画像ファイル入力の初期化は image-upload-with-preview.js で処理
+    // 重複を避けるためここでは処理しない
 
-    // 画像関連のイベントハンドラーを初期化（単一責任の原則に基づく分離実装）
-    setupImageEventHandlers();
+    // 画像関連のイベントハンドラーは image-upload-with-preview.js で処理
+    // 重複を避けるため、この初期化は無効化
+    // setupImageEventHandlers();
 
     // 既存画像削除ボタンの初期化
     document.querySelectorAll('.delete-image-btn').forEach(button => {
@@ -159,28 +155,10 @@ function updateCharacterCount(textarea, counterId) {
 }
 
 /**
- * 画像アップロード処理
- * @param {HTMLInputElement} input - ファイル入力フィールド
+ * 画像アップロード処理は image-upload-with-preview.js で処理
+ * 重複を避けるため、この関数は使用しない
  */
-function handleImageUpload(input) {
-    const files = input.files;
-    const previewArea = document.getElementById('imagePreviewArea');
-    const previewList = document.getElementById('imagePreviewList');
-
-    if (!files.length) {
-        if (previewArea) previewArea.style.display = 'none';
-        return;
-    }
-
-    if (previewArea) previewArea.style.display = 'block';
-    if (previewList) previewList.innerHTML = '';
-
-    Array.from(files).forEach((file, index) => {
-        if (file.type.startsWith('image/')) {
-            createImagePreview(file, index, previewList);
-        }
-    });
-}
+// function handleImageUpload(input) - 削除済み
 
 /**
  * 画像プレビュー作成（遅延読み込み対応）
@@ -188,7 +166,8 @@ function handleImageUpload(input) {
  * @param {number} index - インデックス
  * @param {HTMLElement} container - プレビューコンテナ
  */
-function createImagePreview(file, index, container) {
+// 重複処理を無効化 - image-upload-with-preview.js で処理
+function createImagePreview_DISABLED(file, index, container) {
     // プレビューアイテムをまず作成（遅延読み込み用）
     const previewItem = document.createElement('div');
     previewItem.className = 'image-preview-item';
@@ -214,7 +193,7 @@ function createImagePreview(file, index, container) {
     
     // 遅延読み込みでファイルを読み込む
     requestIdleCallback(() => {
-        loadImagePreview(file, previewItem);
+        // loadImagePreview(file, previewItem); // 無効化済み
     }, { timeout: 2000 });
 }
 
@@ -223,7 +202,8 @@ function createImagePreview(file, index, container) {
  * @param {File} file - 画像ファイル
  * @param {HTMLElement} previewItem - プレビューアイテム要素
  */
-function loadImagePreview(file, previewItem) {
+// 重複処理を無効化 - image-upload-with-preview.js で処理
+function loadImagePreview_DISABLED(file, previewItem) {
     const reader = new FileReader();
     
     reader.onload = function(e) {
@@ -421,7 +401,6 @@ function saveImageSettings() {
 window.formatPrice = formatPrice;
 window.validateJanCode = validateJanCode;
 window.updateCharacterCount = updateCharacterCount;
-window.handleImageUpload = handleImageUpload;
 window.removeImagePreview = removeImagePreview;
 window.deleteExistingImage = deleteExistingImage;
 window.setupImageEventHandlers = setupImageEventHandlers;

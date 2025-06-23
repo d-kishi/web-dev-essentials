@@ -118,6 +118,17 @@ public interface IProductRepository
     Task<Product> UpdateAsync(Product product);
 
     /// <summary>
+    /// 商品の基本プロパティのみを安全に更新する
+    /// </summary>
+    /// <param name="product">更新する商品情報</param>
+    /// <returns>更新された商品</returns>
+    /// <remarks>
+    /// ProductCategoriesの関係は UpdateProductCategoriesAsync で別途管理
+    /// InMemoryプロバイダーでのEntity Framework競合を回避するため、基本プロパティのみ更新
+    /// </remarks>
+    Task<Product> UpdateBasicPropertiesAsync(Product product);
+
+    /// <summary>
     /// 商品削除
     /// </summary>
     /// <param name="id">削除する商品ID</param>
@@ -149,6 +160,17 @@ public interface IProductRepository
     /// excludeProductId により、更新時の自己重複を除外可能
     /// </remarks>
     Task<bool> IsJanCodeDuplicateAsync(string janCode, int? excludeProductId = null);
+
+    /// <summary>
+    /// 商品のカテゴリ関係を安全に更新する
+    /// </summary>
+    /// <param name="productId">商品ID</param>
+    /// <param name="categoryIds">新しいカテゴリIDのリスト</param>
+    /// <remarks>
+    /// InMemoryプロバイダーの複合キー問題を回避するため、
+    /// 既存のProductCategoryを削除してから新しいものを追加する
+    /// </remarks>
+    Task UpdateProductCategoriesAsync(int productId, List<int> categoryIds);
 
     /// <summary>
     /// 商品統計情報取得

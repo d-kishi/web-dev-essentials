@@ -208,7 +208,9 @@ function showSuccessModal(title, message, callback) {
     // コールバック関数をグローバルに設定
     window.deleteSuccessCallback = callback;
     
-    document.body.appendChild(modal);
+    if (document.body) {
+        document.body.appendChild(modal);
+    }
     modal.style.display = 'block';
 }
 
@@ -233,7 +235,9 @@ function showError(message) {
     if (pageHeader) {
         pageHeader.insertAdjacentElement('afterend', errorContainer);
     } else {
-        document.body.insertBefore(errorContainer, document.body.firstChild);
+        if (document.body && document.body.firstChild) {
+            document.body.insertBefore(errorContainer, document.body.firstChild);
+        }
     }
     
     // 自動削除（10秒後）

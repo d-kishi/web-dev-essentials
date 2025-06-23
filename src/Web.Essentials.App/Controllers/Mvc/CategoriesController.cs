@@ -115,8 +115,8 @@ public class CategoriesController : Controller
                     Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 {
                     var errors = ModelState
-                        .Where(x => x.Value.Errors.Count > 0)
-                        .Select(x => new { Field = x.Key, Message = x.Value.Errors.First().ErrorMessage })
+                        .Where(x => x.Value?.Errors.Count > 0)
+                        .Select(x => new { Field = x.Key, Message = x.Value?.Errors.First().ErrorMessage ?? "エラーが発生しました" })
                         .ToList();
                     
                     return Json(new { success = false, errors = errors });
@@ -225,8 +225,8 @@ public class CategoriesController : Controller
                     Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 {
                     var errors = ModelState
-                        .Where(x => x.Value.Errors.Count > 0)
-                        .Select(x => new { Field = x.Key, Message = x.Value.Errors.First().ErrorMessage })
+                        .Where(x => x.Value?.Errors.Count > 0)
+                        .Select(x => new { Field = x.Key, Message = x.Value?.Errors.First().ErrorMessage ?? "エラーが発生しました" })
                         .ToList();
                     
                     return Json(new { success = false, errors = errors });

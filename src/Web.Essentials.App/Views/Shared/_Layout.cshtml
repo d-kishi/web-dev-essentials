@@ -23,10 +23,10 @@
     </environment>
     
     <!-- 共通JavaScript -->
-    <script src="~/js/common.js" asp-append-version="true" defer></script>
-    <script src="~/js/ajax.js" asp-append-version="true" defer></script>
+    <script src="~/js/common/dom-utils.js" asp-append-version="true" defer></script>
+    <script src="~/js/common/api-client.js" asp-append-version="true" defer></script>
     <script src="~/js/components.js" asp-append-version="true" defer></script>
-    <script src="~/js/category-hierarchy.js" asp-append-version="true" defer></script>
+    <script src="~/js/categories/category-hierarchy.js" asp-append-version="true" defer></script>
     
     <!-- ページ固有のスクリプト -->
     @await RenderSectionAsync("Scripts", required: false)

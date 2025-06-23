@@ -3,7 +3,6 @@
    ====================================== */
 
 // RxJSオペレーターの取得
-const { fromFetch } = rxjs.fetch;
 const { from, of, throwError } = rxjs;
 const { switchMap, map, catchError, retry, debounceTime, distinctUntilChanged, shareReplay } = rxjs.operators;
 
@@ -81,7 +80,7 @@ class RxAjaxClient {
             }
         }
         
-        return fromFetch(fullUrl, config).pipe(
+        return from(fetch(fullUrl, config)).pipe(
             switchMap(response => {
                 if (!response.ok) {
                     // エラーレスポンスの詳細を取得

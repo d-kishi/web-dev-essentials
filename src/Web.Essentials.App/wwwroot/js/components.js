@@ -11,7 +11,7 @@ const ConfirmationModal = {
      * 確認モーダル表示
      */
     show(title, message, details = '', okButtonText = '実行', onConfirm = null) {
-        const modal = Utils.$('#confirmationModal');
+        const modal = Utils.element('#confirmationModal');
         if (!modal) return;
         
         // 内容設定
@@ -20,7 +20,7 @@ const ConfirmationModal = {
         Utils.text('#confirmationModalOkButton', okButtonText);
         
         // 詳細情報設定
-        const detailsEl = Utils.$('#confirmationModalDetails');
+        const detailsEl = Utils.element('#confirmationModalDetails');
         if (details) {
             Utils.html(detailsEl, details);
             Utils.show(detailsEl);
@@ -29,7 +29,7 @@ const ConfirmationModal = {
         }
         
         // 確認ボタンのイベント設定
-        const okButton = Utils.$('#confirmationModalOkButton');
+        const okButton = Utils.element('#confirmationModalOkButton');
         if (okButton) {
             okButton.onclick = () => {
                 this.hide();
@@ -47,7 +47,7 @@ const ConfirmationModal = {
      * 確認モーダル非表示
      */
     hide() {
-        const modal = Utils.$('#confirmationModal');
+        const modal = Utils.element('#confirmationModal');
         if (modal) {
             Utils.hide(modal);
         }
@@ -58,7 +58,7 @@ const ConfirmationModal = {
  * メッセージクローズ処理
  */
 function closeMessage(messageId) {
-    const messageEl = Utils.$(`#${messageId}`);
+    const messageEl = Utils.element(`#${messageId}`);
     if (messageEl) {
         Utils.fadeOut(messageEl, 300);
     }
@@ -136,7 +136,7 @@ const Pagination = {
      * ページング表示の描画
      */
     renderPagination(pagingData) {
-        const container = Utils.$('#paginationContainer');
+        const container = Utils.element('#paginationContainer');
         if (!container) return;
         
         if (pagingData.totalPages <= 1) {
@@ -184,7 +184,7 @@ const SearchComponent = {
      * 検索フォーム初期化
      */
     initializeSearchForm() {
-        const searchInput = Utils.$('#searchKeyword');
+        const searchInput = Utils.element('#searchKeyword');
         if (searchInput) {
             // リアルタイム検索候補
             Utils.on(searchInput, 'input', Utils.debounce((e) => {
@@ -226,7 +226,7 @@ const SearchComponent = {
         });
         
         // 高度な検索オプション切り替え
-        const toggleBtn = Utils.$('.toggle-btn');
+        const toggleBtn = Utils.element('.toggle-btn');
         if (toggleBtn) {
             Utils.on(toggleBtn, 'click', this.toggleAdvancedSearch);
         }
@@ -245,7 +245,7 @@ const SearchComponent = {
      * 検索リセット
      */
     resetSearch() {
-        const form = Utils.$('#searchForm');
+        const form = Utils.element('#searchForm');
         if (form) {
             form.reset();
         }
@@ -271,7 +271,7 @@ const SearchComponent = {
      * 検索候補描画
      */
     renderSuggestions(suggestions) {
-        const container = Utils.$('#searchSuggestions');
+        const container = Utils.element('#searchSuggestions');
         if (!container) return;
         
         if (!suggestions || suggestions.length === 0) {
@@ -291,7 +291,7 @@ const SearchComponent = {
      * 検索候補選択
      */
     selectSuggestion(suggestion) {
-        const searchInput = Utils.$('#searchKeyword');
+        const searchInput = Utils.element('#searchKeyword');
         if (searchInput) {
             searchInput.value = suggestion;
             this.hideSuggestions();
@@ -303,7 +303,7 @@ const SearchComponent = {
      * 検索候補非表示
      */
     hideSuggestions() {
-        const container = Utils.$('#searchSuggestions');
+        const container = Utils.element('#searchSuggestions');
         if (container) {
             Utils.hide(container);
         }
@@ -313,9 +313,9 @@ const SearchComponent = {
      * 高度な検索オプション切り替え
      */
     toggleAdvancedSearch() {
-        const options = Utils.$('#advancedSearchOptions');
-        const toggleText = Utils.$('#advancedSearchToggleText');
-        const toggleIcon = Utils.$('#advancedSearchToggleIcon');
+        const options = Utils.element('#advancedSearchOptions');
+        const toggleText = Utils.element('#advancedSearchToggleText');
+        const toggleIcon = Utils.element('#advancedSearchToggleIcon');
         
         if (options) {
             const isVisible = Utils.css(options, 'display') !== 'none';
@@ -342,9 +342,9 @@ const SearchComponent = {
      * 検索統計表示
      */
     showSearchStats(totalCount, searchTime = null) {
-        const statsEl = Utils.$('#searchStats');
-        const statsTextEl = Utils.$('#searchStatsText');
-        const searchTimeEl = Utils.$('#searchTime');
+        const statsEl = Utils.element('#searchStats');
+        const statsTextEl = Utils.element('#searchStatsText');
+        const searchTimeEl = Utils.element('#searchTime');
         
         if (statsEl && statsTextEl) {
             statsTextEl.textContent = `検索結果: ${totalCount}件`;
@@ -401,7 +401,7 @@ const TableComponent = {
      */
     updateSortIndicators(activeHeader, direction) {
         // すべてのソート表示をリセット
-        Utils.$$('.sort-indicator').forEach(indicator => {
+        Utils.element$('.sort-indicator').forEach(indicator => {
             indicator.textContent = '';
         });
         
@@ -436,18 +436,18 @@ const ViewToggle = {
         this.currentView = view;
         
         // ボタンの状態更新
-        Utils.$$('.view-toggle').forEach(btn => {
+        Utils.element$('.view-toggle').forEach(btn => {
             Utils.removeClass(btn, 'active');
         });
         
-        const activeBtn = Utils.$(`.view-toggle[data-view="${view}"]`);
+        const activeBtn = Utils.element(`.view-toggle[data-view="${view}"]`);
         if (activeBtn) {
             Utils.addClass(activeBtn, 'active');
         }
         
         // 表示の切り替え
-        const tableView = Utils.$('#tableView');
-        const gridView = Utils.$('#gridView');
+        const tableView = Utils.element('#tableView');
+        const gridView = Utils.element('#gridView');
         
         if (view === 'table') {
             if (tableView) Utils.show(tableView);
@@ -463,7 +463,7 @@ const ViewToggle = {
      * グリッド表示用データ読み込み
      */
     async loadGridView() {
-        const gridContainer = Utils.$('#productGrid');
+        const gridContainer = Utils.element('#productGrid');
         if (!gridContainer) return;
         
         // グリッド表示用のデータ読み込み処理
@@ -611,7 +611,7 @@ const ImageUpload = {
      * 画像アップロード初期化
      */
     initialize() {
-        const uploadArea = Utils.$('.image-upload-area');
+        const uploadArea = Utils.element('.image-upload-area');
         if (uploadArea) {
             // ドラッグ&ドロップ設定
             this.setupDragAndDrop(uploadArea);
@@ -673,8 +673,8 @@ const ImageUpload = {
      * ファイル処理
      */
     handleFiles(files) {
-        const previewArea = Utils.$('#imagePreviewArea');
-        const previewList = Utils.$('#imagePreviewList');
+        const previewArea = Utils.element('#imagePreviewArea');
+        const previewList = Utils.element('#imagePreviewList');
         
         if (!previewArea || !previewList) return;
         
@@ -753,7 +753,7 @@ function sortBy(column) {
 
 function updateCharacterCount(element, counterId) {
     const currentLength = element.value.length;
-    const counterEl = Utils.$(`#${counterId}`);
+    const counterEl = Utils.element(`#${counterId}`);
     if (counterEl) {
         counterEl.textContent = currentLength;
     }
@@ -764,8 +764,8 @@ function highlightFieldError(field) {
 }
 
 function showValidationErrors(errors) {
-    const summaryEl = Utils.$('#formValidationSummary');
-    const listEl = Utils.$('#validationErrorList');
+    const summaryEl = Utils.element('#formValidationSummary');
+    const listEl = Utils.element('#validationErrorList');
     
     if (summaryEl && listEl) {
         listEl.innerHTML = errors.map(error => 
@@ -777,23 +777,23 @@ function showValidationErrors(errors) {
 }
 
 function hideValidationErrors() {
-    const summaryEl = Utils.$('#formValidationSummary');
+    const summaryEl = Utils.element('#formValidationSummary');
     if (summaryEl) {
         Utils.hide(summaryEl);
     }
     
     // 個別フィールドエラーもクリア
-    Utils.$$('.form-input.error, .form-select.error, .form-textarea.error').forEach(field => {
+    Utils.elements('.form-input.error, .form-select.error, .form-textarea.error').forEach(field => {
         Utils.removeClass(field, 'error');
     });
     
-    Utils.$$('.validation-error').forEach(errorEl => {
+    Utils.elements('.validation-error').forEach(errorEl => {
         Utils.hide(errorEl);
     });
 }
 
 function showValidationMessage(elementId, message, type) {
-    const element = Utils.$(`#${elementId}`);
+    const element = Utils.element(`#${elementId}`);
     if (element) {
         element.textContent = message;
         element.className = `field-validation ${type}`;
@@ -802,7 +802,7 @@ function showValidationMessage(elementId, message, type) {
 }
 
 function hideValidationMessage(elementId) {
-    const element = Utils.$(`#${elementId}`);
+    const element = Utils.element(`#${elementId}`);
     if (element) {
         Utils.hide(element);
     }

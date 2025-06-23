@@ -176,6 +176,41 @@ public class ProductRepository : IProductRepository
         await _context.SaveChangesAsync();
         return product;
     }
+    
+    /// <summary>
+    /// 商品の基本プロパティのみを安全に更新する
+    /// ProductCategoriesの関係は UpdateProductCategoriesAsync で別途管理
+    /// </summary>
+    /// <param name="product">更新する商品情報</param>
+    /// <returns>更新された商品</returns>
+    public async Task<Product> UpdateBasicPropertiesAsync(Product product)
+    {
+        if (product == null)
+            throw new ArgumentNullException(nameof(product));
+
+        // エンティティの状態をクリアして競合を回避
+        var entry = _context.Entry(product);
+        entry.State = EntityState.Detached;
+        
+        // 基本プロパティのみを更新（ProductCategoriesは除外）
+        var trackedProduct = await _context.Products
+            .Where(p => p.Id == product.Id)
+            .FirstOrDefaultAsync();
+            
+        if (trackedProduct == null)
+            throw new InvalidOperationException($"Product with ID {product.Id} not found");
+            
+        // 基本プロパティのみをコピー
+        trackedProduct.Name = product.Name;
+        trackedProduct.Description = product.Description;
+        trackedProduct.Price = product.Price;
+        trackedProduct.JanCode = product.JanCode;
+        trackedProduct.Status = product.Status;
+        trackedProduct.UpdatedAt = product.UpdatedAt;
+        
+        await _context.SaveChangesAsync();
+        return trackedProduct;
+    }
 
     /// <inheritdoc />
     public async Task<bool> DeleteAsync(int id)
@@ -193,6 +228,40 @@ public class ProductRepository : IProductRepository
     public async Task<bool> ExistsAsync(int id)
     {
         return await _context.Products.AnyAsync(p => p.Id == id);
+    }
+    
+    /// <summary>
+    /// 商品のカテゴリ関係を安全に更新する
+    /// InMemoryプロバイダーの複合キー問題を回避するため、専用メソッドで処理
+    /// </summary>
+    /// <param name="productId">商品ID</param>
+    /// <param name="categoryIds">新しいカテゴリIDのリスト</param>
+    public async Task UpdateProductCategoriesAsync(int productId, List<int> categoryIds)
+    {
+        // 既存のProductCategoryを全て削除
+        var existingProductCategories = await _context.ProductCategories
+            .Where(pc => pc.ProductId == productId)
+            .ToListAsync();
+            
+        if (existingProductCategories.Any())
+        {
+            _context.ProductCategories.RemoveRange(existingProductCategories);
+            await _context.SaveChangesAsync(); // 先に削除を確定
+        }
+        
+        // 新しいProductCategoryを追加
+        if (categoryIds.Any())
+        {
+            var newProductCategories = categoryIds.Select(categoryId => new ProductCategory
+            {
+                ProductId = productId,
+                CategoryId = categoryId,
+                CreatedAt = DateTime.UtcNow
+            }).ToList();
+            
+            await _context.ProductCategories.AddRangeAsync(newProductCategories);
+            await _context.SaveChangesAsync(); // 追加を確定
+        }
     }
 
     /// <inheritdoc />

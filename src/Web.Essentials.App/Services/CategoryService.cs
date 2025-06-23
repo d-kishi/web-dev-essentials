@@ -415,7 +415,7 @@ public class CategoryService : ICategoryService
     /// </summary>
     /// <param name="categories">変換対象のカテゴリエンティティのコレクション</param>
     /// <returns>階層構造と完全パスを持つCategorySelectItemsのコレクション</returns>
-    private async Task<IEnumerable<CategorySelectItem>> ConvertToCategorySelectItemsAsync(IEnumerable<Category> categories)
+    private Task<IEnumerable<CategorySelectItem>> ConvertToCategorySelectItemsAsync(IEnumerable<Category> categories)
     {
         var result = new List<CategorySelectItem>();
         var categoryDict = categories.ToDictionary(c => c.Id);
@@ -437,7 +437,7 @@ public class CategoryService : ICategoryService
         }
 
         // FullPathの昇順でソート（「ルートカテゴリとして作成」が先頭に来るように）
-        return result.OrderBy(c => c.FullPath);
+        return Task.FromResult(result.OrderBy(c => c.FullPath).AsEnumerable());
     }
 
     /// <summary>

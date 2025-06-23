@@ -12,11 +12,17 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
 let selectedFiles = [];
 let selectedFileMetadata = []; // 代替テキストとメイン画像フラグを管理
 let currentEditingIndex = -1;
+let isInitialized = false; // 初期化フラグ
 
 /**
  * 初期化
  */
 function initializeImageUploadWithPreview() {
+    if (isInitialized) {
+        console.log('画像アップロード機能は既に初期化済みです');
+        return;
+    }
+    
     const fileInput = document.getElementById('imageFiles');
     const uploadZone = document.getElementById('imageUploadZone');
     
@@ -29,6 +35,22 @@ function initializeImageUploadWithPreview() {
     if (uploadZone) {
         setupDragAndDrop(uploadZone);
     }
+    
+    // 「ファイルを選択」ボタンイベント
+    const selectFileBtn = document.querySelector('[data-action="select-file"]');
+    if (selectFileBtn) {
+        selectFileBtn.addEventListener('click', function(e) {
+            e.preventDefault(); // デフォルト動作を防止
+            e.stopPropagation(); // アップロードゾーンへのイベント伝播を停止
+            console.log('ファイル選択ボタンがクリックされました'); // デバッグ用
+            if (fileInput) {
+                fileInput.click();
+            }
+        });
+    }
+    
+    isInitialized = true;
+    console.log('画像アップロード機能の初期化が完了しました');
 }
 
 /**
@@ -53,11 +75,15 @@ function setupDragAndDrop(uploadZone) {
         processFiles(Array.from(files));
     });
     
-    // クリックでファイル選択
+    // クリックでファイル選択（ボタン要素とその内部要素をクリックした場合は除外）
     uploadZone.addEventListener('click', function(e) {
-        if (e.target.tagName !== 'BUTTON') {
-            document.getElementById('imageFiles').click();
+        // ボタンまたはボタン内の要素がクリックされた場合は何もしない
+        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+            console.log('アップロードゾーン: ボタンクリックのため無視'); // デバッグ用
+            return;
         }
+        console.log('アップロードゾーンがクリックされました'); // デバッグ用
+        document.getElementById('imageFiles').click();
     });
 }
 
@@ -65,6 +91,7 @@ function setupDragAndDrop(uploadZone) {
  * ファイル選択処理
  */
 function handleFileSelection(event) {
+    console.log('ファイル選択処理が実行されました', event.target.files.length, '個のファイル'); // デバッグ用
     const files = Array.from(event.target.files);
     processFiles(files);
 }
@@ -167,6 +194,11 @@ function displayImagePreviews() {
  * 個別画像プレビュー作成
  */
 function createImagePreview(file, index, container) {
+    if (!container) {
+        console.error('Image preview container not found');
+        return;
+    }
+    
     const reader = new FileReader();
     
     reader.onload = function(e) {
@@ -201,7 +233,9 @@ function createImagePreview(file, index, container) {
             </div>
         `;
         
-        container.appendChild(previewItem);
+        if (container) {
+            container.appendChild(previewItem);
+        }
     };
     
     reader.readAsDataURL(file);
@@ -470,6 +504,12 @@ function setupFormSubmissionHandler() {
         });
     }
 }
+
+// ページ読み込み時の初期化
+document.addEventListener('DOMContentLoaded', function() {
+    initializeImageUploadWithPreview();
+    setupFormSubmissionHandler();
+});
 
 // グローバル関数として公開
 window.clearAllImages = clearAllImages;

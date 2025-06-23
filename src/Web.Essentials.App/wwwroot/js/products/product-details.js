@@ -150,12 +150,16 @@ function openImageViewer(imagePath, altText) {
     `;
     
     modal.addEventListener('click', function() {
-        document.body.removeChild(modal);
+        if (document.body.contains(modal)) {
+            document.body.removeChild(modal);
+        }
         document.body.style.overflow = 'auto';
     });
     
-    document.body.appendChild(modal);
-    document.body.style.overflow = 'hidden';
+    if (document.body) {
+        document.body.appendChild(modal);
+        document.body.style.overflow = 'hidden';
+    }
 }
 
 /**
@@ -163,7 +167,7 @@ function openImageViewer(imagePath, altText) {
  */
 function closeImageViewer() {
     const modal = document.querySelector('.image-view-modal');
-    if (modal) {
+    if (modal && document.body.contains(modal)) {
         document.body.removeChild(modal);
         document.body.style.overflow = 'auto';
     }
@@ -316,10 +320,12 @@ async function copyToClipboard(text) {
         // フォールバック
         const textArea = document.createElement('textarea');
         textArea.value = text;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
+        if (document.body) {
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+        }
         
         showSuccess('クリップボードにコピーしました');
     }

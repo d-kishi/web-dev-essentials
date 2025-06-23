@@ -11,15 +11,15 @@
     var showFullDetails = ViewBag.ShowFullDetails as bool? ?? true;
 }
 
-<div class="Model-details-display">
+<div class="product-details-display">
     <!-- 商品概要カード -->
-    <div class="Model-overview-card">
-        <div class="Model-overview-content">
+    <div class="product-overview-card">
+        <div class="product-overview-content">
             <!-- 商品画像セクション -->
-            <div class="Model-images-section">
+            <div class="product-images-section">
                 @if (Model.Images?.Any() == true)
                 {
-                    <div class="Model-images-gallery">
+                    <div class="product-images-gallery">
                         @{
                             var mainImage = Model.Images.FirstOrDefault();
                             foreach (var img in Model.Images)
@@ -35,7 +35,7 @@
                         <div class="main-image-container">
                             <img src="@(mainImage?.ImagePath ?? "")" 
                                  alt="@(mainImage?.AltText ?? "")" 
-                                 class="main-Model-image" 
+                                 class="main-product-image" 
                                  data-action="open-image-viewer" 
                                  data-image-path="@(mainImage?.ImagePath ?? "")" 
                                  data-alt-text="@(mainImage?.AltText ?? "")" />
@@ -77,11 +77,11 @@
             </div>
             
             <!-- 商品基本情報セクション -->
-            <div class="Model-basic-section">
+            <div class="product-basic-section">
                 <!-- 商品名とステータス -->
-                <div class="Model-header-info">
-                    <h2 class="Model-display-name">@Model.Name</h2>
-                    <div class="Model-status-info">
+                <div class="product-header-info">
+                    <h2 class="product-display-name">@Model.Name</h2>
+                    <div class="product-status-info">
                         @switch (Model.Status)
                         {
                             case ProductStatus.PreSale:
@@ -98,7 +98,7 @@
                 </div>
                 
                 <!-- 価格表示 -->
-                <div class="Model-price-info">
+                <div class="product-price-info">
                     <div class="price-display">
                         <span class="price-currency">¥</span>
                         <span class="price-amount">@Model.Price.ToString("N0")</span>
@@ -109,7 +109,7 @@
                 <!-- 商品説明 -->
                 @if (!string.IsNullOrEmpty(Model.Description))
                 {
-                    <div class="Model-description-section">
+                    <div class="product-description-section">
                         <h3 class="description-title">商品説明</h3>
                         <div class="description-content">
                             @Html.Raw(Model.Description.Replace("\n", "<br />"))
@@ -120,7 +120,7 @@
                 <!-- カテゴリ情報 -->
                 @if (Model.Categories?.Any() == true)
                 {
-                    <div class="Model-categories-section">
+                    <div class="product-categories-section">
                         <h3 class="categories-title">カテゴリ</h3>
                         <div class="categories-display">
                             @foreach (var category in Model.Categories)
@@ -147,7 +147,7 @@
         <!-- アクションボタン（表示モードに応じて） -->
         @if (showActions && !isDeleteMode)
         {
-            <div class="Model-actions-section">
+            <div class="product-actions-section">
                 <div class="action-buttons">
                     <a asp-action="Edit" asp-controller="Products" asp-route-id="@Model.Id" 
                        class="btn btn-primary">
@@ -156,16 +156,16 @@
                     </a>
                     <button type="button" 
                             class="btn btn-outline" 
-                            data-action="share-Model" 
-                            data-Model-id="@Model.Id" 
-                            data-Model-name="@Model.Name">
+                            data-action="share-product" 
+                            data-product-id="@Model.Id" 
+                            data-product-name="@Model.Name">
                         <span class="btn-icon">📤</span>
                         共有
                     </button>
                     <button type="button" 
                             class="btn btn-light" 
-                            data-action="duplicate-Model" 
-                            data-Model-id="@Model.Id">
+                            data-action="duplicate-product" 
+                            data-product-id="@Model.Id">
                         <span class="btn-icon">📋</span>
                         複製
                     </button>
@@ -177,7 +177,7 @@
     <!-- 詳細情報（フル表示モードの場合） -->
     @if (showFullDetails)
     {
-        <div class="Model-detailed-info">
+        <div class="product-detailed-info">
             <!-- 商品仕様情報 -->
             <div class="specifications-section">
                 <h3 class="section-title">商品仕様</h3>
@@ -295,9 +295,9 @@
 </div>
 
 @section Scripts {
-    <script src="~/js/Model-details.js" asp-append-version="true" defer></script>
+    <script src="~/js/products/product-details.js" asp-append-version="true" defer></script>
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/Model-details.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/product-details.css" asp-append-version="true" />
 }

@@ -178,7 +178,7 @@ public class ProductService : IProductService
         {
             _logger.LogInformation("商品編集用ViewModel準備サービス実行。商品ID: {ProductId}", id);
 
-            var product = await _productRepository.GetByIdAsync(id);
+            var product = await _productRepository.GetByIdAsync(id, includeRelations: true);
             if (product == null)
             {
                 _logger.LogWarning("商品が見つかりませんでした。商品ID: {ProductId}", id);
@@ -190,6 +190,11 @@ public class ProductService : IProductService
             var productImages = await _productImageRepository.GetByProductIdAsync(id);
             var categorySelectItems = ConvertToCategorySelectItems(categories);
 
+            // ProductCategoriesが正しくロードされているかログ出力
+            var selectedCategoryIds = product.ProductCategories?.Select(pc => pc.CategoryId).ToList() ?? new List<int>();
+            _logger.LogInformation("商品編集ViewModel準備: 商品ID {ProductId}, 関連カテゴリ数: {CategoryCount}, カテゴリIDs: {CategoryIds}", 
+                id, selectedCategoryIds.Count, string.Join(",", selectedCategoryIds));
+
             return new ProductEditViewModel
             {
                 Id = product.Id,
@@ -198,7 +203,7 @@ public class ProductService : IProductService
                 Price = (uint)product.Price,
                 Status = product.Status,
                 JanCode = product.JanCode,
-                SelectedCategoryIds = product.ProductCategories.Select(pc => pc.CategoryId).ToList(),
+                SelectedCategoryIds = selectedCategoryIds,
                 Categories = categorySelectItems.OrderBy(c => c.FullPath).ToList(),
                 ExistingImages = productImages.Select(img => new ProductImageViewModel
                 {
@@ -416,7 +421,11 @@ public class ProductService : IProductService
         {
             _logger.LogInformation("商品更新サービス実行。商品ID: {ProductId}", editModel.Id);
 
-            var product = await _productRepository.GetByIdAsync(editModel.Id);
+            // 先にカテゴリ関係を更新（InMemoryプロバイダーの複合キー問題を回避）
+            await _productRepository.UpdateProductCategoriesAsync(editModel.Id, editModel.SelectedCategoryIds?.ToList() ?? new List<int>());
+
+            // 基本情報のみを更新（カテゴリ関係は含めない）
+            var product = await _productRepository.GetByIdAsync(editModel.Id, includeRelations: false);
             if (product == null)
             {
                 _logger.LogWarning("更新対象の商品が見つかりませんでした。商品ID: {ProductId}", editModel.Id);
@@ -431,22 +440,7 @@ public class ProductService : IProductService
             product.Status = editModel.Status;
             product.UpdatedAt = DateTime.UtcNow;
 
-            // カテゴリ関係の更新
-            product.ProductCategories.Clear();
-            if (editModel.SelectedCategoryIds?.Any() == true)
-            {
-                foreach (var categoryId in editModel.SelectedCategoryIds)
-                {
-                    var productCategory = new ProductCategory
-                    {
-                        ProductId = product.Id,
-                        CategoryId = categoryId
-                    };
-                    product.ProductCategories.Add(productCategory);
-                }
-            }
-
-            await _productRepository.UpdateAsync(product);
+            await _productRepository.UpdateBasicPropertiesAsync(product);
             _logger.LogInformation("商品を正常に更新しました。商品ID: {ProductId}", product.Id);
             
             return true;
