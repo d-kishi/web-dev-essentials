@@ -539,6 +539,93 @@ public class ApplicationDbContext : DbContext
   - ProductImagesの関連レコードも自動削除 (`ON DELETE CASCADE`)
 
 ### 8.2 InMemoryデータベース制約
-- アプリケーション再起動でデータリセット
-- 複数プロセスでのデータ共有不可
-- トランザクション機能制限あり
+
+#### 基本制約
+- **データ永続化なし**: アプリケーション再起動でデータリセット
+- **メモリ内動作**: データはプロセスメモリ内にのみ存在
+- **単一プロセス**: 複数プロセスでのデータ共有不可
+- **トランザクション機能制限**: 一部のトランザクション機能が制限される
+
+#### Entity Framework Core特有の制約
+
+##### 1. 複合キー関連の制約
+**問題**: 複合主キーを持つエンティティ（ProductCategoriesなど）の更新処理で「重複キー」エラーが発生する場合がある
+
+**原因**: 
+- InMemoryプロバイダーでは、複合キーの変更追跡が実データベースと異なる動作をする
+- Entity Framework の Change Tracker が複合キーエンティティの状態管理で競合を起こす
+
+**対策**:
+```csharp
+// 問題のあるパターン（InMemoryで競合発生）
+product.ProductCategories.Clear();
+product.ProductCategories.Add(new ProductCategory { ProductId = 1, CategoryId = 2 });
+_context.Update(product);
+
+// 安全なパターン（InMemory対応）
+// 1. 既存の関連を先に削除
+var existing = await _context.ProductCategories
+    .Where(pc => pc.ProductId == productId)
+    .ToListAsync();
+_context.ProductCategories.RemoveRange(existing);
+await _context.SaveChangesAsync();
+
+// 2. 新しい関連を追加
+var newRelations = categoryIds.Select(id => new ProductCategory 
+{ 
+    ProductId = productId, 
+    CategoryId = id 
+});
+await _context.ProductCategories.AddRangeAsync(newRelations);
+await _context.SaveChangesAsync();
+```
+
+##### 2. エンティティ状態管理の制約
+**問題**: 同一エンティティの複数インスタンスが Change Tracker に登録されると競合エラー
+
+**対策**:
+```csharp
+// エンティティの状態をクリアしてから操作
+var entry = _context.Entry(entity);
+entry.State = EntityState.Detached;
+
+// または、基本プロパティのみ更新する専用メソッドを使用
+await UpdateBasicPropertiesAsync(product);
+```
+
+##### 3. 外部キー制約の動作差異
+**制約**: InMemoryプロバイダーは外部キー制約の検証が実データベースと異なる場合がある
+**注意点**: 本番環境（SQL Server等）では動作するが、InMemoryでエラーになるケースがある
+
+##### 4. インデックス制約の制限
+**制約**: 一部のインデックス制約（特にユニーク制約）がInMemoryプロバイダーで完全に再現されない場合がある
+**注意点**: 本番データベースでは検出される重複エラーがInMemoryで検出されない可能性
+
+#### 開発時の注意事項
+
+##### 1. プロダクション環境との差異
+- **テスト重要性**: 実データベース（SQL Server等）での動作確認が必須
+- **CI/CD**: 本番環境と同じデータベースでの統合テスト実行を推奨
+
+##### 2. エラーハンドリング
+- InMemory特有のエラーパターンを考慮したエラーハンドリング実装
+- 本番環境で発生しうるエラーのシミュレーション
+
+##### 3. パフォーマンステスト
+- InMemoryでのパフォーマンステストは参考程度
+- 実データベースでのパフォーマンス測定が必要
+
+#### 代替手段
+**SQLite InMemory**: より実データベースに近い動作が必要な場合
+```csharp
+// appsettings.Development.json での設定例
+services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlite("DataSource=:memory:"));
+```
+
+**Docker SQL Server**: 開発環境で本番同様のテスト実行時
+```bash
+docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=YourPassword123" \
+    -p 1433:1433 --name sqlserver \
+    -d mcr.microsoft.com/mssql/server:2019-latest
+```
