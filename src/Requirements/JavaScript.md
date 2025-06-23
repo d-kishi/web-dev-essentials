@@ -84,20 +84,30 @@ wwwroot/js/
 ```
 
 ### 3.2 ファイル読み込み順序
+
+#### 3.2.1 スクリプト読み込みの基本方針
+**すべてのJavaScriptファイルにはdefer属性を付与し、非同期読み込みとDOMContentLoaded後の実行を保証する**
+
 ```html
 <!-- レイアウトファイル（_Layout.cshtml） -->
-<script src="~/js/lib/rxjs.umd.min.js"></script>
-<script src="~/js/common/dom-utils.js"></script>
-<script src="~/js/common/api-client.js"></script>
+<script src="~/js/lib/rxjs.umd.min.js" defer></script>
+<script src="~/js/common/dom-utils.js" defer></script>
+<script src="~/js/common/api-client.js" defer></script>
 
 <!-- 各画面固有のスクリプト -->
 @section Scripts {
-    <script src="~/js/common/debouncer.js"></script>
-    <script src="~/js/common/pagination.js"></script>
-    <script src="~/js/products/products-search.js"></script>
-    <script src="~/js/products/products-index.js"></script>
+    <script src="~/js/common/debouncer.js" defer></script>
+    <script src="~/js/common/pagination.js" defer></script>
+    <script src="~/js/products/products-search.js" defer></script>
+    <script src="~/js/products/products-index.js" defer></script>
 }
 ```
+
+#### 3.2.2 defer属性使用の理由
+- **パフォーマンス向上**: HTMLパースを阻害せず、ページ読み込み速度を向上
+- **実行順序保証**: defer属性により、記述順序での実行が保証される
+- **DOM準備完了**: DOMContentLoadedイベント前に実行され、DOM操作が安全に実行可能
+- **非同期読み込み**: ネットワークからの並列読み込みによる効率化
 
 ## 4. RxJS使用方針
 

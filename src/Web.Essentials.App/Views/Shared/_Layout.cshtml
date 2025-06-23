@@ -14,12 +14,12 @@
     
     <!-- RxJS ライブラリ -->
     <environment include="Development">
-        <script src="https://unpkg.com/rxjs@7.8.1/dist/bundles/rxjs.umd.min.js"></script>
+        <script src="https://unpkg.com/rxjs@7.8.1/dist/bundles/rxjs.umd.min.js" defer></script>
     </environment>
     <environment exclude="Development">
         <script src="https://unpkg.com/rxjs@7.8.1/dist/bundles/rxjs.umd.min.js" 
                 asp-fallback-src="~/lib/rxjs/rxjs.umd.min.js" 
-                asp-fallback-test="window.rxjs"></script>
+                asp-fallback-test="window.rxjs" defer></script>
     </environment>
     
     <!-- 共通JavaScript -->
