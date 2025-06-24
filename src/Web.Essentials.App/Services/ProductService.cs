@@ -389,19 +389,10 @@ public class ProductService : IProductService
 
             await _productRepository.AddAsync(product);
 
-            // カテゴリ関係の設定
+            // カテゴリ関係の設定（編集処理と同じ安全な方法を使用）
             if (createModel.SelectedCategoryIds?.Any() == true)
             {
-                foreach (var categoryId in createModel.SelectedCategoryIds)
-                {
-                    var productCategory = new ProductCategory
-                    {
-                        ProductId = product.Id,
-                        CategoryId = categoryId
-                    };
-                    product.ProductCategories.Add(productCategory);
-                }
-                await _productRepository.UpdateAsync(product);
+                await _productRepository.UpdateProductCategoriesAsync(product.Id, createModel.SelectedCategoryIds.ToList());
             }
 
             _logger.LogInformation("商品を正常に作成しました。商品ID: {ProductId}", product.Id);

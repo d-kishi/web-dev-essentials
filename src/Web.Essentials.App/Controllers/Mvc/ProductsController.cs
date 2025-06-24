@@ -343,42 +343,19 @@ public class ProductsController : Controller
                 return View(viewModel);
             }
 
-            var product = await _productRepository.GetByIdAsync(id);
-            if (product == null)
+            // ProductService の安全な更新メソッドを使用
+            var updateResult = await _productService.UpdateProductAsync(viewModel);
+            if (!updateResult)
             {
-                return NotFound($"商品ID {id} が見つかりません");
+                ModelState.AddModelError("", "商品の更新に失敗しました");
+                await ReloadEditViewModelDataAsync(viewModel);
+                return View(viewModel);
             }
-
-            // 商品情報を更新
-            product.Name = viewModel.Name;
-            product.Description = viewModel.Description;
-            product.Price = viewModel.Price;
-            product.Status = viewModel.Status;
-            product.JanCode = viewModel.JanCode;
-            product.UpdatedAt = DateTime.Now;
-
-            // カテゴリ関係の更新
-            product.ProductCategories.Clear();
-            if (viewModel.SelectedCategoryIds?.Any() == true)
-            {
-                foreach (var categoryId in viewModel.SelectedCategoryIds)
-                {
-                    var productCategory = new ProductCategory
-                    {
-                        ProductId = product.Id,
-                        CategoryId = categoryId,
-                        CreatedAt = DateTime.UtcNow
-                    };
-                    product.ProductCategories.Add(productCategory);
-                }
-            }
-
-            await _productRepository.UpdateAsync(product);
 
             // 新しい画像ファイルがアップロードされている場合の処理
             if (viewModel.NewImageFiles != null && viewModel.NewImageFiles.Any())
             {
-                await ProcessImageUploadsAsync(product.Id, viewModel.NewImageFiles);
+                await ProcessImageUploadsAsync(viewModel.Id, viewModel.NewImageFiles);
             }
 
             TempData["SuccessMessage"] = "商品が正常に更新されました";

@@ -1,16 +1,19 @@
 # CLAUDE 申し送り事項
 
-## 未解決事項
+## 解決済み事項
 
-### 商品編集の変更保存問題
-- **問題**: 商品編集画面での変更保存時に問題が発生している
-- **対応状況**: 部分的に対応済み（UpdateBasicPropertiesAsyncメソッド追加済み）
-- **残課題**: 完全な解決には至っていない
-- **関連ファイル**: 
-  - `Web.Essentials.App/Services/ProductService.cs:443` (UpdateBasicPropertiesAsync使用)
-  - `Web.Essentials.Infrastructure/Repositories/ProductRepository.cs:186-213` (UpdateBasicPropertiesAsync実装)
-  - `Web.Essentials.Domain/Repositories/IProductRepository.cs:129` (インターフェース定義)
-- **備考**: カテゴリチェックボックスの事前選択問題は解決済み
+### 商品編集の変更保存問題（解決済み）
+- **問題**: 商品編集画面での変更保存時に「An item with the same key has already been added」エラーが発生
+- **発生条件**: 新規登録した商品の編集時のみ（Seedデータの編集では問題なし）
+- **根本原因**: ProductsControllerで直接ProductRepositoryを使用し、Change Tracker上でProductCategoriesを操作していた
+- **解決方法**: 
+  - ProductsController.EditアクションでProductService.UpdateProductAsyncを使用するように修正
+  - ProductService.CreateProductAsyncでも安全なUpdateProductCategoriesAsyncメソッドを使用するよう修正
+- **修正ファイル**:
+  - `Web.Essentials.App/Controllers/Mvc/ProductsController.cs` (危険な直接操作を削除、ProductService使用に変更)
+  - `Web.Essentials.App/Services/ProductService.cs` (CreateProductAsyncの安全化)
+- **解決日**: 2025年6月24日
+- **動作確認**: 新規登録→編集保存が正常動作することを確認済み
 
 ## 実装済み機能
 
