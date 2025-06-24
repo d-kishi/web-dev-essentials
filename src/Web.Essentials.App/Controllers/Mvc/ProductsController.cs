@@ -352,11 +352,8 @@ public class ProductsController : Controller
                 return View(viewModel);
             }
 
-            // 新しい画像ファイルがアップロードされている場合の処理
-            if (viewModel.NewImageFiles != null && viewModel.NewImageFiles.Any())
-            {
-                await ProcessImageUploadsAsync(viewModel.Id, viewModel.NewImageFiles);
-            }
+            // 画像の統合保存処理
+            await ProcessImageUpdatesAsync(viewModel);
 
             TempData["SuccessMessage"] = "商品が正常に更新されました";
             return RedirectToAction(nameof(Index));
@@ -486,6 +483,98 @@ public class ProductsController : Controller
                 viewModel.SelectedCategoryIds = product.ProductCategories.Select(pc => pc.CategoryId).ToList();
             }
         }
+    }
+
+    /// <summary>
+    /// 画像の統合保存処理（既存画像の更新+新規画像の追加）
+    /// </summary>
+    /// <param name="viewModel">編集用ビューモデル</param>
+    private async Task ProcessImageUpdatesAsync(ProductEditViewModel viewModel)
+    {
+        // 既存画像の更新処理
+        if (!string.IsNullOrEmpty(viewModel.ExistingImageData))
+        {
+            var existingImageUpdates = System.Text.Json.JsonSerializer.Deserialize<List<ExistingImageUpdateData>>(viewModel.ExistingImageData);
+            if (existingImageUpdates != null)
+            {
+                foreach (var update in existingImageUpdates)
+                {
+                    var existingImage = await _productImageRepository.GetByIdAsync(update.Id);
+                    if (existingImage != null)
+                    {
+                        existingImage.AltText = update.AltText;
+                        existingImage.IsMain = update.IsMain;
+                        existingImage.DisplayOrder = update.DisplayOrder;
+                        await _productImageRepository.UpdateAsync(existingImage);
+                    }
+                }
+            }
+        }
+
+        // 新規画像の追加処理
+        if (viewModel.ImageFiles != null && viewModel.ImageFiles.Any())
+        {
+            await ProcessNewImageUploadsAsync(viewModel.Id, viewModel.ImageFiles, viewModel.NewImageStartOrder, viewModel.ImageAltTexts, viewModel.ImageIsMainFlags);
+        }
+    }
+
+    /// <summary>
+    /// 新規画像のアップロード処理（DisplayOrderを指定開始値から設定）
+    /// </summary>
+    /// <param name="productId">商品ID</param>
+    /// <param name="imageFiles">画像ファイル</param>
+    /// <param name="startOrder">開始DisplayOrder</param>
+    /// <param name="altTexts">代替テキストのリスト</param>
+    /// <param name="isMainFlags">メイン画像フラグのリスト</param>
+    private async Task ProcessNewImageUploadsAsync(int productId, IEnumerable<IFormFile> imageFiles, int startOrder, List<string>? altTexts, List<bool>? isMainFlags)
+    {
+        var uploadPath = Path.Combine("wwwroot", "uploads", "products");
+        Directory.CreateDirectory(uploadPath);
+
+        var displayOrder = startOrder;
+        var fileIndex = 0;
+        
+        foreach (var file in imageFiles)
+        {
+            if (file.Length > 0)
+            {
+                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+                var filePath = Path.Combine(uploadPath, fileName);
+                
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                var altText = altTexts != null && fileIndex < altTexts.Count ? altTexts[fileIndex] : "";
+                var isMain = isMainFlags != null && fileIndex < isMainFlags.Count ? isMainFlags[fileIndex] : false;
+
+                var productImage = new ProductImage
+                {
+                    ProductId = productId,
+                    ImagePath = $"/uploads/products/{fileName}",
+                    DisplayOrder = displayOrder,
+                    AltText = altText,
+                    IsMain = isMain,
+                    CreatedAt = DateTime.Now
+                };
+
+                await _productImageRepository.AddAsync(productImage);
+                displayOrder++;
+                fileIndex++;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 既存画像更新用データクラス
+    /// </summary>
+    private class ExistingImageUpdateData
+    {
+        public int Id { get; set; }
+        public string AltText { get; set; } = string.Empty;
+        public bool IsMain { get; set; }
+        public int DisplayOrder { get; set; }
     }
 
     #endregion

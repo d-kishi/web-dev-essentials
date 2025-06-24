@@ -11,6 +11,7 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
 // 選択されたファイルを管理
 let selectedFiles = [];
 let selectedFileMetadata = []; // 代替テキストとメイン画像フラグを管理
+let existingImages = []; // 既存画像データ（編集画面用）
 let currentEditingIndex = -1;
 let isInitialized = false; // 初期化フラグ
 
@@ -27,6 +28,9 @@ function initializeImageUploadWithPreview() {
     const uploadZone = document.getElementById('imageUploadZone');
     
     if (!fileInput) return;
+
+    // 既存画像の読み込み（編集画面用）
+    loadExistingImages();
 
     // ファイル選択イベント
     fileInput.addEventListener('change', handleFileSelection);
@@ -150,15 +154,16 @@ function processFiles(files) {
         showInfo(`以下のファイルは既に選択済みのため、スキップされました：\n${duplicateFiles.join(', ')}`);
     }
     
-    // ファイル数制限チェック
-    const totalFiles = selectedFiles.length + newFiles.length;
+    // ファイル数制限チェック（既存画像+選択済みファイル+新規ファイル）
+    const currentTotal = existingImages.length + selectedFiles.length;
+    const totalFiles = currentTotal + newFiles.length;
     if (totalFiles > MAX_FILES) {
-        const availableSlots = MAX_FILES - selectedFiles.length;
-        const filesToAdd = newFiles.slice(0, availableSlots);
-        const skippedFiles = newFiles.slice(availableSlots);
+        const availableSlots = MAX_FILES - currentTotal;
+        const filesToAdd = newFiles.slice(0, Math.max(0, availableSlots));
+        const skippedFiles = newFiles.slice(Math.max(0, availableSlots));
         
         if (skippedFiles.length > 0) {
-            showError(`ファイル数の制限により、以下のファイルは追加されませんでした：\n${skippedFiles.map(f => f.name).join(', ')}\n\n最大${MAX_FILES}枚まで選択可能です（現在${selectedFiles.length}枚選択済み）`);
+            showError(`ファイル数の制限により、以下のファイルは追加されませんでした：\n${skippedFiles.map(f => f.name).join(', ')}\n\n最大${MAX_FILES}枚まで選択可能です（既存${existingImages.length}枚 + 選択済み${selectedFiles.length}枚）`);
         }
         
         // 制限内のファイルのみ追加
@@ -177,8 +182,8 @@ function addFilesToSelection(newFiles) {
         return;
     }
     
-    // 既存のメイン画像設定を保持
-    const hasMainImage = selectedFileMetadata.some(meta => meta.isMain);
+    // 既存のメイン画像設定を保持（既存画像も含めて確認）
+    const hasMainImage = existingImages.some(img => img.IsMain) || selectedFileMetadata.some(meta => meta.isMain);
     
     // 新しいファイルを追加
     selectedFiles = selectedFiles.concat(newFiles);
@@ -186,7 +191,7 @@ function addFilesToSelection(newFiles) {
     // 新しいファイルのメタデータを作成
     const newMetadata = newFiles.map((file, index) => ({
         altText: '',
-        isMain: !hasMainImage && selectedFiles.length === newFiles.length && index === 0 // 既存のメイン画像がなく、初回選択の場合のみ最初の画像をメインに設定
+        isMain: false // 編集画面では新規追加画像はメイン画像にならない
     }));
     
     selectedFileMetadata = selectedFileMetadata.concat(newMetadata);
@@ -221,7 +226,7 @@ function validateFile(file) {
 }
 
 /**
- * 画像プレビュー表示
+ * 画像プレビュー表示（既存画像+選択ファイル）
  */
 function displayImagePreviews() {
     const previewArea = document.getElementById('imagePreviewArea');
@@ -229,16 +234,29 @@ function displayImagePreviews() {
     
     if (!previewArea || !previewContainer) return;
     
+    const totalImages = existingImages.length + selectedFiles.length;
+    if (totalImages === 0) {
+        previewArea.style.display = 'none';
+        return;
+    }
+    
     previewArea.style.display = 'block';
     previewContainer.innerHTML = '';
     
+    // 既存画像を最初に表示
+    existingImages.forEach((image, index) => {
+        createExistingImagePreview(image, index, previewContainer);
+    });
+    
+    // 選択したファイルを表示
     selectedFiles.forEach((file, index) => {
-        createImagePreview(file, index, previewContainer);
+        const adjustedIndex = existingImages.length + index;
+        createImagePreview(file, adjustedIndex, previewContainer);
     });
 }
 
 /**
- * 個別画像プレビュー作成
+ * 個別画像プレビュー作成（新規ファイル用）
  */
 function createImagePreview(file, index, container) {
     if (!container) {
@@ -249,10 +267,12 @@ function createImagePreview(file, index, container) {
     const reader = new FileReader();
     
     reader.onload = function(e) {
-        const metadata = selectedFileMetadata[index];
+        const metadataIndex = index - existingImages.length;
+        const metadata = selectedFileMetadata[metadataIndex] || { altText: '', isMain: false };
         const previewItem = document.createElement('div');
         previewItem.className = 'image-preview-item';
         previewItem.dataset.index = index;
+        previewItem.dataset.type = 'new';
         
         previewItem.innerHTML = `
             <div class="preview-image-container">
@@ -289,24 +309,86 @@ function createImagePreview(file, index, container) {
 }
 
 /**
- * 画像削除
+ * 既存画像プレビュー作成
+ */
+function createExistingImagePreview(image, index, container) {
+    if (!container) {
+        console.error('Image preview container not found');
+        return;
+    }
+    
+    const previewItem = document.createElement('div');
+    previewItem.className = 'image-preview-item';
+    previewItem.dataset.index = index;
+    previewItem.dataset.type = 'existing';
+    previewItem.dataset.imageId = image.Id;
+    
+    previewItem.innerHTML = `
+        <div class="preview-image-container">
+            <img src="${image.ImagePath}" alt="${image.AltText || '商品画像'}" class="preview-image" />
+            <div class="preview-overlay">
+                <button type="button" class="overlay-btn edit-btn" onclick="openImageEditModal(${index})" title="編集">
+                    ✏️
+                </button>
+                <button type="button" class="overlay-btn delete-btn" onclick="removeImage(${index})" title="削除">
+                    🗑️
+                </button>
+                <button type="button" class="overlay-btn view-btn" onclick="viewImage('${image.ImagePath}', '${image.AltText || '商品画像'}')" title="拡大表示">
+                    🔍
+                </button>
+            </div>
+            ${image.IsMain ? '<div class="main-badge">メイン</div>' : ''}
+        </div>
+        <div class="preview-info">
+            <div class="preview-name">既存画像</div>
+            <div class="preview-details">
+                <span class="preview-order">順序: ${index + 1}</span>
+            </div>
+            ${image.AltText ? `<div class="preview-alt-text" title="${image.AltText}">説明: ${image.AltText}</div>` : ''}
+        </div>
+    `;
+    
+    if (container) {
+        container.appendChild(previewItem);
+    }
+}
+
+/**
+ * 画像削除（既存画像と新規画像対応）
  */
 function removeImage(index) {
     if (confirm('この画像を削除しますか？')) {
-        selectedFiles.splice(index, 1);
-        selectedFileMetadata.splice(index, 1);
-        
-        // メイン画像が削除された場合、最初の画像をメインに設定
-        if (selectedFileMetadata.length > 0 && !selectedFileMetadata.some(meta => meta.isMain)) {
-            selectedFileMetadata[0].isMain = true;
+        if (index < existingImages.length) {
+            // 既存画像の削除
+            existingImages.splice(index, 1);
+        } else {
+            // 新規画像の削除
+            const adjustedIndex = index - existingImages.length;
+            selectedFiles.splice(adjustedIndex, 1);
+            selectedFileMetadata.splice(adjustedIndex, 1);
         }
         
-        if (selectedFiles.length > 0) {
+        // メイン画像が削除された場合、最初の画像をメインに設定
+        const totalImages = existingImages.length + selectedFiles.length;
+        if (totalImages > 0) {
+            const hasMainImage = existingImages.some(img => img.IsMain) || selectedFileMetadata.some(meta => meta.isMain);
+            if (!hasMainImage) {
+                if (existingImages.length > 0) {
+                    existingImages[0].IsMain = true;
+                } else if (selectedFileMetadata.length > 0) {
+                    selectedFileMetadata[0].isMain = true;
+                }
+            }
+        }
+        
+        if (totalImages > 0) {
             displayImagePreviews();
             updateFileInput();
             showInfo('画像を削除しました');
         } else {
-            clearAllImages();
+            hideImagePreviews();
+            clearFileInput();
+            showInfo('すべての画像を削除しました');
         }
     }
 }
@@ -340,31 +422,54 @@ function viewImage(imageSrc, imageName) {
 }
 
 /**
- * 画像編集モーダルを開く
+ * 画像編集モーダルを開く（既存画像+新規画像対応）
  */
 function openImageEditModal(index) {
-    if (index < 0 || index >= selectedFiles.length) return;
+    const totalImages = existingImages.length + selectedFiles.length;
+    if (index < 0 || index >= totalImages) return;
     
     currentEditingIndex = index;
-    const file = selectedFiles[index];
-    const metadata = selectedFileMetadata[index];
     
-    // 画像プレビューを設定
-    const reader = new FileReader();
-    reader.onload = function(e) {
+    let imageSrc, altText, isMain;
+    
+    if (index < existingImages.length) {
+        // 既存画像の編集
+        const image = existingImages[index];
+        imageSrc = image.ImagePath;
+        altText = image.AltText || '';
+        isMain = image.IsMain || false;
+        
+        // 既存画像の場合は直接表示
         const editPreviewImage = document.getElementById('editPreviewImage');
         if (editPreviewImage) {
-            editPreviewImage.src = e.target.result;
+            editPreviewImage.src = imageSrc;
         }
-    };
-    reader.readAsDataURL(file);
+    } else {
+        // 新規画像の編集
+        const adjustedIndex = index - existingImages.length;
+        const file = selectedFiles[adjustedIndex];
+        const metadata = selectedFileMetadata[adjustedIndex];
+        
+        altText = metadata.altText || '';
+        isMain = metadata.isMain || false;
+        
+        // ファイルを読み込んで表示
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const editPreviewImage = document.getElementById('editPreviewImage');
+            if (editPreviewImage) {
+                editPreviewImage.src = e.target.result;
+            }
+        };
+        reader.readAsDataURL(file);
+    }
     
     // フォームに現在の設定を表示
     const imageAltText = document.getElementById('imageAltText');
     const imageIsMain = document.getElementById('imageIsMain');
     
-    if (imageAltText) imageAltText.value = metadata.altText || '';
-    if (imageIsMain) imageIsMain.checked = metadata.isMain || false;
+    if (imageAltText) imageAltText.value = altText;
+    if (imageIsMain) imageIsMain.checked = isMain;
     
     // モーダルを表示
     const modal = document.getElementById('imageEditModal');
@@ -400,10 +505,11 @@ function closeImageEditModal() {
 }
 
 /**
- * 画像設定を保存
+ * 画像設定を保存（既存画像+新規画像対応）
  */
 function saveImageSettings() {
-    if (currentEditingIndex < 0 || currentEditingIndex >= selectedFileMetadata.length) return;
+    const totalImages = existingImages.length + selectedFiles.length;
+    if (currentEditingIndex < 0 || currentEditingIndex >= totalImages) return;
     
     const imageAltText = document.getElementById('imageAltText');
     const imageIsMain = document.getElementById('imageIsMain');
@@ -411,19 +517,46 @@ function saveImageSettings() {
     const altText = imageAltText ? imageAltText.value.trim() : '';
     const isMain = imageIsMain ? imageIsMain.checked : false;
     
-    // メタデータを更新
-    selectedFileMetadata[currentEditingIndex].altText = altText;
-    
-    // メイン画像設定
-    if (isMain) {
-        // 他の画像のメイン設定を解除
-        selectedFileMetadata.forEach(meta => meta.isMain = false);
-        selectedFileMetadata[currentEditingIndex].isMain = true;
-    } else if (selectedFileMetadata[currentEditingIndex].isMain) {
-        // 現在のメイン画像のチェックを外した場合、最初の画像をメインに設定
-        selectedFileMetadata[currentEditingIndex].isMain = false;
-        if (!selectedFileMetadata.some(meta => meta.isMain)) {
-            selectedFileMetadata[0].isMain = true;
+    if (currentEditingIndex < existingImages.length) {
+        // 既存画像の更新
+        existingImages[currentEditingIndex].AltText = altText;
+        
+        // メイン画像設定
+        if (isMain) {
+            // 他の既存画像と新規画像のメイン設定を解除
+            existingImages.forEach(img => img.IsMain = false);
+            selectedFileMetadata.forEach(meta => meta.isMain = false);
+            existingImages[currentEditingIndex].IsMain = true;
+        } else if (existingImages[currentEditingIndex].IsMain) {
+            existingImages[currentEditingIndex].IsMain = false;
+            // メイン画像がなくなった場合は最初の画像をメインに
+            const hasMainImage = existingImages.some(img => img.IsMain) || selectedFileMetadata.some(meta => meta.isMain);
+            if (!hasMainImage && existingImages.length > 0) {
+                existingImages[0].IsMain = true;
+            }
+        }
+    } else {
+        // 新規画像の更新
+        const adjustedIndex = currentEditingIndex - existingImages.length;
+        selectedFileMetadata[adjustedIndex].altText = altText;
+        
+        // メイン画像設定
+        if (isMain) {
+            // 他の既存画像と新規画像のメイン設定を解除
+            existingImages.forEach(img => img.IsMain = false);
+            selectedFileMetadata.forEach(meta => meta.isMain = false);
+            selectedFileMetadata[adjustedIndex].isMain = true;
+        } else if (selectedFileMetadata[adjustedIndex].isMain) {
+            selectedFileMetadata[adjustedIndex].isMain = false;
+            // メイン画像がなくなった場合は最初の画像をメインに
+            const hasMainImage = existingImages.some(img => img.IsMain) || selectedFileMetadata.some(meta => meta.isMain);
+            if (!hasMainImage) {
+                if (existingImages.length > 0) {
+                    existingImages[0].IsMain = true;
+                } else if (selectedFileMetadata.length > 0) {
+                    selectedFileMetadata[0].isMain = true;
+                }
+            }
         }
     }
     
@@ -434,11 +567,12 @@ function saveImageSettings() {
 }
 
 /**
- * すべての画像をクリア
+ * すべての画像をクリア（既存画像も含む）
  */
 function clearAllImages() {
     selectedFiles = [];
     selectedFileMetadata = [];
+    existingImages = [];
     hideImagePreviews();
     clearFileInput();
     showInfo('すべての画像を削除しました');
@@ -518,6 +652,27 @@ function showInfo(message) {
     }
 }
 
+/**
+ * 既存画像の読み込み（編集画面用）
+ */
+function loadExistingImages() {
+    const existingImagesElement = document.getElementById('existingImagesData');
+    if (existingImagesElement) {
+        try {
+            const existingImagesData = JSON.parse(existingImagesElement.textContent);
+            existingImages = existingImagesData || [];
+            
+            if (existingImages.length > 0) {
+                displayImagePreviews();
+                console.log(`${existingImages.length}枚の既存画像を読み込みました`);
+            }
+        } catch (error) {
+            console.error('既存画像データの読み込みに失敗しました:', error);
+            existingImages = [];
+        }
+    }
+}
+
 // 初期化
 document.addEventListener('DOMContentLoaded', function() {
     initializeImageUploadWithPreview();
@@ -525,17 +680,18 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * フォーム送信前に隠しフィールドを設定
+ * フォーム送信前に隠しフィールドを設定（統合表示対応）
  */
 function prepareFormSubmission() {
     // 既存の隠しフィールドを削除
-    const existingFields = document.querySelectorAll('input[name^="ImageAltTexts"], input[name^="ImageIsMainFlags"]');
+    const existingFields = document.querySelectorAll('input[name^="ImageAltTexts"], input[name^="ImageIsMainFlags"], input[name^="ExistingImageData"], input[name^="DeletedImageIds"]');
     existingFields.forEach(field => field.remove());
     
     // 新しい隠しフィールドを作成
     const form = document.querySelector('form');
     if (!form) return;
     
+    // 新規画像のメタデータ
     selectedFileMetadata.forEach((metadata, index) => {
         // 代替テキスト用隠しフィールド
         const altTextInput = document.createElement('input');
@@ -551,6 +707,27 @@ function prepareFormSubmission() {
         isMainInput.value = metadata.isMain ? 'true' : 'false';
         form.appendChild(isMainInput);
     });
+    
+    // 既存画像データ（編集画面用）
+    if (existingImages.length > 0) {
+        const existingImageDataInput = document.createElement('input');
+        existingImageDataInput.type = 'hidden';
+        existingImageDataInput.name = 'ExistingImageData';
+        existingImageDataInput.value = JSON.stringify(existingImages.map((img, index) => ({
+            Id: img.Id,
+            AltText: img.AltText || '',
+            IsMain: img.IsMain || false,
+            DisplayOrder: index + 1
+        })));
+        form.appendChild(existingImageDataInput);
+    }
+    
+    // 新規画像の開始DisplayOrder（既存画像の後から）
+    const newImageStartOrderInput = document.createElement('input');
+    newImageStartOrderInput.type = 'hidden';
+    newImageStartOrderInput.name = 'NewImageStartOrder';
+    newImageStartOrderInput.value = existingImages.length + 1;
+    form.appendChild(newImageStartOrderInput);
 }
 
 /**

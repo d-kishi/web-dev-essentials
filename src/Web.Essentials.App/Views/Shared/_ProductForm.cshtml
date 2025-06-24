@@ -157,7 +157,7 @@
             
             <!-- 画像プレビューエリア -->
             <div id="imagePreviewArea" class="image-preview-area" style="display: none;">
-                <h4 class="preview-title">選択された画像</h4>
+                <h4 class="preview-title">商品画像</h4>
                 <div id="imagePreviewContainer" class="image-preview-container">
                     <!-- 画像プレビューがここに表示される -->
                 </div>
@@ -179,7 +179,7 @@
     </div>
 </div>
 
-<!-- 既存画像表示用（編集時のみ） -->
+<!-- 既存画像の初期セット用データ（編集時のみ） -->
 @{
     var hasExistingImages = false;
     IEnumerable<Web.Essentials.App.ViewModels.ProductImageViewModel>? existingImages = null;
@@ -200,21 +200,16 @@
 }
 @if (hasExistingImages && existingImages != null)
 {
-    <div class="form-section">
-        <h3 class="section-title">現在の商品画像</h3>
-        <div class="existing-images-area">
-            @foreach (var image in existingImages.OrderBy(img => img.DisplayOrder))
-            {
-                ViewBag.ImageId = image.Id;
-                ViewBag.ImagePath = image.ImagePath;
-                ViewBag.AltText = image.AltText;
-                ViewBag.DisplayOrder = image.DisplayOrder;
-                ViewBag.IsMain = image.IsMain;
-                ViewBag.IsExisting = true;
-                <partial name="_ImageItem" model="image" />
-            }
-        </div>
-    </div>
+    <!-- 既存画像データをJavaScriptで読み込み可能な形式で出力 -->
+    <script type="application/json" id="existingImagesData">
+        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(existingImages.OrderBy(img => img.DisplayOrder).Select(img => new {
+            Id = img.Id,
+            ImagePath = img.ImagePath,
+            AltText = img.AltText ?? "",
+            IsMain = img.IsMain,
+            DisplayOrder = img.DisplayOrder
+        })))
+    </script>
 }
 
 <!-- 画像編集モーダル -->

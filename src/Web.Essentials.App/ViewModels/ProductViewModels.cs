@@ -477,6 +477,7 @@ public class ProductCreateViewModel : IProductFormViewModel
 /// <remarks>
 /// 既存商品の編集フォームで使用
 /// 現在の値をプリセット
+/// 既存画像も統合表示に対応
 /// </remarks>
 public class ProductEditViewModel : IProductFormViewModel
 {
@@ -538,46 +539,46 @@ public class ProductEditViewModel : IProductFormViewModel
     public List<int> SelectedCategoryIds { get; set; } = new();
 
     /// <summary>
-    /// 新規アップロード画像ファイル
+    /// アップロード画像ファイル（最大5枚）
     /// </summary>
-    [Display(Name = "追加画像")]
+    [Display(Name = "商品画像")]
     [MaxImages(5)]
     [AllowedImageExtensions(".jpg", ".jpeg", ".png", ".gif")]
     [MaxFileSize(5.0)]
-    public List<IFormFile>? NewImageFiles { get; set; }
+    public List<IFormFile>? ImageFiles { get; set; }
 
     /// <summary>
-    /// 新規画像の代替テキスト
+    /// 画像の代替テキスト
     /// </summary>
     [Display(Name = "画像の説明")]
-    public List<string>? NewImageAltTexts { get; set; }
+    public List<string>? ImageAltTexts { get; set; }
 
     /// <summary>
-    /// 新規画像のメイン画像フラグのリスト
+    /// メイン画像フラグのリスト
     /// </summary>
-    [Display(Name = "新規画像メイン画像フラグ")]
-    public List<bool>? NewImageIsMainFlags { get; set; }
+    [Display(Name = "メイン画像フラグ")]
+    public List<bool>? ImageIsMainFlags { get; set; }
 
     /// <summary>
-    /// 削除対象の画像IDリスト
-    /// </summary>
-    public List<int> DeleteImageIds { get; set; } = new();
-
-    /// <summary>
-    /// メイン画像ID
+    /// メイン画像のインデックス（0から開始）
     /// </summary>
     [Display(Name = "メイン画像")]
-    public int? MainImageId { get; set; }
+    public int MainImageIndex { get; set; } = 0;
 
     /// <summary>
-    /// 既存画像一覧
+    /// 既存画像一覧（編集画面での初期表示用）
     /// </summary>
     public IEnumerable<ProductImageViewModel> ExistingImages { get; set; } = new List<ProductImageViewModel>();
 
     /// <summary>
-    /// 現在の画像一覧
+    /// 既存画像データ（JSON文字列）
     /// </summary>
-    public IEnumerable<ProductImageDisplayItem> CurrentImages { get; set; } = new List<ProductImageDisplayItem>();
+    public string? ExistingImageData { get; set; }
+
+    /// <summary>
+    /// 新規画像の開始DisplayOrder
+    /// </summary>
+    public int NewImageStartOrder { get; set; } = 1;
 
     /// <summary>
     /// カテゴリ選択用リスト
