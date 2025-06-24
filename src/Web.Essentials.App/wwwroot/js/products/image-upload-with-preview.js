@@ -191,7 +191,7 @@ function addFilesToSelection(newFiles) {
     // 新しいファイルのメタデータを作成
     const newMetadata = newFiles.map((file, index) => ({
         altText: '',
-        isMain: false // 編集画面では新規追加画像はメイン画像にならない
+        isMain: !hasMainImage && selectedFiles.length === newFiles.length && index === 0 // 初回選択時のみ最初の画像をメインに設定
     }));
     
     selectedFileMetadata = selectedFileMetadata.concat(newMetadata);
@@ -560,8 +560,8 @@ function saveImageSettings() {
         }
     }
     
-    // プレビューを更新
-    displayImagePreviews();
+    // メインバッジのみ更新（並び順を保持）
+    updateMainImageBadges();
     closeImageEditModal();
     showSuccess('画像設定を保存しました');
 }
@@ -747,6 +747,48 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeImageUploadWithPreview();
     setupFormSubmissionHandler();
 });
+
+/**
+ * メイン画像バッジのみ更新（並び順を保持）
+ */
+function updateMainImageBadges() {
+    const previewItems = document.querySelectorAll('.image-preview-item');
+    
+    previewItems.forEach((item, index) => {
+        const mainBadge = item.querySelector('.main-badge');
+        const isExisting = item.dataset.type === 'existing';
+        
+        if (isExisting) {
+            const existingIndex = parseInt(item.dataset.index);
+            const shouldShowMain = existingImages[existingIndex]?.IsMain || false;
+            
+            if (shouldShowMain && !mainBadge) {
+                // メインバッジを追加
+                const badge = document.createElement('div');
+                badge.className = 'main-badge';
+                badge.textContent = 'メイン';
+                item.querySelector('.preview-image-container').appendChild(badge);
+            } else if (!shouldShowMain && mainBadge) {
+                // メインバッジを削除
+                mainBadge.remove();
+            }
+        } else {
+            const newIndex = parseInt(item.dataset.index) - existingImages.length;
+            const shouldShowMain = selectedFileMetadata[newIndex]?.isMain || false;
+            
+            if (shouldShowMain && !mainBadge) {
+                // メインバッジを追加
+                const badge = document.createElement('div');
+                badge.className = 'main-badge';
+                badge.textContent = 'メイン';
+                item.querySelector('.preview-image-container').appendChild(badge);
+            } else if (!shouldShowMain && mainBadge) {
+                // メインバッジを削除
+                mainBadge.remove();
+            }
+        }
+    });
+}
 
 // グローバル関数として公開
 window.clearAllImages = clearAllImages;

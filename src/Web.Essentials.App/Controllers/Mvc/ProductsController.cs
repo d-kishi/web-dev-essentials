@@ -273,7 +273,7 @@ public class ProductsController : Controller
             // 画像ファイルがアップロードされている場合の処理
             if (viewModel.ImageFiles != null && viewModel.ImageFiles.Any())
             {
-                await ProcessImageUploadsAsync(product.Id, viewModel.ImageFiles);
+                await ProcessNewImageUploadsAsync(product.Id, viewModel.ImageFiles, 1, viewModel.ImageAltTexts, viewModel.ImageIsMainFlags);
             }
 
             TempData["SuccessMessage"] = "商品が正常に登録されました";
@@ -410,41 +410,6 @@ public class ProductsController : Controller
 
     #region Private Helper Methods
 
-    /// <summary>
-    /// 画像ファイルのアップロード処理
-    /// </summary>
-    /// <param name="productId">商品ID</param>
-    /// <param name="imageFiles">アップロードされた画像ファイル一覧</param>
-    private async Task ProcessImageUploadsAsync(int productId, IEnumerable<IFormFile> imageFiles)
-    {
-        var uploadPath = Path.Combine("wwwroot", "uploads", "products");
-        Directory.CreateDirectory(uploadPath);
-
-        var displayOrder = 1;
-        foreach (var file in imageFiles)
-        {
-            if (file.Length > 0)
-            {
-                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-                var filePath = Path.Combine(uploadPath, fileName);
-                
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await file.CopyToAsync(stream);
-                }
-
-                var productImage = new ProductImage
-                {
-                    ProductId = productId,
-                    ImagePath = $"/uploads/products/{fileName}",
-                    DisplayOrder = displayOrder++,
-                    CreatedAt = DateTime.Now
-                };
-
-                await _productImageRepository.AddAsync(productImage);
-            }
-        }
-    }
 
 
     /// <summary>

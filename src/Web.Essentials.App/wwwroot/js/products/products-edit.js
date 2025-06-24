@@ -244,20 +244,8 @@ function setupImageViewerAndEditor() {
                 openImageViewer(target.dataset.imagePath, target.dataset.imageAlt);
                 break;
                 
-            case 'edit-image':
-                e.preventDefault();
-                openImageEditModal(target);
-                break;
                 
-            case 'close-modal':
-                e.preventDefault();
-                closeImageEditModal();
-                break;
                 
-            case 'save-settings':
-                e.preventDefault();
-                saveImageSettings();
-                break;
                 
             case 'delete-existing-image':
                 e.preventDefault();
@@ -299,94 +287,7 @@ function openImageViewer(imagePath, altText) {
     document.body.style.overflow = 'hidden';
 }
 
-/**
- * 画像編集モーダルを開く
- * @param {HTMLElement} editButton - 編集ボタン要素
- */
-function openImageEditModal(editButton) {
-    const modal = document.getElementById('imageEditModal');
-    const previewImg = document.getElementById('editPreviewImage');
-    const altTextInput = document.getElementById('imageAltText');
-    const isMainCheckbox = document.getElementById('imageIsMain');
-    
-    if (!modal || !previewImg || !altTextInput || !isMainCheckbox) return;
-    
-    // データをモーダルに設定
-    previewImg.src = editButton.dataset.imagePath;
-    previewImg.alt = editButton.dataset.imageAlt || '商品画像';
-    altTextInput.value = editButton.dataset.imageAlt || '';
-    
-    // 現在編集中の画像IDを保存（ダブルクォートを除去）
-    const imageId = editButton.dataset.imageId || editButton.getAttribute('data-image-id');
-    const cleanImageId = imageId.toString().replace(/^["']|["']$/g, '');
-    modal.dataset.currentImageId = cleanImageId;
-    
-    // モーダルを表示
-    modal.style.display = 'block';
-}
 
-/**
- * 画像編集モーダルを閉じる
- */
-function closeImageEditModal() {
-    const modal = document.getElementById('imageEditModal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-}
-
-/**
- * 画像設定を保存
- */
-function saveImageSettings() {
-    const modal = document.getElementById('imageEditModal');
-    const altTextInput = document.getElementById('imageAltText');
-    const isMainCheckbox = document.getElementById('imageIsMain');
-    
-    if (!modal || !altTextInput) return;
-    
-    const imageId = modal.dataset.currentImageId;
-    const newAltText = altTextInput.value;
-    const isMain = isMainCheckbox ? isMainCheckbox.checked : false;
-    
-    // 表示されている画像情報を更新
-    const cleanImageId = imageId.toString().replace(/^["']|["']$/g, '');
-    const imageItem = document.querySelector(`[data-image-id="${cleanImageId}"]`);
-    if (imageItem) {
-        // 代替テキストを更新
-        const editButton = imageItem.querySelector('[data-action="edit-image"]');
-        if (editButton) {
-            editButton.dataset.imageAlt = newAltText;
-        }
-        
-        const img = imageItem.querySelector('img');
-        if (img) {
-            img.alt = newAltText;
-            img.dataset.imageAlt = newAltText;
-        }
-        
-        // 情報表示を更新
-        let infoElement = imageItem.querySelector('.alt-text');
-        if (newAltText) {
-            if (!infoElement) {
-                const imageInfo = imageItem.querySelector('.image-info');
-                if (imageInfo) {
-                    infoElement = document.createElement('small');
-                    infoElement.className = 'alt-text';
-                    imageInfo.appendChild(infoElement);
-                }
-            }
-            if (infoElement) {
-                infoElement.textContent = `代替テキスト: ${newAltText}`;
-            }
-        } else if (infoElement) {
-            infoElement.remove();
-        }
-    }
-    
-    showSuccess('画像設定を更新しました');
-    closeImageEditModal();
-}
 
 /**
  * 削除済み画像の初期化
@@ -456,3 +357,4 @@ function setupButtonEventHandlers() {
         resetButton.addEventListener('click', resetForm);
     }
 }
+
