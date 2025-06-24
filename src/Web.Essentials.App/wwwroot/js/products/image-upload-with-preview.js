@@ -49,6 +49,15 @@ function initializeImageUploadWithPreview() {
         });
     }
     
+    // 「すべてクリア」ボタンイベント
+    const clearAllBtn = document.querySelector('[data-action="clear-all"]');
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            clearAllImages();
+        });
+    }
+    
     isInitialized = true;
     console.log('画像アップロード機能の初期化が完了しました');
 }
@@ -97,20 +106,9 @@ function handleFileSelection(event) {
 }
 
 /**
- * ファイル処理
+ * ファイル処理（累積選択対応）
  */
 function processFiles(files) {
-    // 現在の選択をクリア
-    selectedFiles = [];
-    selectedFileMetadata = [];
-    
-    // ファイル数チェック
-    if (files.length > MAX_FILES) {
-        showError(`画像は最大${MAX_FILES}枚まで選択可能です`);
-        clearFileInput();
-        return;
-    }
-    
     // ファイルバリデーションと処理
     const validFiles = [];
     const errors = [];
@@ -133,21 +131,70 @@ function processFiles(files) {
         }
     }
     
-    // 有効なファイルを処理
-    selectedFiles = validFiles;
+    // 重複チェックと制限チェック
+    const newFiles = [];
+    const duplicateFiles = [];
     
-    // メタデータを初期化
-    selectedFileMetadata = selectedFiles.map((file, index) => ({
+    validFiles.forEach((file) => {
+        // 重複チェック（ファイル名ベース）
+        const isDuplicate = selectedFiles.some(existingFile => existingFile.name === file.name);
+        if (isDuplicate) {
+            duplicateFiles.push(file.name);
+        } else {
+            newFiles.push(file);
+        }
+    });
+    
+    // 重複ファイルの通知
+    if (duplicateFiles.length > 0) {
+        showInfo(`以下のファイルは既に選択済みのため、スキップされました：\n${duplicateFiles.join(', ')}`);
+    }
+    
+    // ファイル数制限チェック
+    const totalFiles = selectedFiles.length + newFiles.length;
+    if (totalFiles > MAX_FILES) {
+        const availableSlots = MAX_FILES - selectedFiles.length;
+        const filesToAdd = newFiles.slice(0, availableSlots);
+        const skippedFiles = newFiles.slice(availableSlots);
+        
+        if (skippedFiles.length > 0) {
+            showError(`ファイル数の制限により、以下のファイルは追加されませんでした：\n${skippedFiles.map(f => f.name).join(', ')}\n\n最大${MAX_FILES}枚まで選択可能です（現在${selectedFiles.length}枚選択済み）`);
+        }
+        
+        // 制限内のファイルのみ追加
+        addFilesToSelection(filesToAdd);
+    } else {
+        // 全ファイルを追加
+        addFilesToSelection(newFiles);
+    }
+}
+
+/**
+ * ファイルを選択リストに追加
+ */
+function addFilesToSelection(newFiles) {
+    if (newFiles.length === 0) {
+        return;
+    }
+    
+    // 既存のメイン画像設定を保持
+    const hasMainImage = selectedFileMetadata.some(meta => meta.isMain);
+    
+    // 新しいファイルを追加
+    selectedFiles = selectedFiles.concat(newFiles);
+    
+    // 新しいファイルのメタデータを作成
+    const newMetadata = newFiles.map((file, index) => ({
         altText: '',
-        isMain: index === 0 // 最初の画像をメインに設定
+        isMain: !hasMainImage && selectedFiles.length === newFiles.length && index === 0 // 既存のメイン画像がなく、初回選択の場合のみ最初の画像をメインに設定
     }));
     
-    if (selectedFiles.length > 0) {
-        displayImagePreviews();
-        showSuccess(`${selectedFiles.length}枚の画像が選択されました`);
-    } else {
-        hideImagePreviews();
-    }
+    selectedFileMetadata = selectedFileMetadata.concat(newMetadata);
+    
+    // プレビューを更新
+    displayImagePreviews();
+    updateFileInput();
+    showSuccess(`${newFiles.length}枚の画像を追加しました（合計${selectedFiles.length}枚）`);
 }
 
 /**
@@ -324,6 +371,19 @@ function openImageEditModal(index) {
     if (modal) {
         modal.style.display = 'block';
         document.body.style.overflow = 'hidden';
+        
+        // モーダル内のイベントリスナーを設定（重複回避のため一度削除）
+        const closeButtons = modal.querySelectorAll('[data-action="close-modal"]');
+        closeButtons.forEach(button => {
+            button.removeEventListener('click', closeImageEditModal);
+            button.addEventListener('click', closeImageEditModal);
+        });
+        
+        const saveButton = modal.querySelector('[data-action="save-settings"]');
+        if (saveButton) {
+            saveButton.removeEventListener('click', saveImageSettings);
+            saveButton.addEventListener('click', saveImageSettings);
+        }
     }
 }
 

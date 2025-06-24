@@ -344,11 +344,15 @@ function setupFormChangeDetection() {
 }
 
 /**
- * 画像プレビューのクリア（プレースホルダー）
+ * 画像プレビューのクリア
  */
 function clearImagePreviews() {
-    // 実装予定：画像プレビューのクリア処理
-    console.log('Clear image previews');
+    // 画像アップロード機能のクリア処理を呼び出し
+    if (typeof clearAllImages === 'function') {
+        clearAllImages();
+    } else {
+        console.warn('clearAllImages function not found');
+    }
 }
 
 /**
