@@ -91,6 +91,22 @@ sudo apt install nodejs npm -y
 
 # Claude Code インストール
 npm install -g @anthropic-ai/claude-code
+
+# claude起動
+claude
+
+# 以降、Gemini CLIとOpenAI o3 MCPを紐づける場合
+# geminiインストール
+npm install -g @google/gemini-cli
+
+# gemini起動(この後ログインとか初期設定する)
+gemini
+
+# 事前にOpenAI PlatformからAPI Keyを発行しておく
+# claudeにo3 MCPを追加
+claude mcp add o3 -s user -e OPENAI_API_KEY={your-api-key} -e SEARCH_CONTEXT_SIZE=medium -e REASONING_EFFORT=medium -- npx o3-search-mcp
+claude mcp add o3-low -s user -e OPENAI_API_KEY={your-api-key} -e SEARCH_CONTEXT_SIZE=low -e REASONING_EFFORT=low -- npx o3-search-mcp
+claude mcp add o3-high -s user -e OPENAI_API_KEY={your-api-key} -e SEARCH_CONTEXT_SIZE=high -e REASONING_EFFORT=high -- npx o3-search-mcp
 ```
 
 #### 3. 言語別SDK
