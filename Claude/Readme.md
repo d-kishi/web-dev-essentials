@@ -62,95 +62,193 @@ Claude Codeは単なる開発ツールではなく、**開発の在り方その�
 ### 推奨環境構成
 
 **基本環境**：
-- Windows 11 + WSL2 (Ubuntu)
+- Windows 11（ネイティブ環境）
 - VSCode + 必要な拡張機能
 - Claude Pro サブスクリプション
+- Node.js（Volta経由で管理）
 
 ### 詳細セットアップ手順
 
-#### 1. WSL環境構築
+#### 1. Windows環境の準備
 
-```bash
-# 管理者モードでPowerShell実行
-wsl --install
+```powershell
+# PowerShellを管理者権限で実行
 
-# Ubuntu起動後、システムアップデート
-sudo apt update
-sudo apt upgrade -y
+# Windows Terminal（推奨）のインストール
+winget install Microsoft.WindowsTerminal
+
+# Git for Windowsのインストール（未インストールの場合）
+winget install Git.Git
 ```
 
-#### 2. 開発環境セットアップ
+#### 2. Node.js環境構築（Volta使用）
 
-```bash
-# Node.js (Volta推奨)
-curl https://get.volta.sh | bash
-volta install node@22
+```powershell
+# PowerShellまたはコマンドプロンプトで実行
 
-# または直接インストール
-sudo apt install nodejs npm -y
+# Voltaのインストール（Windows用インストーラー）
+# https://github.com/volta-cli/volta/releases から最新版をダウンロード
+# またはwingetを使用
+winget install Volta.Volta
 
-# Claude Code インストール
+# 新しいターミナルセッションを開始（環境変数反映のため）
+
+# Node.js最新LTS版のインストール
+volta install node@lts
+
+# npm最新版のインストール
+volta install npm@latest
+
+# インストール確認
+node --version
+npm --version
+volta --version
+```
+
+#### 3. Claude Code インストール
+
+```powershell
+# Claude Code CLIのインストール
 npm install -g @anthropic-ai/claude-code
 
-# claude起動
-claude
+# インストール確認
+claude --version
 
-# 以降、Gemini CLIとOpenAI o3 MCPを紐づける場合
-# geminiインストール
+# Claude Code起動（初回起動時にログイン）
+claude
+```
+
+#### 4. 追加ツールのセットアップ（オプション）
+
+```powershell
+# Gemini CLIのインストール（Google AIツール連携が必要な場合）
 npm install -g @google/gemini-cli
 
-# gemini起動(この後ログインとか初期設定する)
-gemini
+# Gemini初期設定
+gemini init
 
-# 事前にOpenAI PlatformからAPI Keyを発行しておく
-# claudeにo3 MCPを追加
-claude mcp add o3 -s user -e OPENAI_API_KEY={your-api-key} -e SEARCH_CONTEXT_SIZE=medium -e REASONING_EFFORT=medium -- npx o3-search-mcp
-claude mcp add o3-low -s user -e OPENAI_API_KEY={your-api-key} -e SEARCH_CONTEXT_SIZE=low -e REASONING_EFFORT=low -- npx o3-search-mcp
-claude mcp add o3-high -s user -e OPENAI_API_KEY={your-api-key} -e SEARCH_CONTEXT_SIZE=high -e REASONING_EFFORT=high -- npx o3-search-mcp
+# OpenAI MCP連携（o3モデル使用の場合）
+# 事前にOpenAI PlatformからAPI Keyを発行
+
+# MCPツールのインストールと設定
+claude mcp add o3 -s user ^
+  -e OPENAI_API_KEY=sk-your-api-key ^
+  -e SEARCH_CONTEXT_SIZE=medium ^
+  -e REASONING_EFFORT=medium ^
+  -- npx o3-search-mcp
+
+# 複数の設定プロファイル（low/medium/high）を追加する場合
+claude mcp add o3-low -s user ^
+  -e OPENAI_API_KEY=sk-your-api-key ^
+  -e SEARCH_CONTEXT_SIZE=low ^
+  -e REASONING_EFFORT=low ^
+  -- npx o3-search-mcp
+
+claude mcp add o3-high -s user ^
+  -e OPENAI_API_KEY=sk-your-api-key ^
+  -e SEARCH_CONTEXT_SIZE=high ^
+  -e REASONING_EFFORT=high ^
+  -- npx o3-search-mcp
 ```
 
-#### 3. 言語別SDK
+#### 5. 言語別SDK（Windows環境）
 
 **.NET開発の場合**：
-```bash
-# Microsoft パッケージリポジトリ追加
-wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-sudo dpkg -i packages-microsoft-prod.deb
-rm packages-microsoft-prod.deb
+```powershell
+# .NET SDK最新版のインストール（Windows用）
+winget install Microsoft.DotNet.SDK.8
 
-# .NET SDK インストール
-sudo apt-get update
-sudo apt-get install -y dotnet-sdk-8.0
+# インストール確認
+dotnet --version
+
+# 必要に応じてVisual Studioもインストール
+winget install Microsoft.VisualStudio.2022.Community
 ```
 
-#### 4. VSCode拡張機能
+#### 6. VSCode拡張機能
+
+> **注釈**: 以下の手順はVSCodeと同様にCursorでも利用可能です。Cursorの場合は `code` コマンドの代わりに `cursor` コマンドを使用してください。
 
 **必須拡張機能**：
-```bash
+```powershell
 # 基本開発環境
 code --install-extension ms-dotnettools.csdevkit
 code --install-extension ms-dotnettools.csharp
+code --install-extension ms-vscode.typescript-language-features
 
 # 生産性向上
 code --install-extension jmrog.vscode-nuget-package-manager
 code --install-extension formulahendry.auto-rename-tag
 code --install-extension eamodio.gitlens
+code --install-extension esbenp.prettier-vscode
+code --install-extension dbaeumer.vscode-eslint
+
+# Claude Code連携（利用可能な場合）
+code --install-extension anthropic.claude-code
 ```
 
 ### 初期セットアップ
 
-1. **VSCode起動** → ターミナルでWSL選択
-2. **Claude Code初期化**：`claude` コマンド実行
-3. **テーマ選択** → **アカウント連携**
-4. **プロジェクトディレクトリ**での動作確認
+1. **VSCode（またはCursor）起動** → 統合ターミナルでPowerShellまたはコマンドプロンプトを使用
+2. **Claude Code初期化**：
+   ```powershell
+   claude init
+   ```
+3. **ブラウザでの認証** → Claude.aiアカウントでログイン
+4. **プロジェクトディレクトリ**での動作確認：
+   ```powershell
+   # プロジェクトディレクトリに移動
+   cd C:\Develop\your-project
+   
+   # Claude Codeを起動
+   claude
+   ```
 
-### よくある問題と解決法
+### Windows環境特有の設定
+
+#### パス関連の注意事項
+```powershell
+# Windows環境では、ファイルパスはバックスラッシュまたはスラッシュが使用可能
+# Claude Codeは両方に対応
+
+# 例：背景ファイルの読み込み
+> ../Claude/Background/*.md を読み込んでください
+# または
+> ..\Claude\Background\*.md を読み込んでください
+```
+
+#### 環境変数の設定
+```powershell
+# ユーザー環境変数の設定（必要に応じて）
+[System.Environment]::SetEnvironmentVariable("CLAUDE_API_KEY", "your-api-key", "User")
+
+# システム環境変数の確認
+$env:Path -split ';' | Select-String "volta"
+```
+
+### よくある問題と解決法（Windows環境）
 
 | 問題 | 解決法 |
 |------|-------|
-| WSLでdotnetコマンドが見つからない | PATH設定確認、ターミナル再起動 |
-| Claude Codeログインエラー | ブラウザでClaude.ai先行ログイン |
-| VSCode拡張機能が動作しない | WSL拡張機能の個別インストール確認 |
+| Voltaコマンドが認識されない | 新しいターミナルセッションを開始、またはPATH確認 |
+| npm installでアクセス権限エラー | 管理者権限でターミナル実行、またはnpmキャッシュクリア |
+| Claude Codeログインがループする | ブラウザのキャッシュクリア、別ブラウザで試行 |
+| VSCode拡張機能が動作しない | VSCodeを再起動、拡張機能の再インストール |
+| ファイアウォール警告 | Windows Defenderで許可設定を追加 |
+
+### パフォーマンス最適化（Windows向け）
+
+```powershell
+# Windows Defenderの除外設定（開発フォルダ）
+Add-MpPreference -ExclusionPath "C:\Develop"
+
+# npm設定の最適化
+npm config set msvs_version 2022
+npm config set cache-min 9999999
+
+# Voltaのキャッシュ設定
+volta config set node_binary_mirror https://nodejs.org/dist/
+```
 
 ---
 
